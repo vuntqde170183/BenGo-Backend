@@ -6,6 +6,9 @@ export class User extends Document {
   @Prop({ type: String, required: true, unique: true, index: true })
   phone: string;
 
+  @Prop({ type: String, unique: true, sparse: true })
+  email: string;
+
   @Prop({ type: String, required: true, select: false })
   password: string;
 
@@ -14,7 +17,7 @@ export class User extends Document {
 
   @Prop({
     type: String,
-    enum: ['CUSTOMER', 'DRIVER', 'ADMIN'],
+    enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER'],
     default: 'CUSTOMER',
   })
   role: string;

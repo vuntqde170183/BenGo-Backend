@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -36,9 +37,10 @@ export class DriverController {
   @ApiOperation({ summary: 'Toggle Online/Offline' })
   @ApiResponse({ status: 200, description: 'Status updated' })
   async toggleStatus(
+    @Req() req: any,
     @Body() dto: ToggleStatusDto,
   ): Promise<{ success: boolean }> {
-    await this.driverService.toggleStatus(dto);
+    await this.driverService.toggleStatus(req.user.id, dto);
     return { success: true };
   }
 
@@ -65,9 +67,10 @@ export class DriverController {
   @ApiOperation({ summary: 'Accept a trip' })
   @ApiResponse({ status: 201, description: 'Trip accepted' })
   async acceptOrder(
+    @Req() req: any,
     @Param('id') id: string,
   ): Promise<{ success: boolean; order: any }> {
-    return this.driverService.acceptOrder(id);
+    return this.driverService.acceptOrder(req.user.id, id);
   }
 
   @Put('orders/:id/update')
@@ -85,9 +88,10 @@ export class DriverController {
   @ApiOperation({ summary: 'Update real-time GPS' })
   @ApiResponse({ status: 200, description: 'Location updated' })
   async updateLocation(
+    @Req() req: any,
     @Body() dto: UpdateLocationDto,
   ): Promise<{ success: boolean }> {
-    await this.driverService.updateLocation(dto);
+    await this.driverService.updateLocation(req.user.id, dto);
     return { success: true };
   }
 
@@ -95,9 +99,10 @@ export class DriverController {
   @ApiOperation({ summary: 'Upload documents' })
   @ApiResponse({ status: 201, description: 'Document uploaded' })
   async uploadDocument(
+    @Req() req: any,
     @Body() dto: UploadDocumentDto,
   ): Promise<{ success: boolean }> {
-    await this.driverService.uploadDocument(dto);
+    await this.driverService.uploadDocument(req.user.id, dto);
     return { success: true };
   }
 
@@ -109,9 +114,10 @@ export class DriverController {
     type: StatsResponseDto,
   })
   async getStats(
+    @Req() req: any,
     @Query('from') from: string,
     @Query('to') to: string,
   ): Promise<StatsResponseDto> {
-    return this.driverService.getStats(from, to);
+    return this.driverService.getStats(req.user.id, from, to);
   }
 }
