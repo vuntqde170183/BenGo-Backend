@@ -70,4 +70,12 @@ export class AuthService {
       },
     });
   }
+
+  async getProfile(userId: string): Promise<ApiResponseType> {
+    return this.userService.getProfile(userId);
+  }
+
+  async updateProfile(userId: string, dto: any): Promise<ApiResponseType> {
+    return this.userService.updateProfile(userId, dto);
+  }
 }

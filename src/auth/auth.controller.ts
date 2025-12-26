@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -39,16 +39,19 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @UseGuards(JwtGuard)
   @Get('profile')
-  async getProfile(): Promise<any> {
-    return { id: 1, name: 'Demo User', role: 'CUSTOMER' };
+  async getProfile(@Req() req: any): Promise<ApiResponseType> {
+    return this.authService.getProfile(req.user.id);
   }
 
   @ApiOperation({ summary: 'Update profile' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtGuard)
   @Put('profile')
-  async updateProfile(@Body() dto: UpdateProfileDto): Promise<any> {
-    return { success: true, user: dto };
+  async updateProfile(
+    @Req() req: any,
+    @Body() dto: UpdateProfileDto,
+  ): Promise<ApiResponseType> {
+    return this.authService.updateProfile(req.user.id, dto);
   }
 
   @ApiOperation({ summary: 'Request Password Reset' })
