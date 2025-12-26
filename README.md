@@ -1,201 +1,543 @@
 # BenGo API Documentation - Transport & Delivery Service
 
+**Base URL:** `http://localhost:3000/api/v1`  
+**Swagger Docs:** `http://localhost:3000/docs`
+
+---
+
+## 📑 Table of Contents
+
+1. [Auth](#1-auth)
+2. [Admin (21 routes)](#2-admin-routes-)
+3. [Orders](#3-orders)
+4. [Driver](#4-driver)
+5. [Dispatcher](#5-dispatcher)
+6. [Chat](#6-chat)
+7. [Payments & Upload](#7-payments--upload)
+8. [Example Accounts](#example-accounts)
+
+---
+
 ## 1. Auth
 
 ### 1.1. Register
 
 **Method:** `POST`  
-**Path:** `/api/v1/auth/register`  
+**Path:** `/auth/register`  
 **Access:** Public  
 **Payload:**
 
 ```json
 {
-  "phone": "string",
-  "name": "string",
-  "password": "string",
-  "type": "string" // "CUSTOMER" or "DRIVER"
+  "phone": "0901234567",
+  "name": "Nguyen Van A",
+  "password": "password123",
+  "type": "CUSTOMER" // or "DRIVER"
+}
+```
+
+**Response:**
+
+```json
+{
+  "statusCode": 201,
+  "message": "Đăng ký tài khoản thành công",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "64f5a1b2c3d4e5f6g7h8i9j0",
+      "phone": "0901234567",
+      "name": "Nguyen Van A",
+      "role": "CUSTOMER"
+    }
+  }
 }
 ```
 
 ### 1.2. Login
 
 **Method:** `POST`  
-**Path:** `/api/v1/auth/login`  
-**Access:** Public
+**Path:** `/auth/login`  
+**Access:** Public  
+**Payload:**
+
+```json
+{
+  "phone": "0901234567",
+  "password": "password123"
+}
+```
+
+**Response:** Same as Register
 
 ### 1.3. Get Profile
 
 **Method:** `GET`  
-**Path:** `/api/v1/auth/profile`  
-**Access:** Private (All roles)
+**Path:** `/auth/profile`  
+**Access:** Private (All roles)  
+**Headers:** `Authorization: Bearer <token>`  
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "message": "Lấy thông tin người dùng thành công",
+  "data": {
+    "_id": "64f5a1b2c3d4e5f6g7h8i9j0",
+    "phone": "0901234567",
+    "email": "user@example.com",
+    "name": "Nguyen Van A",
+    "role": "CUSTOMER",
+    "walletBalance": 500000,
+    "rating": 5,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
 
 ### 1.4. Update Profile
 
 **Method:** `PUT`  
-**Path:** `/api/v1/auth/profile`  
-**Access:** Private (All roles)
+**Path:** `/auth/profile`  
+**Access:** Private (All roles)  
+**Headers:** `Authorization: Bearer <token>`  
+**Payload:**
+
+```json
+{
+  "name": "Nguyen Van B",
+  "avatar": "https://example.com/avatar.jpg",
+  "email": "newmail@example.com"
+}
+```
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "message": "Cập nhật thông tin thành công",
+  "data": { ...updatedUser }
+}
+```
 
 ### 1.5. Forgot Password
 
 **Method:** `POST`  
-**Path:** `/api/v1/auth/forgot-password`
+**Path:** `/auth/forgot-password`  
+**Payload:** `{ "phone": "0901234567" }`  
+**Response:** `{ "success": true, "message": "OTP sent" }`
 
 ### 1.6. Reset Password
 
 **Method:** `POST`  
-**Path:** `/api/v1/auth/reset-password`
+**Path:** `/auth/reset-password`  
+**Payload:**
+
+```json
+{
+  "phone": "0901234567",
+  "otp": "123456",
+  "newPassword": "newpassword123"
+}
+```
 
 ---
 
 ## 2. Admin Routes 🔐
 
+> **Note:** All admin routes require `Authorization: Bearer <admin_token>`
+
 ### 👥 User Management
 
-#### 2.1. Get All Users **[ADMIN]**
+#### 2.1. Get All Users
 
 **Method:** `GET`  
-**Path:** `/api/v1/admin/users`  
-**Query:** `role`, `search`, `page`, `limit`
+**Path:** `/admin/users`  
+**Query Params:**
 
-#### 2.2. Get User Details **[ADMIN]**
+- `role` (optional): `CUSTOMER` | `DRIVER` | `ADMIN` | `DISPATCHER`
+- `search` (optional): Search by name/phone/email
+- `page` (optional, default: 1)
+- `limit` (optional, default: 20)
+
+**Example:** `/admin/users?role=CUSTOMER&search=Nguyen&page=1&limit=10`
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "id": "64f5a1b2c3d4e5f6g7h8i9j0",
+      "phone": "0901234567",
+      "email": "user@example.com",
+      "name": "Nguyen Van A",
+      "role": "CUSTOMER",
+      "avatar": null,
+      "rating": 5,
+      "walletBalance": 500000
+    }
+  ],
+  "meta": {
+    "total": 100,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+#### 2.2. Get User Details
 
 **Method:** `GET`  
-**Path:** `/api/v1/admin/users/:id`
+**Path:** `/admin/users/:id`  
+**Response:** Full user object with all fields
 
-#### 2.3. Block/Unblock User **[ADMIN]**
+#### 2.3. Block/Unblock User
 
 **Method:** `PUT`  
-**Path:** `/api/v1/admin/users/:id/block`  
-**Payload:** `{ "blocked": boolean, "reason": "string" }`
-
-#### 2.4. Delete User **[ADMIN]**
-
-**Method:** `DELETE`  
-**Path:** `/api/v1/admin/users/:id`
-
-### 🚗 Driver Management
-
-#### 2.5. Get All Drivers **[ADMIN]**
-
-**Method:** `GET`  
-**Path:** `/api/v1/admin/drivers`  
-**Query:** `status`
-
-#### 2.6. Approve/Reject Driver **[ADMIN]**
-
-**Method:** `POST`  
-**Path:** `/api/v1/admin/drivers/approval`  
-**Payload:** `{ "driverId": "string", "action": "APPROVE" | "REJECT" }`
-
-### 📦 Order Management
-
-#### 2.7. Get All Orders **[ADMIN]**
-
-**Method:** `GET`  
-**Path:** `/api/v1/admin/orders`  
-**Query:** `status`, `page`, `limit`
-
-#### 2.8. Get Order Details **[ADMIN]**
-
-**Method:** `GET`  
-**Path:** `/api/v1/admin/orders/:id`
-
-#### 2.9. Force Cancel Order **[ADMIN]**
-
-**Method:** `PUT`  
-**Path:** `/api/v1/admin/orders/:id/cancel`  
-**Payload:** `{ "reason": "string" }`
-
-### 💰 Pricing Configuration
-
-#### 2.10. Get Pricing Config **[ADMIN]**
-
-**Method:** `GET`  
-**Path:** `/api/v1/admin/pricing`
-
-#### 2.11. Update Pricing **[ADMIN]**
-
-**Method:** `PUT`  
-**Path:** `/api/v1/admin/pricing`  
-**Payload:** `{ "basePrice": number, "perKm": number, "peakHourMultiplier": number }`
-
-### 🎁 Promotion Management
-
-#### 2.12. Get All Promotions **[ADMIN]**
-
-**Method:** `GET`  
-**Path:** `/api/v1/admin/promotions`  
-**Query:** `active`
-
-#### 2.13. Create Promotion **[ADMIN]**
-
-**Method:** `POST`  
-**Path:** `/api/v1/admin/promotions`  
+**Path:** `/admin/users/:id/block`  
 **Payload:**
 
 ```json
 {
-  "code": "SUMMER2024",
-  "title": "Summer Sale",
-  "description": "Get 20% off",
-  "discountType": "PERCENTAGE",
-  "discountValue": 20,
-  "minOrderValue": 50000,
-  "startDate": "2024-06-01",
-  "endDate": "2024-08-31",
-  "usageLimit": 100,
-  "applicableVehicles": ["BIKE", "VAN"]
+  "blocked": true,
+  "reason": "Spam orders"
 }
 ```
 
-#### 2.14. Update Promotion **[ADMIN]**
-
-**Method:** `PUT`  
-**Path:** `/api/v1/admin/promotions/:id`
-
-#### 2.15. Delete Promotion **[ADMIN]**
+#### 2.4. Delete User
 
 **Method:** `DELETE`  
-**Path:** `/api/v1/admin/promotions/:id`
+**Path:** `/admin/users/:id`  
+**Response:** `{ "success": true }`
+
+### 🚗 Driver Management
+
+#### 2.5. Get All Drivers
+
+**Method:** `GET`  
+**Path:** `/admin/drivers`  
+**Query:** `status` (optional): `PENDING_APPROVAL` | `APPROVED` | `LOCKED`  
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "_id": "64f5...",
+      "userId": {
+        "name": "Nguyen Van Driver",
+        "phone": "0911234567",
+        "email": "driver@example.com",
+        "rating": 4.8
+      },
+      "vehicleType": "VAN",
+      "plateNumber": "29A-12345",
+      "licenseImages": ["url1", "url2"],
+      "isOnline": true,
+      "location": {
+        "type": "Point",
+        "coordinates": [105.83416, 21.02776]
+      },
+      "status": "APPROVED"
+    }
+  ],
+  "total": 50
+}
+```
+
+#### 2.6. Approve/Reject Driver
+
+**Method:** `POST`  
+**Path:** `/admin/drivers/approval`  
+**Payload:**
+
+```json
+{
+  "driverId": "64f5a1b2c3d4e5f6g7h8i9j0",
+  "action": "APPROVE" // or "REJECT"
+}
+```
+
+### 📦 Order Management
+
+#### 2.7. Get All Orders
+
+**Method:** `GET`  
+**Path:** `/admin/orders`  
+**Query:**
+
+- `status` (optional): `PENDING` | `ACCEPTED` | `PICKED_UP` | `DELIVERED` | `CANCELLED`
+- `page`, `limit`
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "_id": "64f5...",
+      "customerId": {
+        "name": "Customer Name",
+        "phone": "0901234567"
+      },
+      "driverId": {
+        "name": "Driver Name",
+        "phone": "0911234567"
+      },
+      "pickup": {
+        "address": "123 Nguyen Van Linh",
+        "lat": 21.0244,
+        "lng": 105.8587
+      },
+      "dropoff": {
+        "address": "456 Tran Duy Hung",
+        "lat": 21.0583,
+        "lng": 105.8233
+      },
+      "vehicleType": "VAN",
+      "status": "DELIVERED",
+      "totalPrice": 150000,
+      "distanceKm": 5.2,
+      "paymentMethod": "CASH",
+      "paymentStatus": "PAID",
+      "createdAt": "2024-01-01T10:00:00.000Z"
+    }
+  ],
+  "meta": { "total": 500, "page": 1, "limit": 20 }
+}
+```
+
+#### 2.8. Get Order Details
+
+**Method:** `GET`  
+**Path:** `/admin/orders/:id`
+
+#### 2.9. Force Cancel Order
+
+**Method:** `PUT`  
+**Path:** `/admin/orders/:id/cancel`  
+**Payload:** `{ "reason": "Admin override due to complaint" }`
+
+### 💰 Pricing Configuration
+
+#### 2.10. Get Pricing Config
+
+**Method:** `GET`  
+**Path:** `/admin/pricing`  
+**Response:**
+
+```json
+[
+  {
+    "_id": "64f5...",
+    "vehicleType": "BIKE",
+    "basePrice": 15000,
+    "perKm": 5000,
+    "peakHourMultiplier": 1.2,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "vehicleType": "VAN",
+    "basePrice": 50000,
+    "perKm": 12000,
+    "peakHourMultiplier": 1.5
+  },
+  {
+    "vehicleType": "TRUCK",
+    "basePrice": 100000,
+    "perKm": 18000,
+    "peakHourMultiplier": 1.8
+  }
+]
+```
+
+#### 2.11. Update Pricing
+
+**Method:** `PUT`  
+**Path:** `/admin/pricing`  
+**Payload:**
+
+```json
+{
+  "basePrice": 20000,
+  "perKm": 6000,
+  "peakHourMultiplier": 1.3
+}
+```
+
+**Note:** Updates pricing for all vehicle types
+
+### 🎁 Promotion Management
+
+#### 2.12. Get All Promotions
+
+**Method:** `GET`  
+**Path:** `/admin/promotions`  
+**Query:** `active` (optional): `true` | `false`
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "_id": "64f5...",
+      "code": "SUMMER2024",
+      "title": "Summer Sale",
+      "description": "Get 20% off on all trips",
+      "discountType": "PERCENTAGE",
+      "discountValue": 20,
+      "minOrderValue": 50000,
+      "maxDiscountAmount": 100000,
+      "startDate": "2024-06-01T00:00:00.000Z",
+      "endDate": "2024-08-31T23:59:59.999Z",
+      "usageLimit": 100,
+      "usedCount": 25,
+      "isActive": true,
+      "applicableVehicles": ["BIKE", "VAN"]
+    }
+  ],
+  "total": 10
+}
+```
+
+#### 2.13. Create Promotion
+
+**Method:** `POST`  
+**Path:** `/admin/promotions`  
+**Payload:**
+
+```json
+{
+  "code": "NEWYEAR2024",
+  "title": "New Year Promotion",
+  "description": "Special discount for new year",
+  "discountType": "FIXED_AMOUNT",
+  "discountValue": 50000,
+  "minOrderValue": 100000,
+  "maxDiscountAmount": 50000,
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "usageLimit": 500,
+  "applicableVehicles": ["VAN", "TRUCK"]
+}
+```
+
+#### 2.14. Update Promotion
+
+**Method:** `PUT`  
+**Path:** `/admin/promotions/:id`  
+**Payload:** (Any fields from create)
+
+```json
+{
+  "title": "Updated Title",
+  "isActive": false
+}
+```
+
+#### 2.15. Delete Promotion
+
+**Method:** `DELETE`  
+**Path:** `/admin/promotions/:id`
 
 ### 🎫 Support Tickets / Complaints
 
-#### 2.16. Get All Tickets **[ADMIN]**
+#### 2.16. Get All Tickets
 
 **Method:** `GET`  
-**Path:** `/api/v1/admin/tickets`  
-**Query:** `status`, `priority`
+**Path:** `/admin/tickets`  
+**Query:**
 
-#### 2.17. Get Ticket Details **[ADMIN]**
+- `status`: `OPEN` | `IN_PROGRESS` | `RESOLVED` | `CLOSED`
+- `priority`: `LOW` | `MEDIUM` | `HIGH` | `URGENT`
+
+**Response:**
+
+```json
+{
+  "data": [
+    {
+      "_id": "64f5...",
+      "userId": {
+        "name": "Customer Name",
+        "phone": "0901234567",
+        "email": "customer@example.com"
+      },
+      "subject": "Driver was rude",
+      "content": "The driver was very unprofessional...",
+      "status": "OPEN",
+      "priority": "HIGH",
+      "assignedTo": null,
+      "createdAt": "2024-01-01T10:00:00.000Z"
+    }
+  ],
+  "total": 15
+}
+```
+
+#### 2.17. Get Ticket Details
 
 **Method:** `GET`  
-**Path:** `/api/v1/admin/tickets/:id`
+**Path:** `/admin/tickets/:id`
 
-#### 2.18. Assign Ticket **[ADMIN]**
+#### 2.18. Assign Ticket
 
 **Method:** `PUT`  
-**Path:** `/api/v1/admin/tickets/:id/assign`  
+**Path:** `/admin/tickets/:id/assign`  
 **Payload:** `{ "assignedTo": "dispatcherId" }`
 
-#### 2.19. Update Ticket Status **[ADMIN]**
+#### 2.19. Update Ticket Status
 
 **Method:** `PUT`  
-**Path:** `/api/v1/admin/tickets/:id/status`  
-**Payload:** `{ "status": "RESOLVED", "resolution": "string" }`
+**Path:** `/admin/tickets/:id/status`  
+**Payload:**
+
+```json
+{
+  "status": "RESOLVED",
+  "resolution": "Refunded customer and warned driver"
+}
+```
 
 ### 📊 Reports & Statistics
 
-#### 2.20. Get Reports **[ADMIN]**
+#### 2.20. Get Reports
 
 **Method:** `GET`  
-**Path:** `/api/v1/admin/reports`  
-**Query:** `type` (REVENUE, ALL)
+**Path:** `/admin/reports`  
+**Query:** `type`: `REVENUE` | `ALL`  
+**Response:**
 
-#### 2.21. Dashboard Overview **[ADMIN]**
+```json
+{
+  "revenue": {
+    "daily": 18540000,
+    "monthly": 450000000
+  }
+}
+```
+
+#### 2.21. Dashboard Overview
 
 **Method:** `GET`  
-**Path:** `/api/v1/admin/dashboard`
+**Path:** `/admin/dashboard`  
+**Response:**
+
+```json
+{
+  "users": 2547,
+  "drivers": 245,
+  "orders": 1245,
+  "activeOrders": 132,
+  "revenue": 450000000,
+  "pendingTickets": 15
+}
+```
 
 ---
 
@@ -204,32 +546,120 @@
 ### 3.1. Estimate Price
 
 **Method:** `POST`  
-**Path:** `/api/v1/orders/estimate`
+**Path:** `/orders/estimate`  
+**Payload:**
+
+```json
+{
+  "origin": {
+    "lat": 21.0244,
+    "lng": 105.8587,
+    "address": "Hanoi Opera House"
+  },
+  "destination": {
+    "lat": 21.0583,
+    "lng": 105.8233,
+    "address": "West Lake"
+  },
+  "vehicleType": "VAN"
+}
+```
+
+**Response:**
+
+```json
+{
+  "distance": 4.5,
+  "duration": 15,
+  "price": 75000,
+  "currency": "VND"
+}
+```
 
 ### 3.2. Create Order
 
 **Method:** `POST`  
-**Path:** `/api/v1/orders`
+**Path:** `/orders`  
+**Headers:** `Authorization: Bearer <token>`  
+**Payload:**
+
+```json
+{
+  "origin": {
+    "lat": 21.0244,
+    "lng": 105.8587,
+    "address": "123 Nguyen Van Linh"
+  },
+  "destination": {
+    "lat": 21.0583,
+    "lng": 105.8233,
+    "address": "456 Tran Duy Hung"
+  },
+  "vehicleType": "VAN",
+  "goodsImages": [
+    "https://example.com/image1.jpg",
+    "https://example.com/image2.jpg"
+  ],
+  "note": "Handle with care, fragile items"
+}
+```
+
+**Response:**
+
+```json
+{
+  "orderId": "64f5a1b2c3d4e5f6g7h8i9j0",
+  "status": "PENDING",
+  "totalPrice": 75000,
+  "distanceKm": 4.5,
+  "estimatedTime": 15,
+  "createdAt": "2024-01-01T10:00:00.000Z"
+}
+```
 
 ### 3.3. Order History
 
 **Method:** `GET`  
-**Path:** `/api/v1/orders/history`
+**Path:** `/orders/history`  
+**Query:**
+
+- `page` (default: 1)
+- `limit` (default: 10)
+- `status`: `PENDING` | `COMPLETED` | `CANCELLED`
+
+**Response:**
+
+```json
+{
+  "data": [...orders],
+  "meta": { "total": 50, "page": 1 }
+}
+```
 
 ### 3.4. Get Order Detail
 
 **Method:** `GET`  
-**Path:** `/api/v1/orders/:id`
+**Path:** `/orders/:id`  
+**Response:** Full order object with driver info, tracking path, etc.
 
 ### 3.5. Cancel Order
 
 **Method:** `PUT`  
-**Path:** `/api/v1/orders/:id/cancel`
+**Path:** `/orders/:id/cancel`  
+**Payload:** `{ "reason": "Changed my mind" }`
 
 ### 3.6. Rate Driver
 
 **Method:** `POST`  
-**Path:** `/api/v1/orders/:id/rate`
+**Path:** `/orders/:id/rate`  
+**Payload:**
+
+```json
+{
+  "star": 5,
+  "comment": "Very professional and fast!"
+}
+```
 
 ---
 
@@ -238,37 +668,125 @@
 ### 4.1. Toggle Online Status
 
 **Method:** `PUT`  
-**Path:** `/api/v1/driver/status`
+**Path:** `/driver/status`  
+**Headers:** `Authorization: Bearer <driver_token>`  
+**Payload:**
+
+```json
+{
+  "isOnline": true,
+  "location": {
+    "lat": 21.0244,
+    "lng": 105.8587
+  }
+}
+```
 
 ### 4.2. Get Pending Requests
 
 **Method:** `GET`  
-**Path:** `/api/v1/driver/orders/pending`
+**Path:** `/driver/orders/pending`  
+**Query:**
+
+- `lat`, `lng`: Current driver location
+- `radius` (default: 5): Search radius in km
+
+**Example:** `/driver/orders/pending?lat=21.0244&lng=105.8587&radius=10`
+
+**Response:**
+
+```json
+[
+  {
+    "orderId": "64f5...",
+    "distance": 2.3,
+    "price": 75000,
+    "pickup": {
+      "address": "123 Nguyen Van Linh",
+      "lat": 21.0244,
+      "lng": 105.8587
+    },
+    "dropoff": {
+      "address": "456 Tran Duy Hung",
+      "lat": 21.0583,
+      "lng": 105.8233
+    },
+    "createdAt": "2024-01-01T10:00:00.000Z"
+  }
+]
+```
 
 ### 4.3. Accept Order
 
 **Method:** `POST`  
-**Path:** `/api/v1/driver/orders/:id/accept`
+**Path:** `/driver/orders/:id/accept`  
+**Response:**
+
+```json
+{
+  "success": true,
+  "order": { ...fullOrderDetails }
+}
+```
 
 ### 4.4. Update Trip Status
 
 **Method:** `PUT`  
-**Path:** `/api/v1/driver/orders/:id/update`
+**Path:** `/driver/orders/:id/update`  
+**Payload:**
+
+```json
+{
+  "status": "PICKED_UP", // or "DELIVERED"
+  "proofImage": "https://example.com/proof.jpg" // Required for DELIVERED
+}
+```
 
 ### 4.5. Update Real-time Location
 
 **Method:** `PUT`  
-**Path:** `/api/v1/driver/location`
+**Path:** `/driver/location`  
+**Payload:**
+
+```json
+{
+  "lat": 21.0244,
+  "lng": 105.8587,
+  "heading": 90
+}
+```
 
 ### 4.6. Upload Documents
 
 **Method:** `POST`  
-**Path:** `/api/v1/driver/documents`
+**Path:** `/driver/documents`  
+**Payload:**
+
+```json
+{
+  "type": "LICENSE", // or "VEHICLE"
+  "imageUrl": "https://cloudinary.com/..."
+}
+```
 
 ### 4.7. View Earnings/Stats
 
 **Method:** `GET`  
-**Path:** `/api/v1/driver/stats`
+**Path:** `/driver/stats`  
+**Query:** `from`, `to` (date range, optional)  
+**Example:** `/driver/stats?from=2024-01-01&to=2024-01-31`
+
+**Response:**
+
+```json
+{
+  "totalEarnings": 15000000,
+  "totalTrips": 150,
+  "rating": 4.8,
+  "onlineHours": 240,
+  "acceptanceRate": 95
+}
+```
 
 ---
 
@@ -277,22 +795,65 @@
 ### 5.1. Monitor Orders
 
 **Method:** `GET`  
-**Path:** `/api/v1/dispatcher/orders`
+**Path:** `/dispatcher/orders`  
+**Query:** `status`: `PENDING` | `ACTIVE` | `ALL`  
+**Response:**
+
+```json
+[
+  {
+    "id": "64f5...",
+    "from": "123 Nguyen Van Linh",
+    "to": "456 Tran Duy Hung",
+    "status": "PENDING",
+    "customerId": {...},
+    "driverId": null,
+    "createdAt": "2024-01-01T10:00:00.000Z"
+  }
+]
+```
 
 ### 5.2. View Driver Map
 
 **Method:** `GET`  
-**Path:** `/api/v1/dispatcher/drivers`
+**Path:** `/dispatcher/drivers`  
+**Query:** `lat`, `lng`, `radius`  
+**Response:**
+
+```json
+[
+  {
+    "id": "64f5...",
+    "name": "Driver Name",
+    "location": {
+      "lat": 21.0244,
+      "lng": 105.8587
+    },
+    "status": "ONLINE",
+    "currentOrderId": null
+  }
+]
+```
 
 ### 5.3. Manual Dispatch
 
 **Method:** `POST`  
-**Path:** `/api/v1/dispatcher/assign`
+**Path:** `/dispatcher/assign`  
+**Payload:**
+
+```json
+{
+  "orderId": "64f5a1b2c3d4e5f6g7h8i9j0",
+  "driverId": "64f5a1b2c3d4e5f6g7h8i9j1"
+}
+```
 
 ### 5.4. Support Tickets
 
 **Method:** `GET`  
-**Path:** `/api/v1/dispatcher/support`
+**Path:** `/dispatcher/support`  
+**Query:** `status`: `OPEN` | `IN_PROGRESS`  
+**Response:** Same as Admin tickets endpoint
 
 ---
 
@@ -301,17 +862,53 @@
 ### 6.1. Get Conversations
 
 **Method:** `GET`  
-**Path:** `/api/v1/chat/conversations`
+**Path:** `/chat/conversations`  
+**Headers:** `Authorization: Bearer <token>`  
+**Response:**
+
+```json
+[
+  {
+    "roomId": "64f5...",
+    "orderId": "64f5...",
+    "participants": ["customerId", "driverId"],
+    "lastMessage": "I'm on my way",
+    "updatedAt": "2024-01-01T10:00:00.000Z"
+  }
+]
+```
 
 ### 6.2. Get Messages
 
 **Method:** `GET`  
-**Path:** `/api/v1/chat/:id/messages`
+**Path:** `/chat/:id/messages`  
+**Query:** `page` (default: 1)  
+**Response:**
+
+```json
+[
+  {
+    "_id": "64f5...",
+    "senderId": "64f5...",
+    "content": "Hello, I'm waiting at the gate",
+    "type": "TEXT",
+    "timestamp": "2024-01-01T10:00:00.000Z"
+  }
+]
+```
 
 ### 6.3. Send Message
 
 **Method:** `POST`  
-**Path:** `/api/v1/chat/:id/send`
+**Path:** `/chat/:id/send`  
+**Payload:**
+
+```json
+{
+  "content": "I'll be there in 5 minutes",
+  "type": "TEXT" // or "IMAGE"
+}
+```
 
 ---
 
@@ -320,52 +917,138 @@
 ### 7.1. Create Payment QR
 
 **Method:** `POST`  
-**Path:** `/api/v1/payment/create-qr`
+**Path:** `/payment/create-qr`  
+**Payload:**
+
+```json
+{
+  "amount": 75000,
+  "orderId": "64f5a1b2c3d4e5f6g7h8i9j0"
+}
+```
+
+**Response:**
+
+```json
+{
+  "qrRaw": "https://qr.sepay.vn/img?acc=...",
+  "bankInfo": {
+    "accountNumber": "1234567890",
+    "bankCode": "VCB",
+    "accountName": "BenGo Transport"
+  }
+}
+```
 
 ### 7.2. Payment Webhook (SePay)
 
 **Method:** `POST`  
-**Path:** `/api/v1/payment/webhook`
+**Path:** `/payment/webhook`  
+**Note:** Called by SePay server, not client  
+**Payload:**
+
+```json
+{
+  "gateway": "VCB",
+  "transactionDate": "2024-01-01 10:00:00",
+  "accountNumber": "1234567890",
+  "transferAmount": 75000,
+  "transferContent": "BGORD64f5a1b2c3d4e5f6g7h8i9j0",
+  "referenceCode": "REF123456"
+}
+```
 
 ### 7.3. Upload Image
 
 **Method:** `POST`  
-**Path:** `/api/v1/upload`
+**Path:** `/upload`  
+**Content-Type:** `multipart/form-data`  
+**Body:**
 
----
+- `file`: Image file (jpg, jpeg, png, gif)
+- Max size: 5MB
 
-## Feature Checklist ✅
+**Response:**
 
-### Completed Admin Features:
-
-- ✅ **User Management** - View, block, delete users
-- ✅ **Driver Approval** - Approve/reject driver applications
-- ✅ **Order Management** - View all orders, force cancel
-- ✅ **Pricing Configuration** - Set base price, per-km rates
-- ✅ **Promotion Management** - CRUD for discount codes
-- ✅ **Content Management** - Via support tickets system
-- ✅ **Reports & Statistics** - Revenue reports, dashboard
-- ✅ **Complaint Handling** - Full ticket management
-- ✅ **Role-Based Access Control** - JWT Guard with role check
+```json
+{
+  "statusCode": 200,
+  "message": "Upload hình ảnh thành công",
+  "data": {
+    "public_id": "BenGo-BE/abc123",
+    "url": "https://res.cloudinary.com/.../abc123.jpg",
+    "width": 800,
+    "height": 600,
+    "format": "jpg",
+    "bytes": 102400
+  }
+}
+```
 
 ---
 
 ## Example Accounts
 
-| Role           | Email                        | Password         |
+| Role           | Email/Phone                  | Password         |
 | -------------- | ---------------------------- | ---------------- |
 | **ADMIN**      | `adminbengo@gmail.com`       | `Admin123!`      |
 | **DISPATCHER** | `dispatcherbengo1@gmail.com` | `Dispatcher123!` |
 | **DRIVER**     | `tranhonamson@gmail.com`     | `Driver123!`     |
 | **CUSTOMER**   | `nguyenngochavy@gmail.com`   | `Customer123!`   |
 
-_(Full list of accounts available in `src/scripts/seed.ts`)_
+**Run seed script to populate database:**
+
+```bash
+npm run seed
+```
+
+---
+
+## Getting Started
+
+1. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Setup environment variables (.env):**
+
+   ```env
+   MONGO_URI=mongodb://localhost:27017/bengo
+   JWT_SECRET=your_jwt_secret_key
+   GOOGLE_MAPS_API_KEY=your_google_maps_key
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+   CLOUDINARY_API_KEY=your_cloudinary_key
+   CLOUDINARY_API_SECRET=your_cloudinary_secret
+   ```
+
+3. **Seed database:**
+
+   ```bash
+   npm run seed
+   ```
+
+4. **Start development server:**
+
+   ```bash
+   npm run start:dev
+   ```
+
+5. **Access Swagger docs:**
+   Open `http://localhost:3000/docs`
 
 ---
 
 ## Notes
 
-- All routes marked **[ADMIN]** require Admin role and JWT authentication
-- Use the `Authorization: Bearer <token>` header for protected routes
-- Admin accounts can be created via seed script or manually in database
-- Swagger documentation available at `/docs` after running the server
+- All routes marked **[ADMIN]** require Admin role
+- Protected routes need `Authorization: Bearer <token>` header
+- Timestamps are in ISO 8601 format (UTC)
+- Prices are in VND (Vietnamese Dong)
+- Distance is in kilometers
+
+---
+
+**Last Updated:** 2024-12-27  
+**API Version:** 1.0.0
