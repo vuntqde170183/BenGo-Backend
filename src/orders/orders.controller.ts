@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -53,8 +54,11 @@ export class OrdersController {
     description: 'Order created successfully',
     type: OrderResponseDto,
   })
-  async createOrder(@Body() dto: CreateOrderDto): Promise<OrderResponseDto> {
-    return this.ordersService.createOrder(dto);
+  async createOrder(
+    @Req() req: any,
+    @Body() dto: CreateOrderDto,
+  ): Promise<OrderResponseDto> {
+    return this.ordersService.createOrder(req.user.id, dto);
   }
 
   @Get('history')
@@ -65,11 +69,17 @@ export class OrdersController {
     type: OrderHistoryResponseDto,
   })
   async getHistory(
+    @Req() req: any,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('status') status?: string,
   ): Promise<OrderHistoryResponseDto> {
-    return this.ordersService.getHistory(Number(page), Number(limit), status);
+    return this.ordersService.getHistory(
+      req.user.id,
+      Number(page),
+      Number(limit),
+      status,
+    );
   }
 
   @Get(':id')
@@ -87,10 +97,11 @@ export class OrdersController {
   @ApiOperation({ summary: 'Cancel order' })
   @ApiResponse({ status: 200, description: 'Order cancelled successfully' })
   async cancelOrder(
+    @Req() req: any,
     @Param('id') id: string,
     @Body() dto: CancelOrderDto,
   ): Promise<{ success: boolean }> {
-    await this.ordersService.cancelOrder(id, dto);
+    await this.ordersService.cancelOrder(req.user.id, id, dto);
     return { success: true };
   }
 
@@ -98,10 +109,11 @@ export class OrdersController {
   @ApiOperation({ summary: 'Rate driver' })
   @ApiResponse({ status: 201, description: 'Rating submitted successfully' })
   async rateDriver(
+    @Req() req: any,
     @Param('id') id: string,
     @Body() dto: RateDriverDto,
   ): Promise<{ success: boolean }> {
-    await this.ordersService.rateDriver(id, dto);
+    await this.ordersService.rateDriver(req.user.id, id, dto);
     return { success: true };
   }
 }
