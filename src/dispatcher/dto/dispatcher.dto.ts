@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 export class AssignDriverDto {
   @ApiProperty()
@@ -12,40 +12,40 @@ export class AssignDriverDto {
 }
 
 export class OrderSummaryResponseDto {
-    @ApiProperty()
-    id: string;
+  @ApiProperty()
+  id: string;
 
-    @ApiProperty()
-    from: string;
+  @ApiProperty()
+  from: string;
 
-    @ApiProperty()
-    to: string;
+  @ApiProperty()
+  to: string;
 
-    @ApiProperty()
-    status: string;
+  @ApiProperty()
+  status: string;
 }
 
 export class DriverMapResponseDto {
-    @ApiProperty()
-    id: string;
-    
-    @ApiProperty()
-    name: string;
-    
-    @ApiProperty()
-    location: any;
-    
-    @ApiProperty()
-    status: string;
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  location: any;
+
+  @ApiProperty()
+  status: string;
 }
 
 export class SupportTicketResponseDto {
-    @ApiProperty()
-    id: string;
-    
-    @ApiProperty()
-    user: string;
-    
-    @ApiProperty()
-    content: string;
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  user: string;
+
+  @ApiProperty()
+  content: string;
 }

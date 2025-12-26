@@ -1,7 +1,25 @@
-import { Body, Controller, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { ApproveDriverDto, ReportsResponseDto, UpdatePricingDto, UserListResponseDto } from './dto/admin.dto';
+import {
+  ApproveDriverDto,
+  ReportsResponseDto,
+  UpdatePricingDto,
+  UserListResponseDto,
+} from './dto/admin.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('admin')
@@ -28,7 +46,9 @@ export class AdminController {
   @Post('drivers/approval')
   @ApiOperation({ summary: 'Approve/Reject driver' })
   @ApiResponse({ status: 200, description: 'Action completed' })
-  async approveDriver(@Body() dto: ApproveDriverDto): Promise<{ success: boolean }> {
+  async approveDriver(
+    @Body() dto: ApproveDriverDto,
+  ): Promise<{ success: boolean }> {
     await this.adminService.approveDriver(dto);
     return { success: true };
   }
@@ -36,7 +56,9 @@ export class AdminController {
   @Put('pricing')
   @ApiOperation({ summary: 'Update pricing config' })
   @ApiResponse({ status: 200, description: 'Pricing updated' })
-  async updatePricing(@Body() dto: UpdatePricingDto): Promise<{ success: boolean }> {
+  async updatePricing(
+    @Body() dto: UpdatePricingDto,
+  ): Promise<{ success: boolean }> {
     await this.adminService.updatePricing(dto);
     return { success: true };
   }

@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ConversationResponseDto, MessageResponseDto, SendMessageDto } from './dto/chat.dto';
+import {
+  ConversationResponseDto,
+  MessageResponseDto,
+  SendMessageDto,
+} from './dto/chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -7,7 +11,7 @@ export class ChatService {
     return [{ roomId: 'conv_1', orderId: 'order_1', lastMessage: 'Hello' }];
   }
 
-  async getMessages(id: string, page: number): Promise<MessageResponseDto[]> {
+  async getMessages(_id: string, _page: number): Promise<MessageResponseDto[]> {
     return [
       {
         _id: 'msg_1',
@@ -18,7 +22,10 @@ export class ChatService {
     ];
   }
 
-  async sendMessage(id: string, dto: SendMessageDto): Promise<{ success: boolean; message: MessageResponseDto }> {
+  async sendMessage(
+    _id: string,
+    dto: SendMessageDto,
+  ): Promise<{ success: boolean; message: MessageResponseDto }> {
     return {
       success: true,
       message: {

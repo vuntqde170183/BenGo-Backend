@@ -49,9 +49,9 @@ export class CreateQrDto {
 }
 
 export class CreateQrResponseDto {
-    @ApiProperty()
-    qrRaw: string;
+  @ApiProperty()
+  qrRaw: string;
 
-    @ApiProperty()
-    bankInfo: any;
+  @ApiProperty()
+  bankInfo: any;
 }

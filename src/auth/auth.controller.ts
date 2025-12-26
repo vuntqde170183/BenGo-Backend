@@ -1,5 +1,10 @@
 import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   ForgotPasswordDto,
@@ -10,7 +15,6 @@ import {
 } from './dto/auth.dto';
 import { ApiResponseType } from 'src/utils/response.util';
 import { JwtGuard } from './jwt-auth.guard';
-import { User } from 'src/user/user.schema';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -33,16 +37,15 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Get current user info' })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtGuard)
   @Get('profile')
-  async getProfile(): Promise<any> { // Replace any with proper User interface
-    // In a real app, you'd extract user from Request
-    return { id: 1, name: 'Demo User', role: 'CUSTOMER' }; 
+  async getProfile(): Promise<any> {
+    return { id: 1, name: 'Demo User', role: 'CUSTOMER' };
   }
 
   @ApiOperation({ summary: 'Update profile' })
   @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtGuard)
   @Put('profile')
   async updateProfile(@Body() dto: UpdateProfileDto): Promise<any> {
     return { success: true, user: dto };
@@ -50,13 +53,13 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Request Password Reset' })
   @Post('forgot-password')
-  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<any> {
+  async forgotPassword(@Body() _dto: ForgotPasswordDto): Promise<any> {
     return { success: true, message: 'OTP sent' };
   }
 
   @ApiOperation({ summary: 'Reset Password with OTP' })
   @Post('reset-password')
-  async resetPassword(@Body() dto: ResetPasswordDto): Promise<any> {
+  async resetPassword(@Body() _dto: ResetPasswordDto): Promise<any> {
     return { success: true };
   }
 }

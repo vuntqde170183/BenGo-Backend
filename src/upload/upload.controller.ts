@@ -48,11 +48,11 @@ export class UploadController {
         data: {
           type: 'object',
           properties: {
-            public_id: { type: 'string', example: 'real-estate/abc123' },
+            public_id: { type: 'string', example: 'BenGo-BE/abc123' },
             url: {
               type: 'string',
               example:
-                'https://res.cloudinary.com/dtm3qtje7/image/upload/v1234567890/real-estate/abc123.jpg',
+                'https://res.cloudinary.com/dtm3qtje7/image/upload/v1234567890/BenGo-BE/abc123.jpg',
             },
             width: { type: 'number', example: 800 },
             height: { type: 'number', example: 600 },

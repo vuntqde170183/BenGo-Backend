@@ -11,7 +11,7 @@ import {
 
 @Injectable()
 export class OrdersService {
-  async estimatePrice(dto: EstimatePriceDto): Promise<EstimateResponseDto> {
+  async estimatePrice(_dto: EstimatePriceDto): Promise<EstimateResponseDto> {
     return {
       distance: 5.2,
       duration: 20,
@@ -20,7 +20,7 @@ export class OrdersService {
     };
   }
 
-  async createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
+  async createOrder(_dto: CreateOrderDto): Promise<OrderResponseDto> {
     return {
       id: 'order_123',
       status: 'PENDING',
@@ -34,15 +34,19 @@ export class OrdersService {
     };
   }
 
-  async cancelOrder(id: string, dto: CancelOrderDto): Promise<void> {
+  async cancelOrder(_id: string, _dto: CancelOrderDto): Promise<void> {
     // implementation
   }
 
-  async rateDriver(id: string, dto: RateDriverDto): Promise<void> {
+  async rateDriver(_id: string, _dto: RateDriverDto): Promise<void> {
     // implementation
   }
 
-  async getHistory(page: number, limit: number, status?: string): Promise<OrderHistoryResponseDto> {
+  async getHistory(
+    page: number,
+    _limit: number,
+    _status?: string,
+  ): Promise<OrderHistoryResponseDto> {
     return {
       data: [],
       meta: { total: 0, page },

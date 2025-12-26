@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { CreateQrDto, CreateQrResponseDto, SePayWebhookDto } from './dto/payment.dto';
+import {
+  CreateQrDto,
+  CreateQrResponseDto,
+  SePayWebhookDto,
+} from './dto/payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -8,7 +12,7 @@ export class PaymentService {
     console.log('Webhook received', dto);
   }
 
-  async createQr(dto: CreateQrDto): Promise<CreateQrResponseDto> {
+  async createQr(_dto: CreateQrDto): Promise<CreateQrResponseDto> {
     return {
       qrRaw: '00020101...',
       bankInfo: { bank: 'MB', acc: '0000' },

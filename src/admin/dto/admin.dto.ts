@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsNumber, IsString } from 'class-validator';
 
 export class UpdatePricingDto {
   @ApiProperty()
@@ -26,14 +26,14 @@ export class ApproveDriverDto {
 }
 
 export class UserListResponseDto {
-    @ApiProperty()
-    data: any[];
-    
-    @ApiProperty()
-    meta: any;
+  @ApiProperty()
+  data: any[];
+
+  @ApiProperty()
+  meta: any;
 }
 
 export class ReportsResponseDto {
-    @ApiProperty()
-    revenue: any;
+  @ApiProperty()
+  revenue: any;
 }

@@ -1,8 +1,18 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { DispatcherService } from './dispatcher.service';
-import { AssignDriverDto, DriverMapResponseDto, OrderSummaryResponseDto, SupportTicketResponseDto } from './dto/dispatcher.dto';
-import { JwtGuard } from '../auth/jwt-auth.guard'; 
+import {
+  AssignDriverDto,
+  DriverMapResponseDto,
+  OrderSummaryResponseDto,
+  SupportTicketResponseDto,
+} from './dto/dispatcher.dto';
+import { JwtGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('dispatcher')
 @ApiBearerAuth('access-token')
@@ -18,7 +28,9 @@ export class DispatcherController {
     description: 'List of orders',
     type: [OrderSummaryResponseDto],
   })
-  async getOrders(@Query('status') status: string): Promise<OrderSummaryResponseDto[]> {
+  async getOrders(
+    @Query('status') status: string,
+  ): Promise<OrderSummaryResponseDto[]> {
     return this.dispatcherService.getOrders(status);
   }
 
@@ -34,13 +46,19 @@ export class DispatcherController {
     @Query('lng') lng: number,
     @Query('radius') radius: number,
   ): Promise<DriverMapResponseDto[]> {
-    return this.dispatcherService.getDrivers(Number(lat), Number(lng), Number(radius));
+    return this.dispatcherService.getDrivers(
+      Number(lat),
+      Number(lng),
+      Number(radius),
+    );
   }
 
   @Post('assign')
   @ApiOperation({ summary: 'Manual assign' })
   @ApiResponse({ status: 201, description: 'Driver assigned' })
-  async assignDriver(@Body() dto: AssignDriverDto): Promise<{ success: boolean }> {
+  async assignDriver(
+    @Body() dto: AssignDriverDto,
+  ): Promise<{ success: boolean }> {
     await this.dispatcherService.assignDriver(dto);
     return { success: true };
   }
@@ -52,7 +70,9 @@ export class DispatcherController {
     description: 'List of tickets',
     type: [SupportTicketResponseDto],
   })
-  async getSupportTickets(@Query('status') status: string): Promise<SupportTicketResponseDto[]> {
+  async getSupportTickets(
+    @Query('status') status: string,
+  ): Promise<SupportTicketResponseDto[]> {
     return this.dispatcherService.getSupportTickets(status);
   }
 }

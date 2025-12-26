@@ -1,16 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { LocationDto } from '../../orders/dto/orders.dto'; // Reuse if possible or duplicate
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 
 class SimpleLocationDto {
-   @ApiProperty({ example: 10.76 })
-   @IsNumber()
-   lat: number;
+  @ApiProperty({ example: 10.76 })
+  @IsNumber()
+  lat: number;
 
-   @ApiProperty({ example: 106.66 })
-   @IsNumber()
-   lng: number;
+  @ApiProperty({ example: 106.66 })
+  @IsNumber()
+  lng: number;
 }
 
 export class ToggleStatusDto {
@@ -61,23 +67,23 @@ export class UploadDocumentDto {
 }
 
 export class PendingOrderResponseDto {
-    @ApiProperty()
-    orderId: string;
-    
-    @ApiProperty()
-    distance: number;
-    
-    @ApiProperty()
-    price: number;
+  @ApiProperty()
+  orderId: string;
+
+  @ApiProperty()
+  distance: number;
+
+  @ApiProperty()
+  price: number;
 }
 
 export class StatsResponseDto {
-    @ApiProperty()
-    totalEarnings: number;
-    
-    @ApiProperty()
-    totalTrips: number;
-    
-    @ApiProperty()
-    rating: number;
+  @ApiProperty()
+  totalEarnings: number;
+
+  @ApiProperty()
+  totalTrips: number;
+
+  @ApiProperty()
+  rating: number;
 }

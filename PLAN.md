@@ -484,14 +484,14 @@ npm install @googlemaps/google-maps-services-js
 **Code Snippet (Price Estimation Service):**
 
 ```typescript
-import { Client } from "@googlemaps/google-maps-services-js";
+import { Client } from '@googlemaps/google-maps-services-js';
 
 const client = new Client({});
 
 async function calculatePrice(origin, destination) {
   const response = await client.distancematrix({
     params: {
-      origins: [origin], // e.g., "10.762622,106.660172"
+      origins: [origin],
       destinations: [destination],
       key: process.env.GOOGLE_MAPS_API_KEY,
     },
@@ -517,8 +517,8 @@ npx expo install react-native-maps expo-location
 **Code Snippet (Map Screen):**
 
 ```tsx
-import MapView, { Marker, Polyline } from "react-native-maps";
-import * as Location from "expo-location";
+import MapView, { Marker, Polyline } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
@@ -526,7 +526,7 @@ export default function MapScreen() {
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
+      if (status !== 'granted') return;
 
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(loc.coords);
@@ -576,16 +576,13 @@ Sepay allows auto-confirmation of bank transfers.
 **1. Define Payment Controller:**
 
 ```typescript
-// payment.controller.ts
 @Post('webhook')
 async handleSePayWebhook(@Body() data: SePayWebhookDto) {
-  // data.transferContent contains the order code, e.g., "BGORD123"
   const orderId = extractOrderId(data.transferContent);
 
   const order = await this.orderService.findOne(orderId);
   if (order && data.transferAmount >= order.totalPrice) {
     await this.orderService.updateStatus(orderId, 'PAID');
-    // Notify user via Socket.io
     this.gateway.notifyUser(order.userId, 'PaymentReceived');
   }
 

@@ -2,9 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsEnum,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
   Min,
@@ -108,8 +106,7 @@ export class OrderResponseDto {
   status: string;
 
   @ApiPropertyOptional()
-  driver?: any; // Define Driver DTO later or use generic object for now
-
+  driver?: any; 
   @ApiPropertyOptional()
   trackingPath?: any;
 }

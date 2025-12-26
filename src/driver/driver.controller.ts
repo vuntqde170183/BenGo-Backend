@@ -1,5 +1,19 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { DriverService } from './driver.service';
 import {
   PendingOrderResponseDto,
@@ -21,7 +35,9 @@ export class DriverController {
   @Put('status')
   @ApiOperation({ summary: 'Toggle Online/Offline' })
   @ApiResponse({ status: 200, description: 'Status updated' })
-  async toggleStatus(@Body() dto: ToggleStatusDto): Promise<{ success: boolean }> {
+  async toggleStatus(
+    @Body() dto: ToggleStatusDto,
+  ): Promise<{ success: boolean }> {
     await this.driverService.toggleStatus(dto);
     return { success: true };
   }
@@ -38,13 +54,19 @@ export class DriverController {
     @Query('lng') lng: number,
     @Query('radius') radius: number = 5,
   ): Promise<PendingOrderResponseDto[]> {
-    return this.driverService.getPendingOrders(Number(lat), Number(lng), Number(radius));
+    return this.driverService.getPendingOrders(
+      Number(lat),
+      Number(lng),
+      Number(radius),
+    );
   }
 
   @Post('orders/:id/accept')
   @ApiOperation({ summary: 'Accept a trip' })
   @ApiResponse({ status: 201, description: 'Trip accepted' })
-  async acceptOrder(@Param('id') id: string): Promise<{ success: boolean; order: any }> {
+  async acceptOrder(
+    @Param('id') id: string,
+  ): Promise<{ success: boolean; order: any }> {
     return this.driverService.acceptOrder(id);
   }
 
@@ -62,7 +84,9 @@ export class DriverController {
   @Put('location')
   @ApiOperation({ summary: 'Update real-time GPS' })
   @ApiResponse({ status: 200, description: 'Location updated' })
-  async updateLocation(@Body() dto: UpdateLocationDto): Promise<{ success: boolean }> {
+  async updateLocation(
+    @Body() dto: UpdateLocationDto,
+  ): Promise<{ success: boolean }> {
     await this.driverService.updateLocation(dto);
     return { success: true };
   }
@@ -70,7 +94,9 @@ export class DriverController {
   @Post('documents')
   @ApiOperation({ summary: 'Upload documents' })
   @ApiResponse({ status: 201, description: 'Document uploaded' })
-  async uploadDocument(@Body() dto: UploadDocumentDto): Promise<{ success: boolean }> {
+  async uploadDocument(
+    @Body() dto: UploadDocumentDto,
+  ): Promise<{ success: boolean }> {
     await this.driverService.uploadDocument(dto);
     return { success: true };
   }

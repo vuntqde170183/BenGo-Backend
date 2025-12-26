@@ -18,7 +18,7 @@ export class UploadService {
         file.path ||
           `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
         {
-          folder: 'real-estate',
+          folder: 'BenGo-BE',
           resource_type: 'image',
           transformation: [
             { width: 1000, height: 1000, crop: 'limit' },
