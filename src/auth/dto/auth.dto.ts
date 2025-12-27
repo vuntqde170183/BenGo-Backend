@@ -8,10 +8,15 @@ import {
 } from 'class-validator';
 
 export class LoginUserDto {
-  @ApiProperty({ example: '0901234567' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ example: '0901234567' })
+  @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'admin@bengo.com' })
+  @IsOptional()
+  @IsString()
+  email?: string;
 
   @ApiProperty({ example: '123456' })
   @IsNotEmpty()

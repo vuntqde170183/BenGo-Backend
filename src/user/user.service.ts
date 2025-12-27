@@ -34,6 +34,16 @@ export class UserService {
     return this.userModel.findOne({ phone }).select('+password');
   }
 
+  async findByEmailOrPhone(email?: string, phone?: string): Promise<User> {
+    const orConditions = [];
+    if (email) orConditions.push({ email });
+    if (phone) orConditions.push({ phone });
+    
+    if (orConditions.length === 0) return null;
+
+    return this.userModel.findOne({ $or: orConditions }).select('+password');
+  }
+
   async findById(id: string): Promise<User> {
     return this.userModel.findById(id);
   }
