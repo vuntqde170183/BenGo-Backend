@@ -13,10 +13,13 @@ export class AuthService {
   ) {}
 
   async login(loginUserDto: LoginUserDto): Promise<ApiResponseType> {
-    const user = await this.userService.findByPhone(loginUserDto.phone);
+    const user = await this.userService.findByEmailOrPhone(
+      loginUserDto.email,
+      loginUserDto.phone,
+    );
     if (!user) {
       throw new HttpException(
-        'Số điện thoại không tồn tại',
+        'Tài khoản không tồn tại',
         HttpStatus.UNAUTHORIZED,
       );
     }
