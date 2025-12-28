@@ -1,0 +1,84 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Discord - Started
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [
+                {
+                  "title": "🚀 Deployment Started",
+                  "description": "Deploying BenGo Backend to VPS...",
+                  "color": 3447003,
+                  "fields": [
+                    { "name": "Branch", "value": "${{ github.ref_name }}", "inline": true },
+                    { "name": "Author", "value": "${{ github.actor }}", "inline": true }
+                  ]
+                }
+              ]
+            }' \
+            "https://discord.com/api/webhooks/1392393413789224970/-YZZnJ5T21J9Jdzyx5hyIAe-rh7NS-gjdxjvR0IWaewqFqWVCSnpAwGD7L6qJIhnXzSf"
+
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 14.225.250.226
+          username: root
+          port: 22
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /root/confix/democicd
+            git pull origin main
+            docker compose down
+            docker compose build
+            docker compose up -d
+            docker compose ps
+
+      - name: Notify Discord - Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [
+                {
+                  "title": "✅ Deployment Successful",
+                  "description": "BenGo Backend deployed successfully!",
+                  "color": 3066993,
+                  "fields": [
+                    { "name": "Branch", "value": "${{ github.ref_name }}", "inline": true },
+                    { "name": "Author", "value": "${{ github.actor }}", "inline": true }
+                  ]
+                }
+              ]
+            }' \
+            "https://discord.com/api/webhooks/1392393413789224970/-YZZnJ5T21J9Jdzyx5hyIAe-rh7NS-gjdxjvR0IWaewqFqWVCSnpAwGD7L6qJIhnXzSf"
+
+      - name: Notify Discord - Failed
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [
+                {
+                  "title": "❌ Deployment Failed",
+                  "description": "BenGo Backend deployment failed!",
+                  "color": 15158332,
+                  "fields": [
+                    {
+                      "name": "Logs",
+                      "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }' \
+            "https://discord.com/api/webhooks/1392393413789224970/-YZZnJ5T21J9Jdzyx5hyIAe-rh7NS-gjdxjvR0IWaewqFqWVCSnpAwGD7L6qJIhnXzSf"
