@@ -26,7 +26,7 @@ jobs:
                 }
               ]
             }' \
-            "https://discord.com/api/webhooks/1392393413789224970/-YZZnJ5T21J9Jdzyx5hyIAe-rh7NS-gjdxjvR0IWaewqFqWVCSnpAwGD7L6qJIhnXzSf"
+            "https://discordapp.com/api/webhooks/1454877521345642766/thtgq5QROiHY6ecr8OrFnJnhNBjhgQrc1eavVxf-2PD18hc5LahjRl1svdQAI-pHu13B"
 
       - name: Deploy on VPS.
         uses: appleboy/ssh-action@v1.0.0
@@ -60,7 +60,7 @@ jobs:
                 }
               ]
             }' \
-            "https://discord.com/api/webhooks/1392393413789224970/-YZZnJ5T21J9Jdzyx5hyIAe-rh7NS-gjdxjvR0IWaewqFqWVCSnpAwGD7L6qJIhnXzSf"
+            "https://discordapp.com/api/webhooks/1454877521345642766/thtgq5QROiHY6ecr8OrFnJnhNBjhgQrc1eavVxf-2PD18hc5LahjRl1svdQAI-pHu13B"
 
       - name: Notify Discord - Failed
         if: failure()
@@ -81,4 +81,4 @@ jobs:
                 }
               ]
             }' \
-            "https://discord.com/api/webhooks/1392393413789224970/-YZZnJ5T21J9Jdzyx5hyIAe-rh7NS-gjdxjvR0IWaewqFqWVCSnpAwGD7L6qJIhnXzSf"
+            "https://discordapp.com/api/webhooks/1454877521345642766/thtgq5QROiHY6ecr8OrFnJnhNBjhgQrc1eavVxf-2PD18hc5LahjRl1svdQAI-pHu13B"
