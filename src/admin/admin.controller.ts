@@ -33,14 +33,18 @@ import { createApiResponse } from '../utils/response.util';
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  // ============= USER MANAGEMENT =============
+  // ============= QUẢN LÝ NGƯỜI DÙNG =============
   @Get('users')
-  @ApiOperation({ summary: '[ADMIN] Get all users' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy danh sách người dùng',
+    description: 'API lấy danh sách tất cả người dùng trong hệ thống với phân trang và bộ lọc. Có thể lọc theo vai trò và tìm kiếm theo tên, số điện thoại, email.'
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of users',
+    description: 'Lấy danh sách người dùng thành công',
     type: UserListResponseDto,
   })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getUsers(
     @Query('role') role: string,
     @Query('search') search: string,
@@ -51,13 +55,25 @@ export class AdminController {
   }
 
   @Get('users/:id')
-  @ApiOperation({ summary: '[ADMIN] Get user details' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy thông tin chi tiết người dùng',
+    description: 'API lấy thông tin chi tiết của một người dùng cụ thể theo ID.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy thông tin người dùng thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy người dùng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getUserById(@Param('id') id: string): Promise<any> {
     return this.adminService.getUserById(id);
   }
 
   @Put('users/:id/block')
-  @ApiOperation({ summary: '[ADMIN] Block/Unblock user' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Khóa/Mở khóa tài khoản người dùng',
+    description: 'API khóa hoặc mở khóa tài khoản người dùng. Có thể thêm lý do khi khóa tài khoản.'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật trạng thái khóa tài khoản thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy người dùng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async blockUser(
     @Param('id') id: string,
     @Body() body: { blocked: boolean; reason?: string },
@@ -67,22 +83,38 @@ export class AdminController {
   }
 
   @Delete('users/:id')
-  @ApiOperation({ summary: '[ADMIN] Delete user' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Xóa người dùng',
+    description: 'API xóa vĩnh viễn một người dùng khỏi hệ thống. Thao tác này không thể hoàn tác.'
+  })
+  @ApiResponse({ status: 200, description: 'Xóa người dùng thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy người dùng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async deleteUser(@Param('id') id: string): Promise<any> {
     await this.adminService.deleteUser(id);
     return createApiResponse(null, 'User deleted successfully');
   }
 
-  // ============= DRIVER MANAGEMENT =============
+  // ============= QUẢN LÝ TÀI XẾ =============
   @Get('drivers')
-  @ApiOperation({ summary: '[ADMIN] Get all drivers' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy danh sách tài xế',
+    description: 'API lấy danh sách tất cả tài xế trong hệ thống. Có thể lọc theo trạng thái (PENDING, APPROVED, LOCKED).'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy danh sách tài xế thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllDrivers(@Query('status') status?: string): Promise<any> {
     return this.adminService.getAllDrivers(status);
   }
 
   @Post('drivers/approval')
-  @ApiOperation({ summary: '[ADMIN] Approve/Reject driver' })
-  @ApiResponse({ status: 200, description: 'Action completed' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Duyệt/Từ chối tài xế',
+    description: 'API duyệt hoặc từ chối đơn đăng ký tài xế. Sau khi duyệt, tài xế có thể bắt đầu nhận đơn hàng.'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật trạng thái duyệt tài xế thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy tài xế' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async approveDriver(
     @Body() dto: ApproveDriverDto,
   ): Promise<any> {
@@ -90,9 +122,14 @@ export class AdminController {
     return createApiResponse(null, 'Driver approval status updated successfully');
   }
 
-  // ============= ORDER MANAGEMENT =============
+  // ============= QUẢN LÝ ĐƠN HÀNG =============
   @Get('orders')
-  @ApiOperation({ summary: '[ADMIN] Get all orders' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy danh sách đơn hàng',
+    description: 'API lấy danh sách tất cả đơn hàng trong hệ thống với phân trang. Có thể lọc theo trạng thái đơn hàng.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy danh sách đơn hàng thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllOrders(
     @Query('status') status?: string,
     @Query('page') page: number = 1,
@@ -102,13 +139,25 @@ export class AdminController {
   }
 
   @Get('orders/:id')
-  @ApiOperation({ summary: '[ADMIN] Get order details' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy thông tin chi tiết đơn hàng',
+    description: 'API lấy thông tin chi tiết của một đơn hàng cụ thể, bao gồm thông tin khách hàng, tài xế, và trạng thái đơn hàng.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy thông tin đơn hàng thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy đơn hàng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getOrderById(@Param('id') id: string): Promise<any> {
     return this.adminService.getOrderById(id);
   }
 
   @Put('orders/:id/cancel')
-  @ApiOperation({ summary: '[ADMIN] Force cancel order' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Bắt buộc hủy đơn hàng',
+    description: 'API cho phép admin bắt buộc hủy một đơn hàng vì lý do cụ thể. Thường dùng trong trường hợp khẩn cấp.'
+  })
+  @ApiResponse({ status: 200, description: 'Hủy đơn hàng thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy đơn hàng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async forceCancelOrder(
     @Param('id') id: string,
     @Body() body: { reason: string },
@@ -117,16 +166,25 @@ export class AdminController {
     return createApiResponse(null, 'Order cancelled successfully');
   }
 
-  // ============= PRICING CONFIGURATION =============
+  // ============= CẤU HÌNH GIÁ CƯỚC =============
   @Get('pricing')
-  @ApiOperation({ summary: '[ADMIN] Get pricing config' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy cấu hình giá cước',
+    description: 'API lấy thông tin cấu hình giá cước hiện tại cho các loại xe (BIKE, VAN, TRUCK).'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy cấu hình giá cước thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getPricing(): Promise<any> {
     return this.adminService.getPricing();
   }
 
   @Put('pricing')
-  @ApiOperation({ summary: '[ADMIN] Update pricing config' })
-  @ApiResponse({ status: 200, description: 'Pricing updated' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Cập nhật cấu hình giá cước',
+    description: 'API cập nhật giá cước cơ bản, giá theo km, và hệ số giờ cao điểm cho tất cả các loại xe.'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật giá cước thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async updatePricing(
     @Body() dto: UpdatePricingDto,
   ): Promise<any> {
@@ -134,9 +192,14 @@ export class AdminController {
     return createApiResponse(null, 'Pricing updated successfully');
   }
 
-  // ============= PROMOTION MANAGEMENT =============
+  // ============= QUẢN LÝ KHUYẾN MÃI =============
   @Get('promotions')
-  @ApiOperation({ summary: '[ADMIN] Get all promotions' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy danh sách khuyến mãi',
+    description: 'API lấy danh sách tất cả các chương trình khuyến mãi. Có thể lọc theo trạng thái hoạt động.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy danh sách khuyến mãi thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllPromotions(
     @Query('active') active?: boolean,
   ): Promise<any> {
@@ -144,7 +207,13 @@ export class AdminController {
   }
 
   @Post('promotions')
-  @ApiOperation({ summary: '[ADMIN] Create promotion' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Tạo chương trình khuyến mãi mới',
+    description: 'API tạo mới một chương trình khuyến mãi với mã giảm giá, phần trăm giảm, và thời gian hiệu lực.'
+  })
+  @ApiResponse({ status: 201, description: 'Tạo khuyến mãi thành công' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu đầu vào không hợp lệ' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async createPromotion(
     @Body() dto: CreatePromotionDto,
   ): Promise<any> {
@@ -153,7 +222,13 @@ export class AdminController {
   }
 
   @Put('promotions/:id')
-  @ApiOperation({ summary: '[ADMIN] Update promotion' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Cập nhật khuyến mãi',
+    description: 'API cập nhật thông tin của một chương trình khuyến mãi đang tồn tại.'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật khuyến mãi thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy khuyến mãi' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async updatePromotion(
     @Param('id') id: string,
     @Body() dto: UpdatePromotionDto,
@@ -163,15 +238,26 @@ export class AdminController {
   }
 
   @Delete('promotions/:id')
-  @ApiOperation({ summary: '[ADMIN] Delete promotion' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Xóa khuyến mãi',
+    description: 'API xóa một chương trình khuyến mãi khỏi hệ thống.'
+  })
+  @ApiResponse({ status: 200, description: 'Xóa khuyến mãi thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy khuyến mãi' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async deletePromotion(@Param('id') id: string): Promise<any> {
     await this.adminService.deletePromotion(id);
     return createApiResponse(null, 'Promotion deleted successfully');
   }
 
-  // ============= SUPPORT TICKETS / COMPLAINTS =============
+  // ============= QUẢN LÝ HỖ TRỢ / KHIẾU NẠI =============
   @Get('tickets')
-  @ApiOperation({ summary: '[ADMIN] Get all support tickets' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy danh sách phiếu hỗ trợ',
+    description: 'API lấy danh sách tất cả phiếu hỗ trợ/khiếu nại từ người dùng. Có thể lọc theo trạng thái và độ ưu tiên.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy danh sách phiếu hỗ trợ thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllTickets(
     @Query('status') status?: string,
     @Query('priority') priority?: string,
@@ -180,13 +266,25 @@ export class AdminController {
   }
 
   @Get('tickets/:id')
-  @ApiOperation({ summary: '[ADMIN] Get ticket details' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy thông tin chi tiết phiếu hỗ trợ',
+    description: 'API lấy thông tin chi tiết của một phiếu hỗ trợ/khiếu nại, bao gồm thông tin người gửi và người xử lý.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy thông tin phiếu hỗ trợ thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy phiếu hỗ trợ' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getTicketById(@Param('id') id: string): Promise<any> {
     return this.adminService.getTicketById(id);
   }
 
   @Put('tickets/:id/assign')
-  @ApiOperation({ summary: '[ADMIN] Assign ticket to dispatcher' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Phân công phiếu hỗ trợ cho dispatcher',
+    description: 'API phân công một phiếu hỗ trợ cho nhân viên điều phối để xử lý.'
+  })
+  @ApiResponse({ status: 200, description: 'Phân công phiếu hỗ trợ thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy phiếu hỗ trợ' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async assignTicket(
     @Param('id') id: string,
     @Body() body: { assignedTo: string },
@@ -196,7 +294,13 @@ export class AdminController {
   }
 
   @Put('tickets/:id/status')
-  @ApiOperation({ summary: '[ADMIN] Update ticket status' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Cập nhật trạng thái phiếu hỗ trợ',
+    description: 'API cập nhật trạng thái xử lý của phiếu hỗ trợ (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Có thể thêm giải pháp khi đóng phiếu.'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật trạng thái phiếu hỗ trợ thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy phiếu hỗ trợ' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async updateTicketStatus(
     @Param('id') id: string,
     @Body() body: { status: string; resolution?: string },
@@ -205,20 +309,29 @@ export class AdminController {
     return createApiResponse(null, 'Ticket status updated successfully');
   }
 
-  // ============= REPORTS & STATISTICS =============
+  // ============= BÁO CÁO & THỐNG KÊ =============
   @Get('reports')
-  @ApiOperation({ summary: '[ADMIN] System statistics & reports' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Lấy báo cáo thống kê hệ thống',
+    description: 'API lấy báo cáo thống kê về doanh thu, đơn hàng, người dùng theo loại báo cáo (REVENUE, ORDERS, USERS, ALL).'
+  })
   @ApiResponse({
     status: 200,
-    description: 'System reports',
+    description: 'Lấy báo cáo thống kê thành công',
     type: ReportsResponseDto,
   })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getReports(@Query('type') type: string): Promise<ReportsResponseDto> {
     return this.adminService.getReports(type);
   }
 
   @Get('dashboard')
-  @ApiOperation({ summary: '[ADMIN] Dashboard overview' })
+  @ApiOperation({ 
+    summary: '[ADMIN] Tổng quan dashboard',
+    description: 'API lấy thông tin tổng quan cho trang dashboard admin, bao gồm số lượng người dùng, tài xế, đơn hàng, doanh thu, và phiếu hỗ trợ chờ xử lý.'
+  })
+  @ApiResponse({ status: 200, description: 'Lấy thông tin dashboard thành công' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getDashboard(): Promise<any> {
     return this.adminService.getDashboard();
   }
