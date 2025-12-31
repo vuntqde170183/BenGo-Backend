@@ -28,7 +28,7 @@ export class AdminService {
   ) {}
 
   // ============= USER MANAGEMENT =============
-  async getUsers(role: string, search: string, page: number = 1, limit: number = 20): Promise<UserListResponseDto> {
+  async getUsers(role: string, search: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
     
     if (role && role !== 'ALL') {
@@ -49,19 +49,18 @@ export class AdminService {
       this.userModel.countDocuments(query),
     ]);
     
-    return {
-      data: users.map(user => ({
-        id: user._id.toString(),
-        phone: user.phone,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        avatar: user.avatar,
-        rating: user.rating,
-        walletBalance: user.walletBalance,
-      })),
-      meta: { total, page, limit },
-    };
+    const userData = users.map(user => ({
+      id: user._id.toString(),
+      phone: user.phone,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      avatar: user.avatar,
+      rating: user.rating,
+      walletBalance: user.walletBalance,
+    }));
+
+    return createPaginatedResponse(userData, total, page, limit, 'Lấy danh sách người dùng thành công');
   }
 
   async getUserById(id: string): Promise<any> {
@@ -88,14 +87,19 @@ export class AdminService {
   }
 
   // ============= DRIVER MANAGEMENT =============
-  async getAllDrivers(status?: string): Promise<any> {
+  async getAllDrivers(status?: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
-    if (status) {
+    if (status && status !== 'ALL') {
       query.status = status;
     }
 
-    const drivers = await this.driverModel.find(query).populate('userId', 'name phone email rating').exec();
-    return createApiResponse(drivers, 'Drivers retrieved successfully');
+    const skip = (page - 1) * limit;
+    const [drivers, total] = await Promise.all([
+      this.driverModel.find(query).populate('userId', 'name phone email rating').skip(skip).limit(limit).exec(),
+      this.driverModel.countDocuments(query),
+    ]);
+
+    return createPaginatedResponse(drivers, total, page, limit, 'Lấy danh sách tài xế thành công');
   }
 
   async approveDriver(dto: ApproveDriverDto): Promise<void> {
@@ -183,14 +187,19 @@ export class AdminService {
   }
 
   // ============= PROMOTION MANAGEMENT =============
-  async getAllPromotions(active?: boolean): Promise<any> {
+  async getAllPromotions(active?: boolean, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
     if (active !== undefined) {
       query.isActive = active;
     }
 
-    const promotions = await this.promotionModel.find(query).sort({ createdAt: -1 }).exec();
-    return createApiResponse(promotions, 'Promotions retrieved successfully');
+    const skip = (page - 1) * limit;
+    const [promotions, total] = await Promise.all([
+      this.promotionModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.promotionModel.countDocuments(query),
+    ]);
+
+    return createPaginatedResponse(promotions, total, page, limit, 'Lấy danh sách khuyến mãi thành công');
   }
 
   async createPromotion(dto: CreatePromotionDto): Promise<any> {
@@ -213,19 +222,25 @@ export class AdminService {
   }
 
   // ============= SUPPORT TICKETS / COMPLAINTS =============
-  async getAllTickets(status?: string, priority?: string): Promise<any> {
+  async getAllTickets(status?: string, priority?: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
     if (status) query.status = status;
     if (priority) query.priority = priority;
 
-    const tickets = await this.supportTicketModel
-      .find(query)
-      .populate('userId', 'name phone email')
-      .populate('assignedTo', 'name email')
-      .sort({ createdAt: -1 })
-      .exec();
+    const skip = (page - 1) * limit;
+    const [tickets, total] = await Promise.all([
+      this.supportTicketModel
+        .find(query)
+        .populate('userId', 'name phone email')
+        .populate('assignedTo', 'name email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.supportTicketModel.countDocuments(query),
+    ]);
 
-    return createApiResponse(tickets, 'Tickets retrieved successfully');
+    return createPaginatedResponse(tickets, total, page, limit, 'Lấy danh sách phiếu hỗ trợ thành công');
   }
 
   async getTicketById(id: string): Promise<any> {

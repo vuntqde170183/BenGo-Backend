@@ -103,8 +103,12 @@ export class AdminController {
   })
   @ApiResponse({ status: 200, description: 'Lấy danh sách tài xế thành công' })
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
-  async getAllDrivers(@Query('status') status?: string): Promise<any> {
-    return this.adminService.getAllDrivers(status);
+  async getAllDrivers(
+    @Query('status') status?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+  ): Promise<any> {
+    return this.adminService.getAllDrivers(status, page, limit);
   }
 
   @Post('drivers/approval')
@@ -202,8 +206,10 @@ export class AdminController {
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllPromotions(
     @Query('active') active?: boolean,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
   ): Promise<any> {
-    return this.adminService.getAllPromotions(active);
+    return this.adminService.getAllPromotions(active, page, limit);
   }
 
   @Post('promotions')
@@ -261,8 +267,10 @@ export class AdminController {
   async getAllTickets(
     @Query('status') status?: string,
     @Query('priority') priority?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
   ): Promise<any> {
-    return this.adminService.getAllTickets(status, priority);
+    return this.adminService.getAllTickets(status, priority, page, limit);
   }
 
   @Get('tickets/:id')
