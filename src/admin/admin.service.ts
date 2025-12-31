@@ -14,6 +14,7 @@ import { Order } from '../orders/orders.schema';
 import { PricingConfig } from './pricing-config.schema';
 import { Promotion } from './promotion.schema';
 import { SupportTicket } from '../dispatcher/support-ticket.schema';
+import { createApiResponse, createPaginatedResponse } from '../utils/response.util';
 
 @Injectable()
 export class AdminService {
@@ -68,7 +69,7 @@ export class AdminService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return user;
+    return createApiResponse(user, 'User retrieved successfully');
   }
 
   async blockUser(id: string, blocked: boolean, reason?: string): Promise<void> {
@@ -94,7 +95,7 @@ export class AdminService {
     }
 
     const drivers = await this.driverModel.find(query).populate('userId', 'name phone email rating').exec();
-    return { data: drivers, total: drivers.length };
+    return createApiResponse(drivers, 'Drivers retrieved successfully');
   }
 
   async approveDriver(dto: ApproveDriverDto): Promise<void> {
@@ -133,7 +134,7 @@ export class AdminService {
       this.orderModel.countDocuments(query),
     ]);
 
-    return { data: orders, meta: { total, page, limit } };
+    return createPaginatedResponse(orders, total, page, limit, 'Orders retrieved successfully');
   }
 
   async getOrderById(id: string): Promise<any> {
@@ -146,7 +147,7 @@ export class AdminService {
     if (!order) {
       throw new NotFoundException('Order not found');
     }
-    return order;
+    return createApiResponse(order, 'Order retrieved successfully');
   }
 
   async forceCancelOrder(id: string, reason: string): Promise<void> {
@@ -161,7 +162,7 @@ export class AdminService {
   // ============= PRICING CONFIGURATION =============
   async getPricing(): Promise<any> {
     const configs = await this.pricingConfigModel.find().exec();
-    return configs;
+    return createApiResponse(configs, 'Pricing config retrieved successfully');
   }
 
   async updatePricing(dto: UpdatePricingDto): Promise<void> {
@@ -189,7 +190,7 @@ export class AdminService {
     }
 
     const promotions = await this.promotionModel.find(query).sort({ createdAt: -1 }).exec();
-    return { data: promotions, total: promotions.length };
+    return createApiResponse(promotions, 'Promotions retrieved successfully');
   }
 
   async createPromotion(dto: CreatePromotionDto): Promise<any> {
@@ -224,7 +225,7 @@ export class AdminService {
       .sort({ createdAt: -1 })
       .exec();
 
-    return { data: tickets, total: tickets.length };
+    return createApiResponse(tickets, 'Tickets retrieved successfully');
   }
 
   async getTicketById(id: string): Promise<any> {
@@ -238,7 +239,7 @@ export class AdminService {
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
     }
-    return ticket;
+    return createApiResponse(ticket, 'Ticket retrieved successfully');
   }
 
   async assignTicket(id: string, assignedTo: string): Promise<void> {
@@ -312,7 +313,7 @@ export class AdminService {
       this.supportTicketModel.countDocuments({ status: { $in: ['OPEN', 'IN_PROGRESS'] } }),
     ]);
 
-    return {
+    const dashboardData = {
       users: totalUsers,
       drivers: totalDrivers,
       orders: totalOrders,
@@ -320,5 +321,7 @@ export class AdminService {
       revenue: totalRevenue[0]?.total || 0,
       pendingTickets,
     };
+
+    return createApiResponse(dashboardData, 'Dashboard data retrieved successfully');
   }
 }

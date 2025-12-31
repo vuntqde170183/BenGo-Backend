@@ -1,58 +1,63 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class PaginationDto {
+  @ApiProperty({ example: 100, description: 'Total number of items' })
+  total: number;
+
+  @ApiProperty({ example: 10, description: 'Number of items in current page' })
+  count: number;
+
+  @ApiProperty({ example: 10, description: 'Items per page' })
+  per_page: number;
+
+  @ApiProperty({ example: 1, description: 'Current page number' })
+  current_page: number;
+
+  @ApiProperty({ example: 10, description: 'Total number of pages' })
+  total_pages: number;
+}
+
+export class MetaDto {
+  @ApiProperty({ example: '2023-10-27T10:00:00Z', description: 'Response timestamp' })
+  timestamp: string;
+
+  @ApiProperty({ example: 'v1.2', description: 'API version' })
+  apiVersion: string;
+}
+
 export class ApiResponseDto<T = any> {
   @ApiProperty({ example: 200, description: 'HTTP status code' })
   statusCode: number;
 
   @ApiProperty({
     description: 'Response message',
-    example: 'Thao tác thành công',
+    example: 'Success',
   })
   message: string;
 
   @ApiProperty({ description: 'Response data' })
   data: T;
+
+  @ApiProperty({ description: 'Response metadata', type: MetaDto })
+  meta: MetaDto;
 }
 
-export class ApiResponsePaginationDto<T = any> extends ApiResponseDto<{
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}> {
+export class ApiResponsePaginationDto<T = any> {
+  @ApiProperty({ example: 200, description: 'HTTP status code' })
+  statusCode: number;
+
   @ApiProperty({
-    description: 'Response data with pagination',
-    example: {
-      items: [
-        {
-          id: '64a68d1f5abc123456789012',
-          name: 'Nguyễn Văn An',
-          email: 'nguyenvan.an@gmail.com',
-          age: 32,
-          createdAt: '2023-07-06T08:35:27.000Z',
-          updatedAt: '2023-07-06T08:35:27.000Z',
-        },
-        {
-          id: '64a68d1f5abc123456789013',
-          name: 'Trần Thị Bình',
-          email: 'tranthi.binh@gmail.com',
-          age: 28,
-          createdAt: '2023-07-06T09:12:45.000Z',
-          updatedAt: '2023-07-06T09:12:45.000Z',
-        },
-      ],
-      total: 25,
-      page: 1,
-      limit: 10,
-      totalPages: 3,
-    },
+    description: 'Response message',
+    example: 'Success',
   })
-  data: {
-    items: T[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  message: string;
+
+  @ApiProperty({ description: 'Response data array' })
+  data: T[];
+
+  @ApiProperty({ description: 'Pagination information', type: PaginationDto })
+  pagination: PaginationDto;
+
+  @ApiProperty({ description: 'Response metadata', type: MetaDto })
+  meta: MetaDto;
 }

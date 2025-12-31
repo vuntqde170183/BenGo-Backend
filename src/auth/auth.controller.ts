@@ -13,7 +13,7 @@ import {
   ResetPasswordDto,
   UpdateProfileDto,
 } from './dto/auth.dto';
-import { ApiResponseType } from 'src/utils/response.util';
+import { ApiResponseType, createApiResponse } from 'src/utils/response.util';
 import { JwtGuard } from './jwt-auth.guard';
 
 @ApiTags('auth')
@@ -57,12 +57,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Request Password Reset' })
   @Post('forgot-password')
   async forgotPassword(@Body() _dto: ForgotPasswordDto): Promise<any> {
-    return { success: true, message: 'OTP sent' };
+    return createApiResponse(null, 'OTP sent');
   }
 
   @ApiOperation({ summary: 'Reset Password with OTP' })
   @Post('reset-password')
   async resetPassword(@Body() _dto: ResetPasswordDto): Promise<any> {
-    return { success: true };
+    return createApiResponse(null, 'Password reset successfully');
   }
 }

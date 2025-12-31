@@ -24,6 +24,7 @@ import {
 } from './dto/admin.dto';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
+import { createApiResponse } from '../utils/response.util';
 
 @ApiTags('admin')
 @ApiBearerAuth('access-token')
@@ -60,16 +61,16 @@ export class AdminController {
   async blockUser(
     @Param('id') id: string,
     @Body() body: { blocked: boolean; reason?: string },
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.blockUser(id, body.blocked, body.reason);
-    return { success: true };
+    return createApiResponse(null, 'User block status updated successfully');
   }
 
   @Delete('users/:id')
   @ApiOperation({ summary: '[ADMIN] Delete user' })
-  async deleteUser(@Param('id') id: string): Promise<{ success: boolean }> {
+  async deleteUser(@Param('id') id: string): Promise<any> {
     await this.adminService.deleteUser(id);
-    return { success: true };
+    return createApiResponse(null, 'User deleted successfully');
   }
 
   // ============= DRIVER MANAGEMENT =============
@@ -84,9 +85,9 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Action completed' })
   async approveDriver(
     @Body() dto: ApproveDriverDto,
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.approveDriver(dto);
-    return { success: true };
+    return createApiResponse(null, 'Driver approval status updated successfully');
   }
 
   // ============= ORDER MANAGEMENT =============
@@ -111,9 +112,9 @@ export class AdminController {
   async forceCancelOrder(
     @Param('id') id: string,
     @Body() body: { reason: string },
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.forceCancelOrder(id, body.reason);
-    return { success: true };
+    return createApiResponse(null, 'Order cancelled successfully');
   }
 
   // ============= PRICING CONFIGURATION =============
@@ -128,9 +129,9 @@ export class AdminController {
   @ApiResponse({ status: 200, description: 'Pricing updated' })
   async updatePricing(
     @Body() dto: UpdatePricingDto,
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.updatePricing(dto);
-    return { success: true };
+    return createApiResponse(null, 'Pricing updated successfully');
   }
 
   // ============= PROMOTION MANAGEMENT =============
@@ -146,9 +147,9 @@ export class AdminController {
   @ApiOperation({ summary: '[ADMIN] Create promotion' })
   async createPromotion(
     @Body() dto: CreatePromotionDto,
-  ): Promise<{ success: boolean; data: any }> {
+  ): Promise<any> {
     const promotion = await this.adminService.createPromotion(dto);
-    return { success: true, data: promotion };
+    return createApiResponse(promotion, 'Promotion created successfully');
   }
 
   @Put('promotions/:id')
@@ -156,16 +157,16 @@ export class AdminController {
   async updatePromotion(
     @Param('id') id: string,
     @Body() dto: UpdatePromotionDto,
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.updatePromotion(id, dto);
-    return { success: true };
+    return createApiResponse(null, 'Promotion updated successfully');
   }
 
   @Delete('promotions/:id')
   @ApiOperation({ summary: '[ADMIN] Delete promotion' })
-  async deletePromotion(@Param('id') id: string): Promise<{ success: boolean }> {
+  async deletePromotion(@Param('id') id: string): Promise<any> {
     await this.adminService.deletePromotion(id);
-    return { success: true };
+    return createApiResponse(null, 'Promotion deleted successfully');
   }
 
   // ============= SUPPORT TICKETS / COMPLAINTS =============
@@ -189,9 +190,9 @@ export class AdminController {
   async assignTicket(
     @Param('id') id: string,
     @Body() body: { assignedTo: string },
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.assignTicket(id, body.assignedTo);
-    return { success: true };
+    return createApiResponse(null, 'Ticket assigned successfully');
   }
 
   @Put('tickets/:id/status')
@@ -199,9 +200,9 @@ export class AdminController {
   async updateTicketStatus(
     @Param('id') id: string,
     @Body() body: { status: string; resolution?: string },
-  ): Promise<{ success: boolean }> {
+  ): Promise<any> {
     await this.adminService.updateTicketStatus(id, body.status, body.resolution);
-    return { success: true };
+    return createApiResponse(null, 'Ticket status updated successfully');
   }
 
   // ============= REPORTS & STATISTICS =============

@@ -38,10 +38,8 @@ export class AuthService {
     const payload = { sub: user._id, phone: user.phone, role: user.role };
     const token = this.jwtService.sign(payload);
 
-    return createApiResponse({
-      statusCode: HttpStatus.OK,
-      message: 'Đăng nhập thành công',
-      data: {
+    return createApiResponse(
+      {
         accessToken: token,
         user: {
           id: user._id,
@@ -50,7 +48,9 @@ export class AuthService {
           role: user.role,
         },
       },
-    });
+      'Đăng nhập thành công',
+      HttpStatus.OK,
+    );
   }
 
   async register(registerUserDto: RegisterUserDto): Promise<ApiResponseType> {
@@ -59,10 +59,8 @@ export class AuthService {
     const payload = { sub: user._id, phone: user.phone, role: user.role };
     const token = this.jwtService.sign(payload);
 
-    return createApiResponse({
-      statusCode: HttpStatus.CREATED,
-      message: 'Đăng ký tài khoản thành công',
-      data: {
+    return createApiResponse(
+      {
         accessToken: token,
         user: {
           id: user._id,
@@ -71,7 +69,9 @@ export class AuthService {
           role: user.role,
         },
       },
-    });
+      'Đăng ký tài khoản thành công',
+      HttpStatus.CREATED,
+    );
   }
 
   async getProfile(userId: string): Promise<ApiResponseType> {

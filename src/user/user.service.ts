@@ -58,11 +58,11 @@ export class UserService {
         );
       }
 
-      return createApiResponse({
-        statusCode: 200,
-        data: user,
-        message: 'Lấy thông tin người dùng thành công',
-      });
+      return createApiResponse(
+        user,
+        'Lấy thông tin người dùng thành công',
+        200,
+      );
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
@@ -87,11 +87,11 @@ export class UserService {
         { new: true },
       );
 
-      return createApiResponse({
-        statusCode: 200,
-        data: updatedUser,
-        message: 'Cập nhật thông tin thành công',
-      });
+      return createApiResponse(
+        updatedUser,
+        'Cập nhật thông tin thành công',
+        200,
+      );
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }

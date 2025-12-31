@@ -37,6 +37,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message: message,
       data: null,
+      meta: {
+        timestamp: new Date().toISOString(),
+        apiVersion: 'v1.2',
+      },
     });
   }
 }
