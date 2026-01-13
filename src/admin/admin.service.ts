@@ -1,14 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
-  ApproveDriverDto,
+  UpdateDriverStatusDto,
   ReportsResponseDto,
   UpdatePricingDto,
   UserListResponseDto,
+  CreateUserDto,
 } from './dto/admin.dto';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { User } from '../user/user.schema';
+import * as bcrypt from 'bcryptjs';
 import { Driver } from '../driver/driver.schema';
 import { Order } from '../orders/orders.schema';
 import { PricingConfig } from './pricing-config.schema';
@@ -76,7 +78,35 @@ export class AdminService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    user.active = !blocked;
+    if (reason) {
+      user.blockedReason = reason;
+    }
     await user.save();
+  }
+
+  async createUser(dto: CreateUserDto): Promise<any> {
+    const existingUser = await this.userModel.findOne({
+      $or: [
+        { phone: dto.phone },
+        { email: dto.email }
+      ].filter(cond => cond.email || cond.phone)
+    });
+
+    if (existingUser) {
+      throw new BadRequestException('Email hoặc số điện thoại đã tồn tại');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const newUser = new this.userModel({
+      ...dto,
+      password: hashedPassword,
+    });
+
+    const savedUser = await newUser.save();
+    const result = savedUser.toObject();
+    delete result.password;
+    return result;
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -102,17 +132,35 @@ export class AdminService {
     return createPaginatedResponse(drivers, total, page, limit, 'Lấy danh sách tài xế thành công');
   }
 
-  async approveDriver(dto: ApproveDriverDto): Promise<void> {
+  async updateDriverStatus(dto: UpdateDriverStatusDto): Promise<void> {
     const driver = await this.driverModel.findById(dto.driverId);
     
     if (!driver) {
-      throw new NotFoundException('Driver not found');
+      throw new NotFoundException('Không tìm thấy tài xế');
     }
 
-    if (dto.action === 'APPROVE') {
-      driver.status = 'APPROVED';
-    } else if (dto.action === 'REJECT') {
-      driver.status = 'LOCKED';
+    // Validate: Bắt buộc phải có lý do khi REJECT hoặc LOCK
+    if ((dto.status === 'REJECTED' || dto.status === 'LOCKED') && !dto.reason) {
+      throw new BadRequestException(
+        `Bắt buộc phải cung cấp lý do khi ${dto.status === 'REJECTED' ? 'từ chối' : 'khóa'} tài xế`
+      );
+    }
+
+    // Cập nhật trạng thái
+    driver.status = dto.status;
+
+    // Lưu lý do và ghi chú
+    if (dto.reason) {
+      driver.rejectionReason = dto.reason;
+    }
+    if (dto.note) {
+      driver.adminNote = dto.note;
+    }
+
+    // Xóa lý do nếu chuyển về APPROVED hoặc PENDING
+    if (dto.status === 'APPROVED' || dto.status === 'PENDING') {
+      driver.rejectionReason = undefined;
+      driver.adminNote = undefined;
     }
 
     await driver.save();

@@ -33,6 +33,12 @@ export class User extends Document {
 
   @Prop({ type: String })
   fcmToken: string;
+
+  @Prop({ type: Boolean, default: true })
+  active: boolean;
+
+  @Prop({ type: String })
+  blockedReason: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

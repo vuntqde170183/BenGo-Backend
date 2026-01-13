@@ -17,10 +17,11 @@ import {
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import {
-  ApproveDriverDto,
+  UpdateDriverStatusDto,
   ReportsResponseDto,
   UpdatePricingDto,
   UserListResponseDto,
+  CreateUserDto,
 } from './dto/admin.dto';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
@@ -95,6 +96,19 @@ export class AdminController {
     return createApiResponse(null, 'User deleted successfully');
   }
 
+  @Post('users')
+  @ApiOperation({ 
+    summary: '[ADMIN] Tạo người dùng mới',
+    description: 'API tạo một người dùng mới (Customer, Driver, Admin, Dispatcher) bởi Admin.'
+  })
+  @ApiResponse({ status: 201, description: 'Tạo người dùng thành công' })
+  @ApiResponse({ status: 400, description: 'Email hoặc số điện thoại đã tồn tại' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  async createUser(@Body() dto: CreateUserDto): Promise<any> {
+    const user = await this.adminService.createUser(dto);
+    return createApiResponse(user, 'User created successfully', 201);
+  }
+
   // ============= QUẢN LÝ TÀI XẾ =============
   @Get('drivers')
   @ApiOperation({ 
@@ -111,19 +125,20 @@ export class AdminController {
     return this.adminService.getAllDrivers(status, page, limit);
   }
 
-  @Post('drivers/approval')
+  @Put('drivers/status')
   @ApiOperation({ 
-    summary: '[ADMIN] Duyệt/Từ chối tài xế',
-    description: 'API duyệt hoặc từ chối đơn đăng ký tài xế. Sau khi duyệt, tài xế có thể bắt đầu nhận đơn hàng.'
+    summary: '[ADMIN] Cập nhật trạng thái tài xế',
+    description: 'API cập nhật trạng thái tài xế: APPROVED (đã duyệt), PENDING (chờ duyệt), LOCKED (đã khóa), REJECTED (từ chối). Bắt buộc phải có lý do khi REJECT hoặc LOCK tài xế.'
   })
-  @ApiResponse({ status: 200, description: 'Cập nhật trạng thái duyệt tài xế thành công' })
+  @ApiResponse({ status: 200, description: 'Cập nhật trạng thái tài xế thành công' })
+  @ApiResponse({ status: 400, description: 'Thiếu lý do khi từ chối hoặc khóa tài xế' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy tài xế' })
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
-  async approveDriver(
-    @Body() dto: ApproveDriverDto,
+  async updateDriverStatus(
+    @Body() dto: UpdateDriverStatusDto,
   ): Promise<any> {
-    await this.adminService.approveDriver(dto);
-    return createApiResponse(null, 'Driver approval status updated successfully');
+    await this.adminService.updateDriverStatus(dto);
+    return createApiResponse(null, 'Cập nhật trạng thái tài xế thành công');
   }
 
   // ============= QUẢN LÝ ĐƠN HÀNG =============

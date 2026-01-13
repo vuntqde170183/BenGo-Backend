@@ -219,11 +219,20 @@
 
 **Method:** `GET`  
 **Path:** `/admin/drivers`  
-**Query:** `status` (optional): `PENDING_APPROVAL` | `APPROVED` | `LOCKED`  
+**Query Params:**
+
+- `status` (optional): `APPROVED` | `PENDING` | `LOCKED` | `REJECTED` | `ALL`
+- `page` (optional, default: 1)
+- `limit` (optional, default: 20)
+
+**Example:** `/admin/drivers?status=REJECTED&page=1&limit=10`
+
 **Response:**
 
 ```json
 {
+  "statusCode": 200,
+  "message": "Lấy danh sách tài xế thành công",
   "data": [
     {
       "_id": "64f5...",
@@ -241,25 +250,104 @@
         "type": "Point",
         "coordinates": [105.83416, 21.02776]
       },
-      "status": "APPROVED"
+      "status": "APPROVED",
+      "rejectionReason": null,
+      "adminNote": null,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
-  "total": 50
+  "pagination": {
+    "total": 25,
+    "count": 10,
+    "per_page": 10,
+    "current_page": 1,
+    "total_pages": 3
+  },
+  "meta": {
+    "timestamp": "2024-12-31T05:00:00.000Z",
+    "apiVersion": "v1.2"
+  }
 }
 ```
 
-#### 2.6. Approve/Reject Driver
+**Note:** Drivers with `status` = `REJECTED` or `LOCKED` will have `rejectionReason` and `adminNote` fields populated.
 
-**Method:** `POST`  
-**Path:** `/admin/drivers/approval`  
+#### 2.6. Update Driver Status
+
+**Method:** `PUT`  
+**Path:** `/admin/drivers/status`  
+**Description:** Cập nhật trạng thái tài xế (Duyệt, Từ chối, Khóa, Chờ duyệt)  
 **Payload:**
 
 ```json
 {
   "driverId": "64f5a1b2c3d4e5f6g7h8i9j0",
-  "action": "APPROVE" // or "REJECT"
+  "status": "APPROVED", // APPROVED | PENDING | LOCKED | REJECTED
+  "reason": "Hồ sơ không đầy đủ", // Required for LOCKED or REJECTED
+  "note": "Cần bổ sung giấy phép lái xe hạng B2" // Optional
 }
 ```
+
+**Status Values:**
+
+- `APPROVED`: Đã duyệt - Tài xế có thể nhận đơn hàng
+- `PENDING`: Chờ duyệt - Trạng thái mặc định khi đăng ký
+- `LOCKED`: Đã khóa - Tạm ngưng hoạt động (cần lý do)
+- `REJECTED`: Từ chối - Không được phép hoạt động (cần lý do)
+
+**Response:**
+
+```json
+{
+  "statusCode": 200,
+  "message": "Cập nhật trạng thái tài xế thành công",
+  "data": null,
+  "meta": {
+    "timestamp": "2024-12-31T05:00:00.000Z",
+    "apiVersion": "v1.2"
+  }
+}
+```
+
+**Examples:**
+
+1. **Duyệt tài xế:**
+
+```json
+{
+  "driverId": "694eea3a736c474360b86b2f",
+  "status": "APPROVED"
+}
+```
+
+2. **Từ chối tài xế:**
+
+```json
+{
+  "driverId": "694eea3a736c474360b86b33",
+  "status": "REJECTED",
+  "reason": "Hồ sơ không đầy đủ",
+  "note": "Cần bổ sung giấy phép lái xe hạng B2"
+}
+```
+
+3. **Khóa tài xế:**
+
+```json
+{
+  "driverId": "694eea3a736c474360b86b35",
+  "status": "LOCKED",
+  "reason": "Vi phạm quy định an toàn giao thông",
+  "note": "Tạm khóa 30 ngày"
+}
+```
+
+**Error Responses:**
+
+- `400`: Thiếu lý do khi từ chối hoặc khóa tài xế
+- `404`: Không tìm thấy tài xế
+- `401`: Chưa đăng nhập hoặc không có quyền admin
 
 ### 📦 Order Management
 

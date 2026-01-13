@@ -27,10 +27,16 @@ export class Driver extends Document {
 
   @Prop({
     type: String,
-    enum: ['PENDING_APPROVAL', 'APPROVED', 'LOCKED'],
-    default: 'PENDING_APPROVAL',
+    enum: ['PENDING', 'APPROVED', 'LOCKED', 'REJECTED'],
+    default: 'PENDING',
   })
   status: string;
+
+  @Prop({ type: String })
+  rejectionReason?: string;
+
+  @Prop({ type: String })
+  adminNote?: string;
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver);
