@@ -86,10 +86,98 @@ export class CreateUserDto {
   @IsOptional()
   avatar?: string;
 
-  @ApiProperty({ enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER'], example: 'CUSTOMER' })
-  @IsEnum(['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER'])
+  @ApiProperty({ enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'], example: 'CUSTOMER' })
+  @IsEnum(['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'])
   role: string;
 
-  @ApiProperty({ example: true })
-  active: boolean;
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  active?: boolean;
+
+  @ApiProperty({
+    required: false,
+    enum: ['BIKE', 'TRUCK', 'VAN'],
+    description: 'Bắt buộc nếu role là DRIVER',
+    example: 'BIKE'
+  })
+  @IsOptional()
+  @IsEnum(['BIKE', 'TRUCK', 'VAN'])
+  vehicleType?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Bắt buộc nếu role là DRIVER',
+    example: '59-S2 123.45'
+  })
+  @IsOptional()
+  @IsString()
+  plateNumber?: string;
+
+  @ApiProperty({ example: 0, required: false })
+  @IsOptional()
+  @IsNumber()
+  walletBalance?: number;
+
+  @ApiProperty({ example: 5, required: false, description: 'Điểm đánh giá tài xế (chỉ dành cho DRIVER)' })
+  @IsOptional()
+  @IsNumber()
+  rating?: number;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh giấy phép lái xe (chỉ dành cho DRIVER)',
+    example: 'https://example.com/license.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  licenseImage?: string;
+
+  @ApiProperty({ example: '123456789012', required: false, description: 'Số CCCD/CMND (chỉ dành cho DRIVER)' })
+  @IsOptional()
+  @IsString()
+  identityNumber?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh mặt trước CCCD (chỉ dành cho DRIVER)',
+    example: 'https://example.com/id-front.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  identityFrontImage?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh mặt sau CCCD (chỉ dành cho DRIVER)',
+    example: 'https://example.com/id-back.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  identityBackImage?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh đăng ký xe (chỉ dành cho DRIVER)',
+    example: 'https://example.com/vehicle-reg.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  vehicleRegistrationImage?: string;
+
+  @ApiProperty({ example: 'B2-12345678', required: false, description: 'Số giấy phép lái xe (chỉ dành cho DRIVER)' })
+  @IsOptional()
+  @IsString()
+  drivingLicenseNumber?: string;
+
+  @ApiProperty({ 
+    required: false,
+    description: 'Thông tin tài khoản ngân hàng (chỉ dành cho DRIVER)',
+    example: { bankName: 'Vietcombank', accountNumber: '1234567890', accountHolder: 'Nguyen Van A' }
+  })
+  @IsOptional()
+  bankInfo?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  };
 }

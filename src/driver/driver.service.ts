@@ -160,11 +160,7 @@ export class DriverService {
       throw new NotFoundException('Driver profile not found');
     }
 
-    if (!driver.licenseImages) {
-      driver.licenseImages = [];
-    }
-
-    driver.licenseImages.push(dto.imageUrl);
+    driver.licenseImage = dto.imageUrl;
     await driver.save();
   }
 
@@ -184,9 +180,9 @@ export class DriverService {
     const totalEarnings = orders.reduce((sum, order) => sum + order.totalPrice, 0);
     const totalTrips = orders.length;
 
-    // Get driver rating from user profile
-    const user = await this.userModel.findById(driverId);
-    const rating = user?.rating || 5;
+    // Get driver rating from driver profile
+    const driver = await this.driverModel.findOne({ userId: driverId });
+    const rating = driver?.rating || 5;
 
     return {
       totalEarnings,

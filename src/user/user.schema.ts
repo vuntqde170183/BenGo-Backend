@@ -17,7 +17,7 @@ export class User extends Document {
 
   @Prop({
     type: String,
-    enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER'],
+    enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'],
     default: 'CUSTOMER',
   })
   role: string;
@@ -28,17 +28,14 @@ export class User extends Document {
   @Prop({ type: Number, default: 0 })
   walletBalance: number;
 
-  @Prop({ type: Number, default: 5 })
-  rating: number;
-
-  @Prop({ type: String })
-  fcmToken: string;
-
   @Prop({ type: Boolean, default: true })
   active: boolean;
 
   @Prop({ type: String })
   blockedReason: string;
+
+  @Prop({ type: String })
+  fcmToken: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

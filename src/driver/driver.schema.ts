@@ -13,8 +13,8 @@ export class Driver extends Document {
   @Prop({ type: String, required: true })
   plateNumber: string;
 
-  @Prop({ type: [String] })
-  licenseImages: string[];
+  @Prop({ type: String })
+  licenseImage?: string;
 
   @Prop({ type: Boolean, default: false })
   isOnline: boolean;
@@ -37,6 +37,37 @@ export class Driver extends Document {
 
   @Prop({ type: String })
   adminNote?: string;
+
+  @Prop({ type: Number, default: 5 })
+  rating: number;
+
+  @Prop({ type: String })
+  identityNumber?: string;
+
+  @Prop({ type: String })
+  identityFrontImage?: string;
+
+  @Prop({ type: String })
+  identityBackImage?: string;
+
+  @Prop({ type: String })
+  drivingLicenseNumber?: string;
+
+  @Prop({ type: String })
+  vehicleRegistrationImage?: string;
+
+  @Prop({ 
+    type: {
+      bankName: String,
+      accountNumber: String,
+      accountHolder: String
+    }
+  })
+  bankInfo?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  };
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver);

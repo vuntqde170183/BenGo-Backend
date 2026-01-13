@@ -47,7 +47,7 @@ export class AdminService {
 
     const skip = (page - 1) * limit;
     const [users, total] = await Promise.all([
-      this.userModel.find(query).select('-password').skip(skip).limit(limit).exec(),
+      this.userModel.find(query).sort({ createdAt: -1 }).select('-password').skip(skip).limit(limit).exec(),
       this.userModel.countDocuments(query),
     ]);
     
@@ -58,7 +58,6 @@ export class AdminService {
       name: user.name,
       role: user.role,
       avatar: user.avatar,
-      rating: user.rating,
       walletBalance: user.walletBalance,
     }));
 
@@ -70,7 +69,18 @@ export class AdminService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    return createApiResponse(user, 'User retrieved successfully');
+
+    const userObj: any = user.toObject();
+
+    // Nếu là DRIVER, lấy thêm thông tin từ bảng Driver
+    if (user.role === 'DRIVER') {
+      const driver = await this.driverModel.findOne({ userId: id });
+      if (driver) {
+        userObj.driverProfile = driver.toObject();
+      }
+    }
+
+    return createApiResponse(userObj, 'User retrieved successfully');
   }
 
   async blockUser(id: string, blocked: boolean, reason?: string): Promise<void> {
@@ -86,6 +96,13 @@ export class AdminService {
   }
 
   async createUser(dto: CreateUserDto): Promise<any> {
+    // 1. Kiểm tra thông tin DRIVER trước khi tạo User
+    if (dto.role === 'DRIVER') {
+      if (!dto.vehicleType || !dto.plateNumber) {
+        throw new BadRequestException('Tài xế cần có thông tin loại xe (vehicleType) và biển số xe (plateNumber)');
+      }
+    }
+
     const existingUser = await this.userModel.findOne({
       $or: [
         { phone: dto.phone },
@@ -104,6 +121,31 @@ export class AdminService {
     });
 
     const savedUser = await newUser.save();
+
+    // 2. Nếu là DRIVER thì tạo thêm hồ sơ Driver
+    if (dto.role === 'DRIVER') {
+      const driverData: any = {
+        userId: savedUser._id,
+        vehicleType: dto.vehicleType,
+        plateNumber: dto.plateNumber,
+        status: 'APPROVED',
+        isOnline: false,
+      };
+
+      // Thêm các trường tùy chọn nếu có
+      if (dto.rating !== undefined) driverData.rating = dto.rating;
+      if (dto.licenseImage) driverData.licenseImage = dto.licenseImage;
+      if (dto.identityNumber) driverData.identityNumber = dto.identityNumber;
+      if (dto.identityFrontImage) driverData.identityFrontImage = dto.identityFrontImage;
+      if (dto.identityBackImage) driverData.identityBackImage = dto.identityBackImage;
+      if (dto.vehicleRegistrationImage) driverData.vehicleRegistrationImage = dto.vehicleRegistrationImage;
+      if (dto.drivingLicenseNumber) driverData.drivingLicenseNumber = dto.drivingLicenseNumber;
+      if (dto.bankInfo) driverData.bankInfo = dto.bankInfo;
+
+      const newDriver = new this.driverModel(driverData);
+      await newDriver.save();
+    }
+
     const result = savedUser.toObject();
     delete result.password;
     return result;
@@ -125,7 +167,7 @@ export class AdminService {
 
     const skip = (page - 1) * limit;
     const [drivers, total] = await Promise.all([
-      this.driverModel.find(query).populate('userId', 'name phone email rating').skip(skip).limit(limit).exec(),
+      this.driverModel.find(query).sort({ createdAt: -1 }).populate('userId', 'name phone email rating').skip(skip).limit(limit).exec(),
       this.driverModel.countDocuments(query),
     ]);
 
@@ -177,9 +219,9 @@ export class AdminService {
     const [orders, total] = await Promise.all([
       this.orderModel
         .find(query)
+        .sort({ createdAt: -1 })
         .populate('customerId', 'name phone')
         .populate('driverId', 'name phone')
-        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -270,6 +312,7 @@ export class AdminService {
   }
 
   // ============= SUPPORT TICKETS / COMPLAINTS =============
+
   async getAllTickets(status?: string, priority?: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
     if (status) query.status = status;
@@ -279,9 +322,9 @@ export class AdminService {
     const [tickets, total] = await Promise.all([
       this.supportTicketModel
         .find(query)
+        .sort({ createdAt: -1 })
         .populate('userId', 'name phone email')
         .populate('assignedTo', 'name email')
-        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .exec(),

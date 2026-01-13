@@ -106,12 +106,18 @@ export class OrdersService {
   async getOrder(orderId: string): Promise<OrderResponseDto> {
     const order = await this.orderModel
       .findById(orderId)
-      .populate('customerId', 'name phone rating')
-      .populate('driverId', 'name phone rating')
+      .populate('customerId', 'name phone')
+      .populate('driverId', 'name phone')
       .exec();
 
     if (!order) {
       throw new NotFoundException('Order not found');
+    }
+
+    let driverRating = 5;
+    if (order.driverId) {
+      const driver = await this.driverModel.findOne({ userId: (order.driverId as any)._id });
+      if (driver) driverRating = driver.rating;
     }
 
     return {
@@ -120,7 +126,7 @@ export class OrdersService {
       driver: order.driverId ? {
         name: (order.driverId as any).name,
         phone: (order.driverId as any).phone,
-        rating: (order.driverId as any).rating,
+        rating: driverRating,
       } : null,
       trackingPath: null, // TODO: Implement real-time tracking
     };
@@ -164,7 +170,7 @@ export class OrdersService {
       throw new BadRequestException('No driver assigned to this order');
     }
 
-    const driver = await this.userModel.findById(order.driverId);
+    const driver = await this.driverModel.findOne({ userId: order.driverId });
     
     if (driver) {
       const currentRating = driver.rating || 5;
