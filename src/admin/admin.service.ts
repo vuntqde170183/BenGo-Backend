@@ -96,9 +96,14 @@ export class AdminService {
   }
 
   async createUser(dto: CreateUserDto): Promise<any> {
+    const { driverProfile, ...userDetails } = dto;
+    
     // 1. Kiểm tra thông tin DRIVER trước khi tạo User
     if (dto.role === 'DRIVER') {
-      if (!dto.vehicleType || !dto.plateNumber) {
+      const vehicleType = driverProfile?.vehicleType || dto.vehicleType;
+      const plateNumber = driverProfile?.plateNumber || dto.plateNumber;
+      
+      if (!vehicleType || !plateNumber) {
         throw new BadRequestException('Tài xế cần có thông tin loại xe (vehicleType) và biển số xe (plateNumber)');
       }
     }
@@ -116,7 +121,7 @@ export class AdminService {
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const newUser = new this.userModel({
-      ...dto,
+      ...userDetails,
       password: hashedPassword,
     });
 
@@ -126,25 +131,31 @@ export class AdminService {
     if (dto.role === 'DRIVER') {
       const driverData: any = {
         userId: savedUser._id,
-        vehicleType: dto.vehicleType,
-        plateNumber: dto.plateNumber,
+        vehicleType: driverProfile?.vehicleType || dto.vehicleType,
+        plateNumber: driverProfile?.plateNumber || dto.plateNumber,
         status: 'APPROVED',
         isOnline: false,
       };
 
       // Thêm các trường tùy chọn nếu có
-      if (dto.rating !== undefined) driverData.rating = dto.rating;
-      if (dto.licenseImage) driverData.licenseImage = dto.licenseImage;
-      if (dto.identityNumber) driverData.identityNumber = dto.identityNumber;
-      if (dto.identityFrontImage) driverData.identityFrontImage = dto.identityFrontImage;
-      if (dto.identityBackImage) driverData.identityBackImage = dto.identityBackImage;
-      if (dto.vehicleRegistrationImage) driverData.vehicleRegistrationImage = dto.vehicleRegistrationImage;
-      if (dto.drivingLicenseNumber) driverData.drivingLicenseNumber = dto.drivingLicenseNumber;
-      if (dto.bankInfo) driverData.bankInfo = dto.bankInfo;
+      const rating = driverProfile?.rating !== undefined ? driverProfile.rating : dto.rating;
+      if (rating !== undefined) driverData.rating = rating;
+      
+      driverData.licenseImage = driverProfile?.licenseImage || dto.licenseImage;
+      driverData.identityNumber = driverProfile?.identityNumber || dto.identityNumber;
+      driverData.identityFrontImage = driverProfile?.identityFrontImage || dto.identityFrontImage;
+      driverData.identityBackImage = driverProfile?.identityBackImage || dto.identityBackImage;
+      driverData.vehicleRegistrationImage = driverProfile?.vehicleRegistrationImage || dto.vehicleRegistrationImage;
+      driverData.drivingLicenseNumber = driverProfile?.drivingLicenseNumber || dto.drivingLicenseNumber;
+      driverData.bankInfo = driverProfile?.bankInfo || dto.bankInfo;
+
+      // Xóa các trường undefined để không lưu vào mongo
+      Object.keys(driverData).forEach(key => driverData[key] === undefined && delete driverData[key]);
 
       const newDriver = new this.driverModel(driverData);
       await newDriver.save();
     }
+
 
     const result = savedUser.toObject();
     delete result.password;

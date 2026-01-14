@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdatePricingDto {
   @ApiProperty()
@@ -13,6 +14,99 @@ export class UpdatePricingDto {
   @ApiProperty()
   @IsNumber()
   peakHourMultiplier: number;
+}
+
+export class BankInfoDto {
+  @ApiProperty({ example: 'Vietcombank', required: false })
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @ApiProperty({ example: '1234567890' })
+  @IsString()
+  accountNumber: string;
+
+  @ApiProperty({ example: 'Nguyen Van A' })
+  @IsString()
+  accountHolder: string;
+}
+
+export class DriverProfileDto {
+  @ApiProperty({
+    enum: ['BIKE', 'TRUCK', 'VAN'],
+    description: 'Loại phương tiện',
+    example: 'BIKE'
+  })
+  @IsEnum(['BIKE', 'TRUCK', 'VAN'])
+  vehicleType: string;
+
+  @ApiProperty({
+    description: 'Biển số xe',
+    example: '59-S2 123.45'
+  })
+  @IsString()
+  plateNumber: string;
+
+  @ApiProperty({ example: 5, required: false, description: 'Điểm đánh giá' })
+  @IsOptional()
+  @IsNumber()
+  rating?: number;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh giấy phép lái xe',
+    example: 'https://example.com/license.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  licenseImage?: string;
+
+  @ApiProperty({ example: '123456789012', required: false, description: 'Số CCCD/CMND' })
+  @IsOptional()
+  @IsString()
+  identityNumber?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh mặt trước CCCD',
+    example: 'https://example.com/id-front.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  identityFrontImage?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh mặt sau CCCD',
+    example: 'https://example.com/id-back.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  identityBackImage?: string;
+
+  @ApiProperty({ 
+    required: false, 
+    description: 'URL ảnh đăng ký xe',
+    example: 'https://example.com/vehicle-reg.jpg'
+  })
+  @IsOptional()
+  @IsString()
+  vehicleRegistrationImage?: string;
+
+  @ApiProperty({ example: 'B2-12345678', required: false, description: 'Số giấy phép lái xe' })
+  @IsOptional()
+  @IsString()
+  drivingLicenseNumber?: string;
+
+  @ApiProperty({ 
+    required: false,
+    description: 'Thông tin tài khoản ngân hàng',
+    type: BankInfoDto
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  bankInfo?: BankInfoDto;
 }
 
 export class UpdateDriverStatusDto {
@@ -94,10 +188,26 @@ export class CreateUserDto {
   @IsOptional()
   active?: boolean;
 
+  @ApiProperty({ example: 0, required: false })
+  @IsOptional()
+  @IsNumber()
+  walletBalance?: number;
+
+  @ApiProperty({
+    required: false,
+    description: 'Hồ sơ tài xế (chỉ dành cho role DRIVER)',
+    type: DriverProfileDto
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DriverProfileDto)
+  driverProfile?: DriverProfileDto;
+
+  // Giữ lại các trường cũ để tương thích ngược nếu cần
   @ApiProperty({
     required: false,
     enum: ['BIKE', 'TRUCK', 'VAN'],
-    description: 'Bắt buộc nếu role là DRIVER',
+    description: 'Bắt buộc nếu role là DRIVER (nếu không dùng driverProfile)',
     example: 'BIKE'
   })
   @IsOptional()
@@ -106,17 +216,12 @@ export class CreateUserDto {
 
   @ApiProperty({
     required: false,
-    description: 'Bắt buộc nếu role là DRIVER',
+    description: 'Bắt buộc nếu role là DRIVER (nếu không dùng driverProfile)',
     example: '59-S2 123.45'
   })
   @IsOptional()
   @IsString()
   plateNumber?: string;
-
-  @ApiProperty({ example: 0, required: false })
-  @IsOptional()
-  @IsNumber()
-  walletBalance?: number;
 
   @ApiProperty({ example: 5, required: false, description: 'Điểm đánh giá tài xế (chỉ dành cho DRIVER)' })
   @IsOptional()
@@ -181,3 +286,4 @@ export class CreateUserDto {
     accountHolder: string;
   };
 }
+
