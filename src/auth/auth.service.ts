@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { ApiResponseType, createApiResponse } from 'src/utils/response.util';
+import { ApiResponseType, createApiResponse } from '../utils/response.util';
 import { LoginUserDto, RegisterUserDto } from './dto/auth.dto';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcryptjs';

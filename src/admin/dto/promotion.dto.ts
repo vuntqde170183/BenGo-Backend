@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePromotionDto {
@@ -57,28 +57,14 @@ export class CreatePromotionDto {
 
   @ApiPropertyOptional({ example: ['BIKE', 'VAN'] })
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   applicableVehicles?: string[];
 }
 
-export class UpdatePromotionDto {
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  title?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  description?: string;
-
+export class UpdatePromotionDto extends PartialType(CreatePromotionDto) {
   @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
-
-  @ApiPropertyOptional()
-  @IsDate()
-  @IsOptional()
-  @Type(() => Date)
-  endDate?: Date;
 }

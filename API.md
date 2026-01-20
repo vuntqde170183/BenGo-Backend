@@ -8,7 +8,7 @@
 ## 📑 Table of Contents
 
 1. [Auth](#1-auth)
-2. [Admin (21 routes)](#2-admin-routes-)
+2. [Admin (22 routes)](#2-admin-routes-)
 3. [Orders](#3-orders)
 4. [Driver](#4-driver)
 5. [Dispatcher](#5-dispatcher)
@@ -409,9 +409,22 @@
 **Path:** `/admin/orders/:id/cancel`  
 **Payload:** `{ "reason": "Admin override due to complaint" }`
 
+#### 2.10. Update Order & Payment Status
+
+**Method:** `PUT`  
+**Path:** `/admin/orders/:id/status`  
+**Payload:**
+
+```json
+{
+  "status": "DELIVERED", // optional: PENDING | ACCEPTED | PICKED_UP | DELIVERED | CANCELLED
+  "paymentStatus": "PAID" // optional: UNPAID | PAID
+}
+```
+
 ### 💰 Pricing Configuration
 
-#### 2.10. Get Pricing Config
+#### 2.11. Get Pricing Config
 
 **Method:** `GET`  
 **Path:** `/admin/pricing`  
@@ -443,7 +456,7 @@
 ]
 ```
 
-#### 2.11. Update Pricing
+#### 2.12. Update Pricing
 
 **Method:** `PUT`  
 **Path:** `/admin/pricing`  
@@ -461,11 +474,15 @@
 
 ### 🎁 Promotion Management
 
-#### 2.12. Get All Promotions
+#### 2.13. Get All Promotions
 
 **Method:** `GET`  
 **Path:** `/admin/promotions`  
-**Query:** `active` (optional): `true` | `false`
+**Query:**
+
+- `status` (optional): `ACTIVE` | `INACTIVE` | `EXPIRED` | `USAGE_LIMIT` (Default: `ALL`)
+- `search` (optional): Tìm kiếm theo mã, tiêu đề hoặc mô tả
+- `page`, `limit` (Default: 1, 20)
 
 **Response:**
 
@@ -493,7 +510,7 @@
 }
 ```
 
-#### 2.13. Create Promotion
+#### 2.14. Create Promotion
 
 **Method:** `POST`  
 **Path:** `/admin/promotions`  
@@ -515,7 +532,7 @@
 }
 ```
 
-#### 2.14. Update Promotion
+#### 2.15. Update Promotion
 
 **Method:** `PUT`  
 **Path:** `/admin/promotions/:id`  
@@ -528,14 +545,14 @@
 }
 ```
 
-#### 2.15. Delete Promotion
+#### 2.16. Delete Promotion
 
 **Method:** `DELETE`  
 **Path:** `/admin/promotions/:id`
 
 ### 🎫 Support Tickets / Complaints
 
-#### 2.16. Get All Tickets
+#### 2.17. Get All Tickets
 
 **Method:** `GET`  
 **Path:** `/admin/tickets`  
@@ -568,18 +585,18 @@
 }
 ```
 
-#### 2.17. Get Ticket Details
+#### 2.18. Get Ticket Details
 
 **Method:** `GET`  
 **Path:** `/admin/tickets/:id`
 
-#### 2.18. Assign Ticket
+#### 2.19. Assign Ticket
 
 **Method:** `PUT`  
 **Path:** `/admin/tickets/:id/assign`  
 **Payload:** `{ "assignedTo": "dispatcherId" }`
 
-#### 2.19. Update Ticket Status
+#### 2.20. Update Ticket Status
 
 **Method:** `PUT`  
 **Path:** `/admin/tickets/:id/status`  
@@ -594,23 +611,55 @@
 
 ### 📊 Reports & Statistics
 
-#### 2.20. Get Reports
+#### 2.21. Get Reports
 
 **Method:** `GET`  
 **Path:** `/admin/reports`  
-**Query:** `type`: `REVENUE` | `ALL`  
-**Response:**
+**Query:**
+
+- `type`: `REVENUE` | `ALL`
+- `period` (optional): `WEEK` | `MONTH` | `YEAR` (Default: `WEEK`)
+  **Response:**
 
 ```json
 {
   "revenue": {
     "daily": 18540000,
-    "monthly": 450000000
+    "monthly": 450000000,
+    "total": 1250000000,
+    "byVehicleType": {
+      "BIKE": 450000000,
+      "VAN": 500000000,
+      "TRUCK": 300000000
+    },
+    "chartData": [
+      { "date": "2026-01-14", "value": 15000000 },
+      { "date": "2026-01-15", "value": 18000000 },
+      { "date": "2026-01-16", "value": 12000000 },
+      { "date": "2026-01-17", "value": 22000000 },
+      { "date": "2026-01-18", "value": 19000000 },
+      { "date": "2026-01-19", "value": 25000000 },
+      { "date": "2026-01-20", "value": 18540000 }
+    ]
+  },
+  "topDrivers": [
+    {
+      "driverId": "64f5...",
+      "name": "Nguyen Van A",
+      "revenue": 50000000,
+      "completedOrders": 120,
+      "rating": 4.9
+    }
+  ],
+  "orderStats": {
+    "total": 1245,
+    "completed": 1100,
+    "cancelled": 45
   }
 }
 ```
 
-#### 2.21. Dashboard Overview
+#### 2.22. Dashboard Overview
 
 **Method:** `GET`  
 **Path:** `/admin/dashboard`  

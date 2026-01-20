@@ -13,7 +13,7 @@ import {
   ResetPasswordDto,
   UpdateProfileDto,
 } from './dto/auth.dto';
-import { ApiResponseType, createApiResponse } from 'src/utils/response.util';
+import { ApiResponseType, createApiResponse } from '../utils/response.util';
 import { JwtGuard } from './jwt-auth.guard';
 
 @ApiTags('auth')

@@ -7,6 +7,7 @@ import {
   UpdatePricingDto,
   UserListResponseDto,
   CreateUserDto,
+  UpdateOrderStatusDto,
 } from './dto/admin.dto';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { User } from '../user/user.schema';
@@ -288,6 +289,23 @@ export class AdminService {
     await order.save();
   }
 
+  async updateOrderStatus(id: string, dto: UpdateOrderStatusDto): Promise<void> {
+    const order = await this.orderModel.findById(id);
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+    
+    if (dto.status) {
+      order.status = dto.status;
+    }
+    
+    if (dto.paymentStatus) {
+      order.paymentStatus = dto.paymentStatus;
+    }
+    
+    await order.save();
+  }
+
   // ============= PRICING CONFIGURATION =============
   async getPricing(): Promise<any> {
     const configs = await this.pricingConfigModel.find().exec();
@@ -312,19 +330,83 @@ export class AdminService {
   }
 
   // ============= PROMOTION MANAGEMENT =============
-  async getAllPromotions(active?: boolean, page: number = 1, limit: number = 20): Promise<any> {
+  async getAllPromotions(
+    status?: string,
+    search?: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<any> {
     const query: any = {};
-    if (active !== undefined) {
-      query.isActive = active;
+    const now = new Date();
+
+    if (status === 'ACTIVE') {
+      query.isActive = true;
+      query.endDate = { $gt: now };
+      query.$or = [
+        { usageLimit: null },
+        { $expr: { $lt: ['$usedCount', '$usageLimit'] } },
+      ];
+    } else if (status === 'EXPIRED') {
+      query.endDate = { $lte: now };
+    } else if (status === 'USAGE_LIMIT') {
+      query.usageLimit = { $ne: null };
+      query.$expr = { $gte: ['$usedCount', '$usageLimit'] };
+    } else if (status === 'INACTIVE') {
+      query.$or = [
+        { isActive: false },
+        { endDate: { $lte: now } },
+        {
+          $and: [
+            { usageLimit: { $ne: null } },
+            { $expr: { $gte: ['$usedCount', '$usageLimit'] } },
+          ],
+        },
+      ];
+    }
+
+    if (search) {
+      const searchRegex = { $regex: search, $options: 'i' };
+      const searchConditions = [
+        { code: searchRegex },
+        { title: searchRegex },
+        { description: searchRegex },
+      ];
+
+      if (query.$or) {
+        const existingQuery = { ...query };
+        delete query.$or;
+        delete query.isActive;
+        delete query.endDate;
+        delete query.usageLimit;
+        delete query.$expr;
+        
+        query.$and = [
+          existingQuery,
+          { $or: searchConditions }
+        ];
+      } else {
+        query.$or = searchConditions;
+      }
     }
 
     const skip = (page - 1) * limit;
     const [promotions, total] = await Promise.all([
-      this.promotionModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.promotionModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       this.promotionModel.countDocuments(query),
     ]);
 
-    return createPaginatedResponse(promotions, total, page, limit, 'Lấy danh sách khuyến mãi thành công');
+    return createPaginatedResponse(
+      promotions,
+      total,
+      page,
+      limit,
+      'Lấy danh sách khuyến mãi thành công',
+    );
   }
 
   async createPromotion(dto: CreatePromotionDto): Promise<any> {
@@ -403,34 +485,212 @@ export class AdminService {
   }
 
   // ============= REPORTS & STATISTICS =============
-  async getReports(type: string): Promise<ReportsResponseDto> {
+  async getReports(type: string, period: string = 'WEEK'): Promise<ReportsResponseDto> {
+    const tz = '+07:00'; // Việt Nam Timezone
     const now = new Date();
-    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    // 1. Tính toán mốc thời gian dựa trên period
+    let startDate: Date;
+    let format: string;
+    let limit: number;
+    let iterateUnit: 'day' | 'month';
 
-    let dailyRevenue = 0;
-    let monthlyRevenue = 0;
-
-    if (type === 'REVENUE' || type === 'ALL') {
-      const dailyOrders = await this.orderModel.find({
-        createdAt: { $gte: startOfDay },
-        paymentStatus: 'PAID',
-      });
-      
-      const monthlyOrders = await this.orderModel.find({
-        createdAt: { $gte: startOfMonth },
-        paymentStatus: 'PAID',
-      });
-
-      dailyRevenue = dailyOrders.reduce((sum, order) => sum + order.totalPrice, 0);
-      monthlyRevenue = monthlyOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+    switch (period.toUpperCase()) {
+      case 'YEAR':
+        startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() - 11, 1, -7, 0, 0, 0));
+        format = '%Y-%m';
+        limit = 12;
+        iterateUnit = 'month';
+        break;
+      case 'MONTH':
+        startDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, -7, 0, 0, 0));
+        format = '%Y-%m-%d';
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        limit = daysInMonth;
+        iterateUnit = 'day';
+        break;
+      case 'WEEK':
+      default:
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 6);
+        startDate.setHours(0, 0, 0, 0);
+        format = '%Y-%m-%d';
+        limit = 7;
+        iterateUnit = 'day';
+        break;
     }
+
+    // Lấy thời điểm bắt đầu ngày, tháng hiện tại để làm card thống kê
+    const startOfDay = new Date(now);
+    startOfDay.setHours(startOfDay.getHours() + 7);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    startOfDay.setHours(startOfDay.getHours() - 7);
+
+    const currentStartOfMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, -7, 0, 0, 0));
+
+    const revenueMatch = {
+      $or: [{ paymentStatus: 'PAID' }, { status: 'DELIVERED' }],
+    };
+
+    const [
+      dailyRevenueData,
+      monthlyRevenueData,
+      totalRevenueData,
+      vehicleTypeRevenue,
+      chartDataRaw,
+      topDriversRaw,
+      orderStatsRaw,
+    ] = await Promise.all([
+      // Doanh thu ngày (GMT+7)
+      this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startOfDay },
+            ...revenueMatch,
+          },
+        },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      ]),
+      // Doanh thu tháng hiện tại (GMT+7)
+      this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: currentStartOfMonth },
+            ...revenueMatch,
+          },
+        },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      ]),
+      // Tổng doanh thu
+      this.orderModel.aggregate([
+        { $match: revenueMatch },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } },
+      ]),
+      // Doanh thu theo loại xe
+      this.orderModel.aggregate([
+        { $match: revenueMatch },
+        { $group: { _id: '$vehicleType', total: { $sum: '$totalPrice' } } },
+      ]),
+      // Dữ liệu biểu đồ theo Period (GMT+7)
+      this.orderModel.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate },
+            ...revenueMatch,
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: format, date: '$createdAt', timezone: tz } },
+            total: { $sum: '$totalPrice' },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      // Top tài xế
+      this.orderModel.aggregate([
+        {
+          $match: {
+            ...revenueMatch,
+            driverId: { $ne: null },
+          },
+        },
+        {
+          $group: {
+            _id: '$driverId',
+            revenue: { $sum: '$totalPrice' },
+            completedOrders: { $sum: 1 },
+          },
+        },
+        { $sort: { revenue: -1 } },
+        { $limit: 10 },
+      ]),
+      // Thống kê đơn hàng
+      this.orderModel.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    // Format vehicle type revenue
+    const byVehicleType = { BIKE: 0, VAN: 0, TRUCK: 0 };
+    vehicleTypeRevenue.forEach((item) => {
+      if (byVehicleType.hasOwnProperty(item._id)) {
+        byVehicleType[item._id] = item.total;
+      }
+    });
+
+    // Format chart data based on period
+    const chartData = [];
+    if (iterateUnit === 'month') {
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(Date.UTC(now.getFullYear(), now.getMonth() - i, 1));
+        const monthStr = d.toISOString().substring(0, 7); // YYYY-MM
+        const match = chartDataRaw.find((item) => item._id === monthStr);
+        chartData.push({
+          date: monthStr,
+          value: match ? match.total : 0,
+        });
+      }
+    } else {
+      // iterate day
+      for (let i = limit - 1; i >= 0; i--) {
+        const d = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+        if (period.toUpperCase() === 'MONTH') {
+          // Lấy các ngày trong tháng hiện tại
+          d.setDate(1);
+          d.setDate(d.getDate() + (limit - 1 - i));
+        } else {
+          // Lấy 7 ngày gần nhất
+          d.setDate(d.getDate() - i);
+        }
+        const dateStr = d.toISOString().split('T')[0];
+        const match = chartDataRaw.find((item) => item._id === dateStr);
+        chartData.push({
+          date: dateStr,
+          value: match ? match.total : 0,
+        });
+      }
+    }
+
+    // Populate top drivers info
+    const topDrivers = await Promise.all(
+      topDriversRaw.map(async (item) => {
+        const driverDoc = await this.driverModel
+          .findOne({ userId: item._id })
+          .populate('userId');
+        const user = driverDoc?.userId as any;
+        return {
+          driverId: item._id,
+          name: user?.name || 'Unknown',
+          revenue: item.revenue,
+          completedOrders: item.completedOrders,
+          rating: driverDoc?.rating || 0,
+        };
+      }),
+    );
+
+    // Format order stats
+    const orderStats = {
+      total: orderStatsRaw.reduce((sum, item) => sum + item.count, 0),
+      completed: orderStatsRaw.find((item) => item._id === 'DELIVERED')?.count || 0,
+      cancelled: orderStatsRaw.find((item) => item._id === 'CANCELLED')?.count || 0,
+    };
 
     return {
       revenue: {
-        daily: dailyRevenue,
-        monthly: monthlyRevenue,
+        daily: dailyRevenueData[0]?.total || 0,
+        monthly: monthlyRevenueData[0]?.total || 0,
+        total: totalRevenueData[0]?.total || 0,
+        byVehicleType,
+        chartData,
       },
+      topDrivers,
+      orderStats,
     };
   }
 
@@ -448,7 +708,7 @@ export class AdminService {
       this.orderModel.countDocuments(),
       this.orderModel.countDocuments({ status: { $in: ['PENDING', 'ACCEPTED', 'PICKED_UP'] } }),
       this.orderModel.aggregate([
-        { $match: { paymentStatus: 'PAID' } },
+        { $match: { $or: [{ paymentStatus: 'PAID' }, { status: 'DELIVERED' }] } },
         { $group: { _id: null, total: { $sum: '$totalPrice' } } },
       ]),
       this.supportTicketModel.countDocuments({ status: { $in: ['OPEN', 'IN_PROGRESS'] } }),

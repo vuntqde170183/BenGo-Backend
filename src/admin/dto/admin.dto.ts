@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -154,7 +154,36 @@ export class UserListResponseDto {
 
 export class ReportsResponseDto {
   @ApiProperty()
-  revenue: any;
+  revenue: {
+    daily: number;
+    monthly: number;
+    total: number;
+    byVehicleType: {
+      BIKE: number;
+      VAN: number;
+      TRUCK: number;
+    };
+    chartData: {
+      date: string;
+      value: number;
+    }[];
+  };
+
+  @ApiPropertyOptional()
+  topDrivers?: {
+    driverId: string;
+    name: string;
+    revenue: number;
+    completedOrders: number;
+    rating: number;
+  }[];
+
+  @ApiPropertyOptional()
+  orderStats?: {
+    total: number;
+    completed: number;
+    cancelled: number;
+  };
 }
 
 export class CreateUserDto {
@@ -285,5 +314,27 @@ export class CreateUserDto {
     accountNumber: string;
     accountHolder: string;
   };
+}
+
+export class UpdateOrderStatusDto {
+  @ApiProperty({
+    enum: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERED', 'CANCELLED'],
+    example: 'DELIVERED',
+    description: 'Trạng thái mới của đơn hàng',
+    required: false
+  })
+  @IsOptional()
+  @IsEnum(['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERED', 'CANCELLED'])
+  status?: string;
+
+  @ApiProperty({
+    enum: ['UNPAID', 'PAID'],
+    example: 'PAID',
+    description: 'Trạng thái thanh toán mới',
+    required: false
+  })
+  @IsOptional()
+  @IsEnum(['UNPAID', 'PAID'])
+  paymentStatus?: string;
 }
 

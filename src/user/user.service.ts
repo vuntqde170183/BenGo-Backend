@@ -3,7 +3,7 @@ import { User } from './user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import { ApiResponseType, createApiResponse } from 'src/utils/response.util';
+import { ApiResponseType, createApiResponse } from '../utils/response.util';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()

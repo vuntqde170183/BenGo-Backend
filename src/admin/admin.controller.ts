@@ -22,6 +22,7 @@ import {
   UpdatePricingDto,
   UserListResponseDto,
   CreateUserDto,
+  UpdateOrderStatusDto,
 } from './dto/admin.dto';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
@@ -198,6 +199,22 @@ export class AdminController {
     return createApiResponse(null, 'Order cancelled successfully');
   }
 
+  @Put('orders/:id/status')
+  @ApiOperation({ 
+    summary: '[ADMIN] Cập nhật trạng thái đơn hàng & thanh toán',
+    description: 'API cho phép admin cập nhật trạng thái đơn hàng (PENDING, ACCEPTED,...) và trạng thái thanh toán (UNPAID, PAID).'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật trạng thái thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy đơn hàng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  async updateOrderStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ): Promise<any> {
+    await this.adminService.updateOrderStatus(id, dto);
+    return createApiResponse(null, 'Cập nhật trạng thái đơn hàng thành công');
+  }
+
   // ============= CẤU HÌNH GIÁ CƯỚC =============
   @Get('pricing')
   @ApiOperation({ 
@@ -229,16 +246,17 @@ export class AdminController {
   @Get('promotions')
   @ApiOperation({ 
     summary: '[ADMIN] Lấy danh sách khuyến mãi',
-    description: 'API lấy danh sách tất cả các chương trình khuyến mãi. Có thể lọc theo trạng thái hoạt động.'
+    description: 'API lấy danh sách các chương trình khuyến mãi. Lọc theo trạng thái: ACTIVE (còn hạn & lượt), INACTIVE (hết hạn hoặc hết lượt hoặc bị tắt), EXPIRED (hết hạn), USAGE_LIMIT (hết lượt).'
   })
   @ApiResponse({ status: 200, description: 'Lấy danh sách khuyến mãi thành công' })
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllPromotions(
-    @Query('active') active?: boolean,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
   ): Promise<any> {
-    return this.adminService.getAllPromotions(active, page, limit);
+    return this.adminService.getAllPromotions(status, search, page, limit);
   }
 
   @Post('promotions')
@@ -358,8 +376,11 @@ export class AdminController {
     type: ReportsResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
-  async getReports(@Query('type') type: string): Promise<ReportsResponseDto> {
-    return this.adminService.getReports(type);
+  async getReports(
+    @Query('type') type: string,
+    @Query('period') period: string = 'WEEK',
+  ): Promise<ReportsResponseDto> {
+    return this.adminService.getReports(type, period);
   }
 
   @Get('dashboard')
