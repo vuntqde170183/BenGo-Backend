@@ -141,6 +141,19 @@ export class AdminController {
     return createApiResponse(null, 'Cập nhật trạng thái tài xế thành công');
   }
 
+  @Delete('drivers/:id')
+  @ApiOperation({ 
+    summary: '[ADMIN] Xóa tài xế',
+    description: 'API xóa vĩnh viễn một tài xế và tài khoản người dùng tương ứng.'
+  })
+  @ApiResponse({ status: 200, description: 'Xóa tài xế thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy tài xế' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  async deleteDriver(@Param('id') id: string): Promise<any> {
+    await this.adminService.deleteDriver(id);
+    return createApiResponse(null, 'Driver deleted successfully');
+  }
+
   // ============= QUẢN LÝ ĐƠN HÀNG =============
   @Get('orders')
   @ApiOperation({ 
@@ -197,17 +210,18 @@ export class AdminController {
     return this.adminService.getPricing();
   }
 
-  @Put('pricing')
+  @Put('pricing/:vehicleType?')
   @ApiOperation({ 
     summary: '[ADMIN] Cập nhật cấu hình giá cước',
-    description: 'API cập nhật giá cước cơ bản, giá theo km, và hệ số giờ cao điểm cho tất cả các loại xe.'
+    description: 'API cập nhật giá cước cho một loại xe cụ thể hoặc tất cả các loại xe.'
   })
   @ApiResponse({ status: 200, description: 'Cập nhật giá cước thành công' })
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async updatePricing(
+    @Param('vehicleType') vehicleType: string,
     @Body() dto: UpdatePricingDto,
   ): Promise<any> {
-    await this.adminService.updatePricing(dto);
+    await this.adminService.updatePricing(dto, vehicleType);
     return createApiResponse(null, 'Pricing updated successfully');
   }
 

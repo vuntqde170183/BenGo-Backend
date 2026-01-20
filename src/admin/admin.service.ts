@@ -163,10 +163,17 @@ export class AdminService {
   }
 
   async deleteUser(id: string): Promise<void> {
-    const result = await this.userModel.findByIdAndDelete(id);
-    if (!result) {
+    const user = await this.userModel.findById(id);
+    if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Nếu là DRIVER, xóa hồ sơ driver tương ứng
+    if (user.role === 'DRIVER') {
+      await this.driverModel.findOneAndDelete({ userId: id });
+    }
+
+    await this.userModel.findByIdAndDelete(id);
   }
 
   // ============= DRIVER MANAGEMENT =============
@@ -217,6 +224,23 @@ export class AdminService {
     }
 
     await driver.save();
+  }
+
+  async deleteDriver(id: string): Promise<void> {
+    const driver = await this.driverModel.findById(id);
+    if (!driver) {
+      throw new NotFoundException('Không tìm thấy tài xế');
+    }
+
+    const userId = driver.userId;
+
+    // Xóa hồ sơ driver
+    await this.driverModel.findByIdAndDelete(id);
+
+    // Xóa tài khoản user tương ứng nếu có
+    if (userId) {
+      await this.userModel.findByIdAndDelete(userId);
+    }
   }
 
   // ============= ORDER MANAGEMENT =============
@@ -270,8 +294,8 @@ export class AdminService {
     return createApiResponse(configs, 'Pricing config retrieved successfully');
   }
 
-  async updatePricing(dto: UpdatePricingDto): Promise<void> {
-    const vehicleTypes = ['BIKE', 'VAN', 'TRUCK'];
+  async updatePricing(dto: UpdatePricingDto, vehicleTypeParam?: string): Promise<void> {
+    const vehicleTypes = vehicleTypeParam ? [vehicleTypeParam.toUpperCase()] : ['BIKE', 'VAN', 'TRUCK'];
     
     for (const vehicleType of vehicleTypes) {
       await this.pricingConfigModel.findOneAndUpdate(

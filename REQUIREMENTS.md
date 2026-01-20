@@ -71,7 +71,8 @@ Actors:
    ● Support customers & drivers / Hỗ trợ KH & tài xế
    ● Issue tracking & notes / Ghi chú & xử lý sự cố
    ● Driver performance tracking / Theo dõi hiệu suất tài xế
-4. Administration (Quản trị)● User management / Quản lý người dùng
+4. Administration (Quản trị)
+   ● User management / Quản lý người dùng
    ● Driver approval / Duyệt tài xế
    ● Order management / Quản lý đơn hàng
    ● Pricing configuration / Cấu hình giá
