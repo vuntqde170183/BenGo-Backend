@@ -28,16 +28,16 @@ export class AdminService {
     @InjectModel(PricingConfig.name) private pricingConfigModel: Model<PricingConfig>,
     @InjectModel(Promotion.name) private promotionModel: Model<Promotion>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicket>,
-  ) {}
+  ) { }
 
   // ============= USER MANAGEMENT =============
   async getUsers(role: string, search: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
-    
+
     if (role && role !== 'ALL') {
       query.role = role;
     }
-    
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -51,7 +51,7 @@ export class AdminService {
       this.userModel.find(query).sort({ createdAt: -1 }).select('-password').skip(skip).limit(limit).exec(),
       this.userModel.countDocuments(query),
     ]);
-    
+
     const userData = users.map(user => ({
       id: user._id.toString(),
       phone: user.phone,
@@ -98,12 +98,12 @@ export class AdminService {
 
   async createUser(dto: CreateUserDto): Promise<any> {
     const { driverProfile, ...userDetails } = dto;
-    
+
     // 1. Kiểm tra thông tin DRIVER trước khi tạo User
     if (dto.role === 'DRIVER') {
       const vehicleType = driverProfile?.vehicleType || dto.vehicleType;
       const plateNumber = driverProfile?.plateNumber || dto.plateNumber;
-      
+
       if (!vehicleType || !plateNumber) {
         throw new BadRequestException('Tài xế cần có thông tin loại xe (vehicleType) và biển số xe (plateNumber)');
       }
@@ -141,7 +141,7 @@ export class AdminService {
       // Thêm các trường tùy chọn nếu có
       const rating = driverProfile?.rating !== undefined ? driverProfile.rating : dto.rating;
       if (rating !== undefined) driverData.rating = rating;
-      
+
       driverData.licenseImage = driverProfile?.licenseImage || dto.licenseImage;
       driverData.identityNumber = driverProfile?.identityNumber || dto.identityNumber;
       driverData.identityFrontImage = driverProfile?.identityFrontImage || dto.identityFrontImage;
@@ -177,6 +177,96 @@ export class AdminService {
     await this.userModel.findByIdAndDelete(id);
   }
 
+  async updateUserRole(userId: string, role: string, driverProfile?: any, reason?: string): Promise<any> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    const oldRole = user.role;
+
+    // Nếu chuyển sang DRIVER, cần có thông tin driver profile
+    if (role === 'DRIVER' && oldRole !== 'DRIVER') {
+      if (!driverProfile || !driverProfile.vehicleType || !driverProfile.plateNumber) {
+        throw new BadRequestException('Cần cung cấp thông tin vehicleType và plateNumber khi chuyển sang vai trò DRIVER');
+      }
+
+      // Tạo hồ sơ driver mới
+      const newDriver = new this.driverModel({
+        userId: user._id,
+        vehicleType: driverProfile.vehicleType,
+        plateNumber: driverProfile.plateNumber,
+        status: 'APPROVED',
+        isOnline: false,
+        rating: driverProfile.rating || 5,
+        licenseImage: driverProfile.licenseImage,
+        identityNumber: driverProfile.identityNumber,
+        identityFrontImage: driverProfile.identityFrontImage,
+        identityBackImage: driverProfile.identityBackImage,
+        vehicleRegistrationImage: driverProfile.vehicleRegistrationImage,
+        drivingLicenseNumber: driverProfile.drivingLicenseNumber,
+        bankInfo: driverProfile.bankInfo,
+      });
+      await newDriver.save();
+    }
+
+    // Nếu chuyển từ DRIVER sang role khác, xóa hồ sơ driver
+    if (oldRole === 'DRIVER' && role !== 'DRIVER') {
+      await this.driverModel.findOneAndDelete({ userId: user._id });
+    }
+
+    // Cập nhật role
+    user.role = role;
+    await user.save();
+
+    return createApiResponse(
+      {
+        userId: user._id,
+        name: user.name,
+        oldRole,
+        newRole: role,
+        reason
+      },
+      'Cập nhật vai trò người dùng thành công'
+    );
+  }
+
+  async updateUser(userId: string, updateData: any): Promise<any> {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    // Kiểm tra phone và email đã tồn tại chưa (nếu có thay đổi)
+    if (updateData.phone && updateData.phone !== user.phone) {
+      const existingPhone = await this.userModel.findOne({ phone: updateData.phone });
+      if (existingPhone) {
+        throw new BadRequestException('Số điện thoại đã được sử dụng');
+      }
+    }
+
+    if (updateData.email && updateData.email !== user.email) {
+      const existingEmail = await this.userModel.findOne({ email: updateData.email });
+      if (existingEmail) {
+        throw new BadRequestException('Email đã được sử dụng');
+      }
+    }
+
+    // Cập nhật thông tin
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] !== undefined) {
+        user[key] = updateData[key];
+      }
+    });
+
+    await user.save();
+
+    const result = user.toObject();
+    delete result.password;
+
+    return createApiResponse(result, 'Cập nhật thông tin người dùng thành công');
+  }
+
   // ============= DRIVER MANAGEMENT =============
   async getAllDrivers(status?: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
@@ -195,7 +285,7 @@ export class AdminService {
 
   async updateDriverStatus(dto: UpdateDriverStatusDto): Promise<void> {
     const driver = await this.driverModel.findById(dto.driverId);
-    
+
     if (!driver) {
       throw new NotFoundException('Không tìm thấy tài xế');
     }
@@ -273,7 +363,7 @@ export class AdminService {
       .populate('customerId', 'name phone email')
       .populate('driverId', 'name phone')
       .exec();
-    
+
     if (!order) {
       throw new NotFoundException('Order not found');
     }
@@ -294,15 +384,15 @@ export class AdminService {
     if (!order) {
       throw new NotFoundException('Không tìm thấy đơn hàng');
     }
-    
+
     if (dto.status) {
       order.status = dto.status;
     }
-    
+
     if (dto.paymentStatus) {
       order.paymentStatus = dto.paymentStatus;
     }
-    
+
     await order.save();
   }
 
@@ -314,7 +404,7 @@ export class AdminService {
 
   async updatePricing(dto: UpdatePricingDto, vehicleTypeParam?: string): Promise<void> {
     const vehicleTypes = vehicleTypeParam ? [vehicleTypeParam.toUpperCase()] : ['BIKE', 'VAN', 'TRUCK'];
-    
+
     for (const vehicleType of vehicleTypes) {
       await this.pricingConfigModel.findOneAndUpdate(
         { vehicleType },
@@ -379,7 +469,7 @@ export class AdminService {
         delete query.endDate;
         delete query.usageLimit;
         delete query.$expr;
-        
+
         query.$and = [
           existingQuery,
           { $or: searchConditions }
@@ -458,7 +548,7 @@ export class AdminService {
       .populate('assignedTo', 'name email')
       .populate('orderId')
       .exec();
-    
+
     if (!ticket) {
       throw new NotFoundException('Ticket not found');
     }
@@ -488,7 +578,7 @@ export class AdminService {
   async getReports(type: string, period: string = 'WEEK'): Promise<ReportsResponseDto> {
     const tz = '+07:00'; // Việt Nam Timezone
     const now = new Date();
-    
+
     // 1. Tính toán mốc thời gian dựa trên period
     let startDate: Date;
     let format: string;

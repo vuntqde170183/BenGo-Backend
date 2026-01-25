@@ -52,8 +52,8 @@ export class DriverProfileDto {
   @IsNumber()
   rating?: number;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh giấy phép lái xe',
     example: 'https://example.com/license.jpg'
   })
@@ -66,8 +66,8 @@ export class DriverProfileDto {
   @IsString()
   identityNumber?: string;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh mặt trước CCCD',
     example: 'https://example.com/id-front.jpg'
   })
@@ -75,8 +75,8 @@ export class DriverProfileDto {
   @IsString()
   identityFrontImage?: string;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh mặt sau CCCD',
     example: 'https://example.com/id-back.jpg'
   })
@@ -84,8 +84,8 @@ export class DriverProfileDto {
   @IsString()
   identityBackImage?: string;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh đăng ký xe',
     example: 'https://example.com/vehicle-reg.jpg'
   })
@@ -98,7 +98,7 @@ export class DriverProfileDto {
   @IsString()
   drivingLicenseNumber?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     required: false,
     description: 'Thông tin tài khoản ngân hàng',
     type: BankInfoDto
@@ -110,14 +110,14 @@ export class DriverProfileDto {
 }
 
 export class UpdateDriverStatusDto {
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'ID của tài xế cần cập nhật trạng thái',
     example: '694eea39736c474360b86b15'
   })
   @IsString()
   driverId: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     enum: ['APPROVED', 'PENDING', 'LOCKED', 'REJECTED'],
     description: 'Trạng thái mới của tài xế: APPROVED (đã duyệt), PENDING (chờ duyệt), LOCKED (đã khóa), REJECTED (từ chối)',
     example: 'APPROVED'
@@ -125,7 +125,7 @@ export class UpdateDriverStatusDto {
   @IsEnum(['APPROVED', 'PENDING', 'LOCKED', 'REJECTED'])
   status: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     required: false,
     description: 'Lý do từ chối hoặc khóa tài xế (bắt buộc khi status là REJECTED hoặc LOCKED)',
     example: 'Hồ sơ không đầy đủ'
@@ -134,7 +134,7 @@ export class UpdateDriverStatusDto {
   @IsString()
   reason?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     required: false,
     description: 'Ghi chú thêm từ admin',
     example: 'Cần bổ sung giấy phép lái xe hạng B2'
@@ -257,8 +257,8 @@ export class CreateUserDto {
   @IsNumber()
   rating?: number;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh giấy phép lái xe (chỉ dành cho DRIVER)',
     example: 'https://example.com/license.jpg'
   })
@@ -271,8 +271,8 @@ export class CreateUserDto {
   @IsString()
   identityNumber?: string;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh mặt trước CCCD (chỉ dành cho DRIVER)',
     example: 'https://example.com/id-front.jpg'
   })
@@ -280,8 +280,8 @@ export class CreateUserDto {
   @IsString()
   identityFrontImage?: string;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh mặt sau CCCD (chỉ dành cho DRIVER)',
     example: 'https://example.com/id-back.jpg'
   })
@@ -289,8 +289,8 @@ export class CreateUserDto {
   @IsString()
   identityBackImage?: string;
 
-  @ApiProperty({ 
-    required: false, 
+  @ApiProperty({
+    required: false,
     description: 'URL ảnh đăng ký xe (chỉ dành cho DRIVER)',
     example: 'https://example.com/vehicle-reg.jpg'
   })
@@ -303,7 +303,7 @@ export class CreateUserDto {
   @IsString()
   drivingLicenseNumber?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     required: false,
     description: 'Thông tin tài khoản ngân hàng (chỉ dành cho DRIVER)',
     example: { bankName: 'Vietcombank', accountNumber: '1234567890', accountHolder: 'Nguyen Van A' }
@@ -336,5 +336,75 @@ export class UpdateOrderStatusDto {
   @IsOptional()
   @IsEnum(['UNPAID', 'PAID'])
   paymentStatus?: string;
+}
+
+export class UpdateUserRoleDto {
+  @ApiProperty({
+    enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'],
+    description: 'Vai trò mới của người dùng',
+    example: 'DISPATCHER'
+  })
+  @IsEnum(['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'])
+  role: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Lý do thay đổi vai trò (tùy chọn)',
+    example: 'Thăng chức lên điều phối viên'
+  })
+  @IsOptional()
+  @IsString()
+  reason?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Thông tin tài xế (bắt buộc nếu chuyển sang role DRIVER)',
+    type: DriverProfileDto
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DriverProfileDto)
+  driverProfile?: DriverProfileDto;
+}
+
+export class UpdateUserDto {
+  @ApiProperty({ example: 'Nguyen Van A', required: false })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @ApiProperty({ example: 'user@example.com', required: false })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty({ example: '0901234567', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty({ example: 'https://example.com/avatar.jpg', required: false })
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
+  @ApiProperty({ example: 100000, required: false })
+  @IsOptional()
+  @IsNumber()
+  walletBalance?: number;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  active?: boolean;
+
+  @ApiProperty({
+    enum: ['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'],
+    example: 'DISPATCHER',
+    required: false,
+    description: 'Vai trò của người dùng (nếu muốn thay đổi role, nên dùng endpoint /admin/users/:id/role)'
+  })
+  @IsOptional()
+  @IsEnum(['CUSTOMER', 'DRIVER', 'ADMIN', 'DISPATCHER', 'SUPERADMIN'])
+  role?: string;
 }
 

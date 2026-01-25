@@ -23,6 +23,8 @@ import {
   UserListResponseDto,
   CreateUserDto,
   UpdateOrderStatusDto,
+  UpdateUserRoleDto,
+  UpdateUserDto,
 } from './dto/admin.dto';
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
@@ -33,11 +35,11 @@ import { createApiResponse } from '../utils/response.util';
 @UseGuards(JwtGuard)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService) { }
 
   // ============= QUẢN LÝ NGƯỜI DÙNG =============
   @Get('users')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy danh sách người dùng',
     description: 'API lấy danh sách tất cả người dùng trong hệ thống với phân trang và bộ lọc. Có thể lọc theo vai trò và tìm kiếm theo tên, số điện thoại, email.'
   })
@@ -57,7 +59,7 @@ export class AdminController {
   }
 
   @Get('users/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy thông tin chi tiết người dùng',
     description: 'API lấy thông tin chi tiết của một người dùng cụ thể theo ID.'
   })
@@ -69,7 +71,7 @@ export class AdminController {
   }
 
   @Put('users/:id/block')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Khóa/Mở khóa tài khoản người dùng',
     description: 'API khóa hoặc mở khóa tài khoản người dùng. Có thể thêm lý do khi khóa tài khoản.'
   })
@@ -85,7 +87,7 @@ export class AdminController {
   }
 
   @Delete('users/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Xóa người dùng',
     description: 'API xóa vĩnh viễn một người dùng khỏi hệ thống. Thao tác này không thể hoàn tác.'
   })
@@ -97,8 +99,24 @@ export class AdminController {
     return createApiResponse(null, 'User deleted successfully');
   }
 
+  @Put('users/:id')
+  @ApiOperation({
+    summary: '[ADMIN] Cập nhật thông tin người dùng',
+    description: 'API cập nhật thông tin cơ bản của người dùng (tên, email, số điện thoại, avatar, số dư ví).'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật thông tin thành công' })
+  @ApiResponse({ status: 400, description: 'Email hoặc số điện thoại đã được sử dụng' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy người dùng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  async updateUser(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+  ): Promise<any> {
+    return this.adminService.updateUser(id, dto);
+  }
+
   @Post('users')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Tạo người dùng mới',
     description: 'API tạo một người dùng mới (Customer, Driver, Admin, Dispatcher) bởi Admin.'
   })
@@ -110,9 +128,25 @@ export class AdminController {
     return createApiResponse(user, 'User created successfully', 201);
   }
 
+  @Put('users/:id/role')
+  @ApiOperation({
+    summary: '[ADMIN] Phân quyền người dùng',
+    description: 'API cập nhật vai trò (role) của người dùng. Khi chuyển sang DRIVER cần cung cấp thông tin xe. Khi chuyển từ DRIVER sang role khác, hồ sơ driver sẽ bị xóa.'
+  })
+  @ApiResponse({ status: 200, description: 'Cập nhật vai trò thành công' })
+  @ApiResponse({ status: 400, description: 'Thiếu thông tin bắt buộc khi chuyển sang DRIVER' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy người dùng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  async updateUserRole(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+  ): Promise<any> {
+    return this.adminService.updateUserRole(id, dto.role, dto.driverProfile, dto.reason);
+  }
+
   // ============= QUẢN LÝ TÀI XẾ =============
   @Get('drivers')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy danh sách tài xế',
     description: 'API lấy danh sách tất cả tài xế trong hệ thống. Có thể lọc theo trạng thái (PENDING, APPROVED, LOCKED).'
   })
@@ -127,7 +161,7 @@ export class AdminController {
   }
 
   @Put('drivers/status')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Cập nhật trạng thái tài xế',
     description: 'API cập nhật trạng thái tài xế: APPROVED (đã duyệt), PENDING (chờ duyệt), LOCKED (đã khóa), REJECTED (từ chối). Bắt buộc phải có lý do khi REJECT hoặc LOCK tài xế.'
   })
@@ -143,7 +177,7 @@ export class AdminController {
   }
 
   @Delete('drivers/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Xóa tài xế',
     description: 'API xóa vĩnh viễn một tài xế và tài khoản người dùng tương ứng.'
   })
@@ -157,7 +191,7 @@ export class AdminController {
 
   // ============= QUẢN LÝ ĐƠN HÀNG =============
   @Get('orders')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy danh sách đơn hàng',
     description: 'API lấy danh sách tất cả đơn hàng trong hệ thống với phân trang. Có thể lọc theo trạng thái đơn hàng.'
   })
@@ -172,7 +206,7 @@ export class AdminController {
   }
 
   @Get('orders/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy thông tin chi tiết đơn hàng',
     description: 'API lấy thông tin chi tiết của một đơn hàng cụ thể, bao gồm thông tin khách hàng, tài xế, và trạng thái đơn hàng.'
   })
@@ -184,7 +218,7 @@ export class AdminController {
   }
 
   @Put('orders/:id/cancel')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Bắt buộc hủy đơn hàng',
     description: 'API cho phép admin bắt buộc hủy một đơn hàng vì lý do cụ thể. Thường dùng trong trường hợp khẩn cấp.'
   })
@@ -200,7 +234,7 @@ export class AdminController {
   }
 
   @Put('orders/:id/status')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Cập nhật trạng thái đơn hàng & thanh toán',
     description: 'API cho phép admin cập nhật trạng thái đơn hàng (PENDING, ACCEPTED,...) và trạng thái thanh toán (UNPAID, PAID).'
   })
@@ -217,7 +251,7 @@ export class AdminController {
 
   // ============= CẤU HÌNH GIÁ CƯỚC =============
   @Get('pricing')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy cấu hình giá cước',
     description: 'API lấy thông tin cấu hình giá cước hiện tại cho các loại xe (BIKE, VAN, TRUCK).'
   })
@@ -228,7 +262,7 @@ export class AdminController {
   }
 
   @Put('pricing/:vehicleType?')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Cập nhật cấu hình giá cước',
     description: 'API cập nhật giá cước cho một loại xe cụ thể hoặc tất cả các loại xe.'
   })
@@ -244,7 +278,7 @@ export class AdminController {
 
   // ============= QUẢN LÝ KHUYẾN MÃI =============
   @Get('promotions')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy danh sách khuyến mãi',
     description: 'API lấy danh sách các chương trình khuyến mãi. Lọc theo trạng thái: ACTIVE (còn hạn & lượt), INACTIVE (hết hạn hoặc hết lượt hoặc bị tắt), EXPIRED (hết hạn), USAGE_LIMIT (hết lượt).'
   })
@@ -260,7 +294,7 @@ export class AdminController {
   }
 
   @Post('promotions')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Tạo chương trình khuyến mãi mới',
     description: 'API tạo mới một chương trình khuyến mãi với mã giảm giá, phần trăm giảm, và thời gian hiệu lực.'
   })
@@ -275,7 +309,7 @@ export class AdminController {
   }
 
   @Put('promotions/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Cập nhật khuyến mãi',
     description: 'API cập nhật thông tin của một chương trình khuyến mãi đang tồn tại.'
   })
@@ -291,7 +325,7 @@ export class AdminController {
   }
 
   @Delete('promotions/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Xóa khuyến mãi',
     description: 'API xóa một chương trình khuyến mãi khỏi hệ thống.'
   })
@@ -305,7 +339,7 @@ export class AdminController {
 
   // ============= QUẢN LÝ HỖ TRỢ / KHIẾU NẠI =============
   @Get('tickets')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy danh sách phiếu hỗ trợ',
     description: 'API lấy danh sách tất cả phiếu hỗ trợ/khiếu nại từ người dùng. Có thể lọc theo trạng thái và độ ưu tiên.'
   })
@@ -321,7 +355,7 @@ export class AdminController {
   }
 
   @Get('tickets/:id')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy thông tin chi tiết phiếu hỗ trợ',
     description: 'API lấy thông tin chi tiết của một phiếu hỗ trợ/khiếu nại, bao gồm thông tin người gửi và người xử lý.'
   })
@@ -333,7 +367,7 @@ export class AdminController {
   }
 
   @Put('tickets/:id/assign')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Phân công phiếu hỗ trợ cho dispatcher',
     description: 'API phân công một phiếu hỗ trợ cho nhân viên điều phối để xử lý.'
   })
@@ -349,7 +383,7 @@ export class AdminController {
   }
 
   @Put('tickets/:id/status')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Cập nhật trạng thái phiếu hỗ trợ',
     description: 'API cập nhật trạng thái xử lý của phiếu hỗ trợ (OPEN, IN_PROGRESS, RESOLVED, CLOSED). Có thể thêm giải pháp khi đóng phiếu.'
   })
@@ -366,7 +400,7 @@ export class AdminController {
 
   // ============= BÁO CÁO & THỐNG KÊ =============
   @Get('reports')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Lấy báo cáo thống kê hệ thống',
     description: 'API lấy báo cáo thống kê về doanh thu, đơn hàng, người dùng theo loại báo cáo (REVENUE, ORDERS, USERS, ALL).'
   })
@@ -384,7 +418,7 @@ export class AdminController {
   }
 
   @Get('dashboard')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: '[ADMIN] Tổng quan dashboard',
     description: 'API lấy thông tin tổng quan cho trang dashboard admin, bao gồm số lượng người dùng, tài xế, đơn hàng, doanh thu, và phiếu hỗ trợ chờ xử lý.'
   })

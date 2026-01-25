@@ -8,7 +8,7 @@
 ## 📑 Table of Contents
 
 1. [Auth](#1-auth)
-2. [Admin (22 routes)](#2-admin-routes-)
+2. [Admin (23 routes)](#2-admin-routes-)
 3. [Orders](#3-orders)
 4. [Driver](#4-driver)
 5. [Dispatcher](#5-dispatcher)
@@ -213,9 +213,98 @@
 **Path:** `/admin/users/:id`  
 **Response:** `{ "success": true }`
 
+#### 2.5. Update User Role (Phân quyền người dùng)
+
+**Method:** `PUT`  
+**Path:** `/admin/users/:id/role`  
+**Description:** Cập nhật vai trò (role) của người dùng. Khi chuyển sang DRIVER cần cung cấp thông tin xe. Khi chuyển từ DRIVER sang role khác, hồ sơ driver sẽ bị xóa.
+
+**Payload:**
+
+```json
+{
+  "role": "DISPATCHER",
+  "reason": "Thăng chức lên điều phối viên",
+  "driverProfile": {
+    "vehicleType": "BIKE",
+    "plateNumber": "59-S2 123.45",
+    "rating": 5,
+    "licenseImage": "https://example.com/license.jpg",
+    "identityNumber": "123456789012",
+    "identityFrontImage": "https://example.com/id-front.jpg",
+    "identityBackImage": "https://example.com/id-back.jpg",
+    "vehicleRegistrationImage": "https://example.com/vehicle-reg.jpg",
+    "drivingLicenseNumber": "B2-12345678",
+    "bankInfo": {
+      "bankName": "Vietcombank",
+      "accountNumber": "1234567890",
+      "accountHolder": "Nguyen Van A"
+    }
+  }
+}
+```
+
+**Available Roles:**
+- `CUSTOMER`: Khách hàng sử dụng dịch vụ
+- `DRIVER`: Tài xế cung cấp dịch vụ vận chuyển
+- `DISPATCHER`: Điều phối viên hỗ trợ và giám sát
+- `ADMIN`: Quản trị viên hệ thống
+- `SUPERADMIN`: Quản trị viên cấp cao nhất
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "message": "Cập nhật vai trò người dùng thành công",
+  "data": {
+    "userId": "694eea39736c474360b86b15",
+    "name": "Nguyễn Văn A",
+    "oldRole": "CUSTOMER",
+    "newRole": "DISPATCHER",
+    "reason": "Thăng chức lên điều phối viên"
+  }
+}
+```
+
+**Examples:**
+
+1. **Chuyển CUSTOMER thành DISPATCHER:**
+```json
+{
+  "role": "DISPATCHER",
+  "reason": "Thăng chức lên điều phối viên"
+}
+```
+
+2. **Chuyển CUSTOMER thành DRIVER (cần driverProfile):**
+```json
+{
+  "role": "DRIVER",
+  "reason": "Đăng ký làm tài xế",
+  "driverProfile": {
+    "vehicleType": "BIKE",
+    "plateNumber": "59-S2 123.45"
+  }
+}
+```
+
+3. **Chuyển DRIVER về CUSTOMER (hồ sơ driver sẽ bị xóa):**
+```json
+{
+  "role": "CUSTOMER",
+  "reason": "Ngừng hoạt động tài xế"
+}
+```
+
+**Error Responses:**
+- `400`: Thiếu thông tin bắt buộc khi chuyển sang DRIVER
+- `404`: Không tìm thấy người dùng
+- `401`: Chưa đăng nhập hoặc không có quyền admin
+
 ### 🚗 Driver Management
 
-#### 2.5. Get All Drivers
+#### 2.6. Get All Drivers
 
 **Method:** `GET`  
 **Path:** `/admin/drivers`  
@@ -273,7 +362,7 @@
 
 **Note:** Drivers with `status` = `REJECTED` or `LOCKED` will have `rejectionReason` and `adminNote` fields populated.
 
-#### 2.6. Update Driver Status
+#### 2.7. Update Driver Status
 
 **Method:** `PUT`  
 **Path:** `/admin/drivers/status`  
@@ -351,7 +440,7 @@
 
 ### 📦 Order Management
 
-#### 2.7. Get All Orders
+#### 2.8. Get All Orders
 
 **Method:** `GET`  
 **Path:** `/admin/orders`  
@@ -398,18 +487,18 @@
 }
 ```
 
-#### 2.8. Get Order Details
+#### 2.9. Get Order Details
 
 **Method:** `GET`  
 **Path:** `/admin/orders/:id`
 
-#### 2.9. Force Cancel Order
+#### 2.10. Force Cancel Order
 
 **Method:** `PUT`  
 **Path:** `/admin/orders/:id/cancel`  
 **Payload:** `{ "reason": "Admin override due to complaint" }`
 
-#### 2.10. Update Order & Payment Status
+#### 2.11. Update Order & Payment Status
 
 **Method:** `PUT`  
 **Path:** `/admin/orders/:id/status`  
@@ -424,7 +513,7 @@
 
 ### 💰 Pricing Configuration
 
-#### 2.11. Get Pricing Config
+#### 2.12. Get Pricing Config
 
 **Method:** `GET`  
 **Path:** `/admin/pricing`  
@@ -456,7 +545,7 @@
 ]
 ```
 
-#### 2.12. Update Pricing
+#### 2.13. Update Pricing
 
 **Method:** `PUT`  
 **Path:** `/admin/pricing`  
@@ -474,7 +563,7 @@
 
 ### 🎁 Promotion Management
 
-#### 2.13. Get All Promotions
+#### 2.14. Get All Promotions
 
 **Method:** `GET`  
 **Path:** `/admin/promotions`  
@@ -510,7 +599,7 @@
 }
 ```
 
-#### 2.14. Create Promotion
+#### 2.15. Create Promotion
 
 **Method:** `POST`  
 **Path:** `/admin/promotions`  
@@ -532,7 +621,7 @@
 }
 ```
 
-#### 2.15. Update Promotion
+#### 2.16. Update Promotion
 
 **Method:** `PUT`  
 **Path:** `/admin/promotions/:id`  
@@ -545,14 +634,14 @@
 }
 ```
 
-#### 2.16. Delete Promotion
+#### 2.17. Delete Promotion
 
 **Method:** `DELETE`  
 **Path:** `/admin/promotions/:id`
 
 ### 🎫 Support Tickets / Complaints
 
-#### 2.17. Get All Tickets
+#### 2.18. Get All Tickets
 
 **Method:** `GET`  
 **Path:** `/admin/tickets`  
@@ -585,18 +674,18 @@
 }
 ```
 
-#### 2.18. Get Ticket Details
+#### 2.19. Get Ticket Details
 
 **Method:** `GET`  
 **Path:** `/admin/tickets/:id`
 
-#### 2.19. Assign Ticket
+#### 2.20. Assign Ticket
 
 **Method:** `PUT`  
 **Path:** `/admin/tickets/:id/assign`  
 **Payload:** `{ "assignedTo": "dispatcherId" }`
 
-#### 2.20. Update Ticket Status
+#### 2.21. Update Ticket Status
 
 **Method:** `PUT`  
 **Path:** `/admin/tickets/:id/status`  
@@ -611,7 +700,7 @@
 
 ### 📊 Reports & Statistics
 
-#### 2.21. Get Reports
+#### 2.22. Get Reports
 
 **Method:** `GET`  
 **Path:** `/admin/reports`  
@@ -659,7 +748,7 @@
 }
 ```
 
-#### 2.22. Dashboard Overview
+#### 2.23. Dashboard Overview
 
 **Method:** `GET`  
 **Path:** `/admin/dashboard`  
@@ -991,6 +1080,41 @@
 **Path:** `/dispatcher/support`  
 **Query:** `status`: `OPEN` | `IN_PROGRESS`  
 **Response:** Same as Admin tickets endpoint
+
+### 5.5. Update Support Ticket
+
+**Method:** `PUT`  
+**Path:** `/dispatcher/support/:id`  
+**Headers:** `Authorization: Bearer <dispatcher_token>`  
+**Description:** Cập nhật trạng thái và ghi chú cho ticket hỗ trợ
+
+**Payload:**
+
+```json
+{
+  "status": "IN_PROGRESS",
+  "note": "Đang liên hệ với tài xế để xác minh",
+  "resolution": "Đã hoàn tiền cho khách hàng"
+}
+```
+
+**Status Values:**
+- `OPEN`: Mới tạo, chưa xử lý
+- `IN_PROGRESS`: Đang xử lý
+- `RESOLVED`: Đã giải quyết
+- `CLOSED`: Đã đóng
+
+**Response:**
+
+```json
+{
+  "success": true
+}
+```
+
+**Error Responses:**
+- `404`: Không tìm thấy ticket
+- `401`: Chưa đăng nhập hoặc không có quyền dispatcher
 
 ---
 

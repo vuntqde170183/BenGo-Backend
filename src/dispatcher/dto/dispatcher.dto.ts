@@ -49,3 +49,21 @@ export class SupportTicketResponseDto {
   @ApiProperty()
   content: string;
 }
+
+export class UpdateTicketDto {
+  @ApiProperty({
+    enum: ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+    required: false,
+    description: 'Trạng thái mới của ticket'
+  })
+  @IsString()
+  status?: string;
+
+  @ApiProperty({ required: false, description: 'Ghi chú hoặc giải pháp' })
+  @IsString()
+  note?: string;
+
+  @ApiProperty({ required: false, description: 'Giải pháp xử lý (khi RESOLVED)' })
+  @IsString()
+  resolution?: string;
+}

@@ -17,11 +17,11 @@ export class DispatcherService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicket>,
-  ) {}
+  ) { }
 
   async getOrders(status: string): Promise<OrderSummaryResponseDto[]> {
     const query: any = {};
-    
+
     if (status && status !== 'ALL') {
       query.status = status;
     }
@@ -77,13 +77,13 @@ export class DispatcherService {
 
   async assignDriver(dto: AssignDriverDto): Promise<void> {
     const order = await this.orderModel.findById(dto.orderId);
-    
+
     if (!order) {
       throw new NotFoundException('Order not found');
     }
 
     const driver = await this.driverModel.findById(dto.driverId);
-    
+
     if (!driver) {
       throw new NotFoundException('Driver not found');
     }
@@ -103,7 +103,7 @@ export class DispatcherService {
 
   async getSupportTickets(status: string): Promise<SupportTicketResponseDto[]> {
     const query: any = {};
-    
+
     if (status && status !== 'ALL') {
       query.status = status;
     }
@@ -121,5 +121,27 @@ export class DispatcherService {
       user: (ticket.userId as any)?.name || 'Unknown User',
       content: ticket.content,
     }));
+  }
+
+  async updateTicket(ticketId: string, updateData: any): Promise<void> {
+    const ticket = await this.supportTicketModel.findById(ticketId);
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    if (updateData.status) {
+      ticket.status = updateData.status;
+    }
+
+    if (updateData.note) {
+      ticket.adminNote = updateData.note;
+    }
+
+    if (updateData.resolution) {
+      ticket.resolution = updateData.resolution;
+    }
+
+    await ticket.save();
   }
 }

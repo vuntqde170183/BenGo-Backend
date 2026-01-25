@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -11,6 +11,7 @@ import {
   DriverMapResponseDto,
   OrderSummaryResponseDto,
   SupportTicketResponseDto,
+  UpdateTicketDto,
 } from './dto/dispatcher.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
@@ -19,7 +20,7 @@ import { JwtGuard } from '../auth/jwt-auth.guard';
 @UseGuards(JwtGuard)
 @Controller('dispatcher')
 export class DispatcherController {
-  constructor(private readonly dispatcherService: DispatcherService) {}
+  constructor(private readonly dispatcherService: DispatcherService) { }
 
   @Get('orders')
   @ApiOperation({ summary: 'Monitor active orders' })
@@ -74,5 +75,17 @@ export class DispatcherController {
     @Query('status') status: string,
   ): Promise<SupportTicketResponseDto[]> {
     return this.dispatcherService.getSupportTickets(status);
+  }
+
+  @Put('support/:id')
+  @ApiOperation({ summary: 'Update support ticket' })
+  @ApiResponse({ status: 200, description: 'Ticket updated successfully' })
+  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  async updateTicket(
+    @Param('id') id: string,
+    @Body() dto: UpdateTicketDto,
+  ): Promise<{ success: boolean }> {
+    await this.dispatcherService.updateTicket(id, dto);
+    return { success: true };
   }
 }

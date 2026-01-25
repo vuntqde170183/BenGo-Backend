@@ -26,6 +26,12 @@ export class SupportTicket extends Document {
 
   @Prop({ type: [String] })
   attachments: string[];
+
+  @Prop({ type: String })
+  adminNote: string;
+
+  @Prop({ type: String })
+  resolution: string;
 }
 
 export const SupportTicketSchema = SchemaFactory.createForClass(SupportTicket);
