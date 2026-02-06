@@ -121,7 +121,7 @@ export class DispatcherController {
   })
   async getSupportTickets(
     @Query('status') status: string,
-  ): Promise<SupportTicketResponseDto[]> {
+  ): Promise<any[]> {
     return this.dispatcherService.getSupportTickets(status);
   }
 

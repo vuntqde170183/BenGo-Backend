@@ -20,7 +20,7 @@ export class OrdersService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
-  ) {}
+  ) { }
 
   async estimatePrice(dto: EstimatePriceDto): Promise<EstimateResponseDto> {
     // Calculate distance using Haversine formula
@@ -31,8 +31,8 @@ export class OrdersService {
     const deltaLng = (dto.destination.lng - dto.origin.lng) * Math.PI / 180;
 
     const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-              Math.cos(lat1) * Math.cos(lat2) *
-              Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+      Math.cos(lat1) * Math.cos(lat2) *
+      Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
 
@@ -53,7 +53,7 @@ export class OrdersService {
     const perKm = perKmPrices[dto.vehicleType] || perKmPrices.VAN;
 
     const totalPrice = basePrice + (distance * perKm);
-    
+
     // Estimate duration (assuming average speed of 30 km/h)
     const duration = Math.ceil((distance / 30) * 60); // in minutes
 
@@ -106,8 +106,8 @@ export class OrdersService {
   async getOrder(orderId: string): Promise<OrderResponseDto> {
     const order = await this.orderModel
       .findById(orderId)
-      .populate('customerId', 'name phone')
-      .populate('driverId', 'name phone')
+      .populate('customerId', 'name phone email')
+      .populate('driverId', 'name phone email avatar')
       .exec();
 
     if (!order) {
@@ -124,8 +124,8 @@ export class OrdersService {
       id: order._id.toString(),
       status: order.status,
       driver: order.driverId ? {
-        name: (order.driverId as any).name,
-        phone: (order.driverId as any).phone,
+        name: (order.driverId as any).name || 'Unknown',
+        phone: (order.driverId as any).phone || 'N/A',
         rating: driverRating,
       } : null,
       trackingPath: null, // TODO: Implement real-time tracking
@@ -171,7 +171,7 @@ export class OrdersService {
     }
 
     const driver = await this.driverModel.findOne({ userId: order.driverId });
-    
+
     if (driver) {
       const currentRating = driver.rating || 5;
       const newRating = (currentRating + dto.star) / 2;
@@ -187,7 +187,7 @@ export class OrdersService {
     status?: string,
   ): Promise<OrderHistoryResponseDto> {
     const query: any = { customerId };
-    
+
     if (status && status !== 'ALL') {
       query.status = status;
     }
@@ -197,7 +197,7 @@ export class OrdersService {
     const [orders, total] = await Promise.all([
       this.orderModel
         .find(query)
-        .populate('driverId', 'name phone rating')
+        .populate('driverId', 'name phone')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -210,8 +210,8 @@ export class OrdersService {
         id: order._id.toString(),
         status: order.status,
         driver: order.driverId ? {
-          name: (order.driverId as any).name,
-          phone: (order.driverId as any).phone,
+          name: (order.driverId as any).name || 'Unknown',
+          phone: (order.driverId as any).phone || 'N/A',
         } : null,
       })),
       meta: {

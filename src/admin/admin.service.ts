@@ -53,17 +53,7 @@ export class AdminService {
       this.userModel.countDocuments(query),
     ]);
 
-    const userData = users.map(user => ({
-      id: user._id.toString(),
-      phone: user.phone,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      avatar: user.avatar,
-      walletBalance: user.walletBalance,
-    }));
-
-    return createPaginatedResponse(userData, total, page, limit, 'Lấy danh sách người dùng thành công');
+    return createPaginatedResponse(users, total, page, limit, 'Lấy danh sách người dùng thành công');
   }
 
   async getUserById(id: string): Promise<any> {
@@ -347,8 +337,8 @@ export class AdminService {
       this.orderModel
         .find(query)
         .sort({ createdAt: -1 })
-        .populate('customerId', 'name phone')
-        .populate('driverId', 'name phone')
+        .populate('customerId', 'name phone email avatar')
+        .populate('driverId', 'name phone email avatar')
         .skip(skip)
         .limit(limit)
         .exec(),
@@ -362,7 +352,7 @@ export class AdminService {
     const order = await this.orderModel
       .findById(id)
       .populate('customerId', 'name phone email')
-      .populate('driverId', 'name phone')
+      .populate('driverId', 'name phone email')
       .exec();
 
     if (!order) {
@@ -398,13 +388,14 @@ export class AdminService {
   }
 
   async getSpecialOrders(page: number = 1, limit: number = 20): Promise<any> {
-    const query = { priority: { $ne: 'NORMAL' } };
+    const query = { priority: { $in: ['VIP', 'URGENT', 'FRAGILE'] } };
     const skip = (page - 1) * limit;
 
     const [orders, total] = await Promise.all([
       this.orderModel
         .find(query)
         .populate('customerId', 'name phone')
+        .populate('driverId', 'name phone')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -412,21 +403,8 @@ export class AdminService {
       this.orderModel.countDocuments(query),
     ]);
 
-    const mappedOrders = orders.map((order: any) => ({
-      id: order._id.toString(),
-      from: order.pickup.address || `${order.pickup.lat}, ${order.pickup.lng}`,
-      to: order.dropoff.address || `${order.dropoff.lat}, ${order.dropoff.lng}`,
-      status: order.status,
-      priority: order.priority,
-      specialNote: order.specialNote,
-      tags: order.tags || [],
-      customerName: order.customerId?.name || 'Unknown',
-      customerPhone: order.customerId?.phone || 'N/A',
-      createdAt: order.createdAt,
-    }));
-
     return createPaginatedResponse(
-      mappedOrders,
+      orders,
       total,
       page,
       limit,

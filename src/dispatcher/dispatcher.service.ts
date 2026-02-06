@@ -56,7 +56,7 @@ export class DispatcherService {
     };
   }
 
-  async getOrders(status: string): Promise<OrderSummaryResponseDto[]> {
+  async getOrders(status: string): Promise<any[]> {
     const query: any = {};
 
     if (status && status !== 'ALL') {
@@ -65,28 +65,20 @@ export class DispatcherService {
 
     const orders = await this.orderModel
       .find(query)
-      .populate('customerId', 'name phone')
+      .populate('customerId', 'name phone email avatar')
+      .populate('driverId', 'name phone email avatar')
       .sort({ createdAt: -1 })
       .limit(100)
       .exec();
 
-    return orders.map((order: any) => ({
-      id: order._id.toString(),
-      from: order.pickup.address || `${order.pickup.lat}, ${order.pickup.lng}`,
-      to: order.dropoff.address || `${order.dropoff.lat}, ${order.dropoff.lng}`,
-      status: order.status,
-      customerName: order.customerId?.name || 'Unknown',
-      customerPhone: order.customerId?.phone || 'N/A',
-      createdAt: order.createdAt,
-      priority: (order as any).priority,
-    }));
+    return orders;
   }
 
   async getOrderById(id: string): Promise<any> {
     const order = await this.orderModel
       .findById(id)
       .populate('customerId', 'name phone email')
-      .populate('driverId', 'userId vehicleType plateNumber');
+      .populate('driverId', 'name phone email avatar');
     if (!order) throw new NotFoundException('Order not found');
     return order;
   }
@@ -105,25 +97,15 @@ export class DispatcherService {
     }));
   }
 
-  async getSpecialOrders(): Promise<SpecialOrderResponseDto[]> {
+  async getSpecialOrders(): Promise<any[]> {
     const orders = await this.orderModel
-      .find({ priority: { $ne: 'NORMAL' } })
-      .populate('customerId', 'name phone')
+      .find({ priority: { $in: ['VIP', 'URGENT', 'FRAGILE'] } })
+      .populate('customerId', 'name phone email avatar')
+      .populate('driverId', 'name phone email avatar')
       .sort({ createdAt: -1 })
       .exec();
 
-    return orders.map((order: any) => ({
-      id: order._id.toString(),
-      from: order.pickup.address || `${order.pickup.lat}, ${order.pickup.lng}`,
-      to: order.dropoff.address || `${order.dropoff.lat}, ${order.dropoff.lng}`,
-      status: order.status,
-      priority: order.priority,
-      specialNote: order.specialNote,
-      tags: order.tags || [],
-      customerName: order.customerId?.name || 'Unknown',
-      customerPhone: order.customerId?.phone || 'N/A',
-      createdAt: order.createdAt,
-    }));
+    return orders;
   }
 
   async markSpecial(orderId: string, dto: MarkSpecialDto): Promise<void> {
@@ -246,7 +228,7 @@ export class DispatcherService {
     await order.save();
   }
 
-  async getSupportTickets(status: string): Promise<SupportTicketResponseDto[]> {
+  async getSupportTickets(status: string): Promise<any[]> {
     const query: any = {};
 
     if (status && status !== 'ALL') {
@@ -255,21 +237,13 @@ export class DispatcherService {
 
     const tickets = await this.supportTicketModel
       .find(query)
-      .populate('userId', 'name phone')
-      .populate('orderId', 'status')
+      .populate('userId', 'name phone email avatar role')
+      .populate('orderId')
       .sort({ createdAt: -1 })
       .limit(50)
       .exec();
 
-    return tickets.map((ticket: any) => ({
-      id: ticket._id.toString(),
-      user: ticket.userId?.name || 'Unknown User',
-      phone: ticket.userId?.phone || 'N/A',
-      content: ticket.content,
-      status: ticket.status,
-      createdAt: ticket.createdAt,
-      orderId: ticket.orderId?.toString(),
-    }));
+    return tickets;
   }
 
   async updateTicket(ticketId: string, updateData: any): Promise<void> {
