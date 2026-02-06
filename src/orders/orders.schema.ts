@@ -53,7 +53,21 @@ export class Order extends Document {
 
   @Prop({ type: String, enum: ['UNPAID', 'PAID'], default: 'UNPAID' })
   paymentStatus: string;
+
+  @Prop({
+    type: String,
+    enum: ['NORMAL', 'VIP', 'URGENT', 'FRAGILE'],
+    default: 'NORMAL',
+  })
+  priority: string;
+
+  @Prop({ type: String })
+  specialNote: string;
+
+  @Prop({ type: [String], default: [] })
+  tags: string[];
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ priority: 1 });

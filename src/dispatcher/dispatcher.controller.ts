@@ -8,8 +8,12 @@ import {
 import { DispatcherService } from './dispatcher.service';
 import {
   AssignDriverDto,
+  DashboardStatsResponseDto,
   DriverMapResponseDto,
+  DriverPerformanceResponseDto,
+  MarkSpecialDto,
   OrderSummaryResponseDto,
+  SpecialOrderResponseDto,
   SupportTicketResponseDto,
   UpdateTicketDto,
 } from './dto/dispatcher.dto';
@@ -22,6 +26,13 @@ import { JwtGuard } from '../auth/jwt-auth.guard';
 export class DispatcherController {
   constructor(private readonly dispatcherService: DispatcherService) { }
 
+  @Get('dashboard/stats')
+  @ApiOperation({ summary: 'Get dashboard statistics' })
+  @ApiResponse({ status: 200, type: DashboardStatsResponseDto })
+  async getDashboardStats(): Promise<DashboardStatsResponseDto> {
+    return this.dispatcherService.getDashboardStats();
+  }
+
   @Get('orders')
   @ApiOperation({ summary: 'Monitor active orders' })
   @ApiResponse({
@@ -33,6 +44,46 @@ export class DispatcherController {
     @Query('status') status: string,
   ): Promise<OrderSummaryResponseDto[]> {
     return this.dispatcherService.getOrders(status);
+  }
+
+  @Get('orders/special')
+  @ApiOperation({ summary: 'Get list of special trips' })
+  @ApiResponse({ status: 200, type: [SpecialOrderResponseDto] })
+  async getSpecialOrders(): Promise<SpecialOrderResponseDto[]> {
+    return this.dispatcherService.getSpecialOrders();
+  }
+
+  @Get('orders/:id')
+  @ApiOperation({ summary: 'Get order details' })
+  @ApiResponse({ status: 200 })
+  async getOrderById(@Param('id') id: string): Promise<any> {
+    return this.dispatcherService.getOrderById(id);
+  }
+
+  @Get('drivers/all')
+  @ApiOperation({ summary: 'Get all drivers for list/reports' })
+  @ApiResponse({ status: 200, type: [DriverMapResponseDto] })
+  async getAllDrivers(): Promise<DriverMapResponseDto[]> {
+    return this.dispatcherService.getAllDrivers();
+  }
+
+  @Post('orders/:id/mark-special')
+  @ApiOperation({ summary: 'Mark an order as special' })
+  @ApiResponse({ status: 200, description: 'Order marked as special' })
+  async markSpecial(
+    @Param('id') id: string,
+    @Body() dto: MarkSpecialDto,
+  ): Promise<{ success: boolean }> {
+    await this.dispatcherService.markSpecial(id, dto);
+    return { success: true };
+  }
+
+  @Post('orders/:id/unmark-special')
+  @ApiOperation({ summary: 'Remove special mark from an order' })
+  @ApiResponse({ status: 200, description: 'Order unmarked' })
+  async unmarkSpecial(@Param('id') id: string): Promise<{ success: boolean }> {
+    await this.dispatcherService.unmarkSpecial(id);
+    return { success: true };
   }
 
   @Get('drivers')
@@ -52,6 +103,17 @@ export class DispatcherController {
       Number(lng),
       Number(radius),
     );
+  }
+
+  @Get('drivers/:id/performance')
+  @ApiOperation({ summary: 'Get driver performance' })
+  @ApiResponse({ status: 200, type: DriverPerformanceResponseDto })
+  async getDriverPerformance(
+    @Param('id') id: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ): Promise<DriverPerformanceResponseDto> {
+    return this.dispatcherService.getDriverPerformance(id, from, to);
   }
 
   @Post('assign')
