@@ -18,6 +18,8 @@ import {
   UpdateTicketDto,
 } from './dto/dispatcher.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 
 @ApiTags('dispatcher')
 @ApiBearerAuth('access-token')
@@ -33,25 +35,9 @@ export class DispatcherController {
     return this.dispatcherService.getDashboardStats();
   }
 
-  @Get('orders')
-  @ApiOperation({ summary: 'Monitor active orders' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of orders',
-    type: [OrderSummaryResponseDto],
-  })
-  async getOrders(
-    @Query('status') status: string,
-  ): Promise<OrderSummaryResponseDto[]> {
-    return this.dispatcherService.getOrders(status);
-  }
 
-  @Get('orders/special')
-  @ApiOperation({ summary: 'Get list of special trips' })
-  @ApiResponse({ status: 200, type: [SpecialOrderResponseDto] })
-  async getSpecialOrders(): Promise<SpecialOrderResponseDto[]> {
-    return this.dispatcherService.getSpecialOrders();
-  }
+
+
 
   @Get('orders/:id')
   @ApiOperation({ summary: 'Get order details' })

@@ -29,6 +29,9 @@ import {
 import { CreatePromotionDto, UpdatePromotionDto } from './dto/promotion.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 import { createApiResponse } from '../utils/response.util';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
+import { SpecialOrderResponseDto } from '../dispatcher/dto/dispatcher.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth('access-token')
@@ -203,6 +206,21 @@ export class AdminController {
     @Query('limit') limit: number = 20,
   ): Promise<any> {
     return this.adminService.getAllOrders(status, page, limit);
+  }
+
+  @Get('orders/special')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'DISPATCHER')
+  @ApiOperation({
+    summary: '[ADMIN/DISPATCHER] Lấy danh sách chuyến đi đặc biệt',
+    description: 'API lấy danh sách các đơn hàng có mức độ ưu tiên đặc biệt (VIP, URGENT, FRAGILE).'
+  })
+  @ApiResponse({ status: 200, type: [SpecialOrderResponseDto] })
+  async getSpecialOrders(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+  ): Promise<any> {
+    return this.adminService.getSpecialOrders(Number(page), Number(limit));
   }
 
   @Get('orders/:id')

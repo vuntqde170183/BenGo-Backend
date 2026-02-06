@@ -18,6 +18,7 @@ import { PricingConfig } from './pricing-config.schema';
 import { Promotion } from './promotion.schema';
 import { SupportTicket } from '../dispatcher/support-ticket.schema';
 import { createApiResponse, createPaginatedResponse } from '../utils/response.util';
+import { SpecialOrderResponseDto } from '../dispatcher/dto/dispatcher.dto';
 
 @Injectable()
 export class AdminService {
@@ -394,6 +395,43 @@ export class AdminService {
     }
 
     await order.save();
+  }
+
+  async getSpecialOrders(page: number = 1, limit: number = 20): Promise<any> {
+    const query = { priority: { $ne: 'NORMAL' } };
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      this.orderModel
+        .find(query)
+        .populate('customerId', 'name phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.orderModel.countDocuments(query),
+    ]);
+
+    const mappedOrders = orders.map((order: any) => ({
+      id: order._id.toString(),
+      from: order.pickup.address || `${order.pickup.lat}, ${order.pickup.lng}`,
+      to: order.dropoff.address || `${order.dropoff.lat}, ${order.dropoff.lng}`,
+      status: order.status,
+      priority: order.priority,
+      specialNote: order.specialNote,
+      tags: order.tags || [],
+      customerName: order.customerId?.name || 'Unknown',
+      customerPhone: order.customerId?.phone || 'N/A',
+      createdAt: order.createdAt,
+    }));
+
+    return createPaginatedResponse(
+      mappedOrders,
+      total,
+      page,
+      limit,
+      'Lấy danh sách đơn hàng đặc biệt thành công',
+    );
   }
 
   // ============= PRICING CONFIGURATION =============
