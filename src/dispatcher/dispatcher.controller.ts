@@ -39,6 +39,13 @@ export class DispatcherController {
 
 
 
+  @Get('orders')
+  @ApiOperation({ summary: 'Get list of orders with optional status filter' })
+  @ApiResponse({ status: 200, description: 'List of orders' })
+  async getOrders(@Query('status') status: string): Promise<any[]> {
+    return this.dispatcherService.getOrders(status);
+  }
+
   @Get('orders/:id')
   @ApiOperation({ summary: 'Get order details' })
   @ApiResponse({ status: 200 })
