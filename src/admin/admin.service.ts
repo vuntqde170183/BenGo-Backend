@@ -326,10 +326,24 @@ export class AdminService {
   }
 
   // ============= ORDER MANAGEMENT =============
-  async getAllOrders(status?: string, page: number = 1, limit: number = 20): Promise<any> {
+  async getAllOrders(status?: string, search?: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
     if (status && status !== 'ALL') {
       query.status = status;
+    }
+
+    if (search) {
+      query.$or = [
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $toString: '$_id' },
+              regex: search,
+              options: 'i',
+            },
+          },
+        },
+      ];
     }
 
     const skip = (page - 1) * limit;

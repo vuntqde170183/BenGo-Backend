@@ -1,0 +1,152 @@
+CHỨC NĂNG: PHÂN CHUYẾN THỦ CÔNG (MANUAL TRIP ASSIGNMENT)
+1. MÔ TẢ TỔNG QUAN
+-----------------
+Chức năng Phân chuyến thủ công cho phép Người điều phối (Dispatcher) hoặc Quản trị viên (Admin) 
+can thiệp trực tiếp vào quy trình kết nối đơn hàng. Thay vì đợi hệ thống tự động tìm tài xế, 
+Người điều phối có quyền chủ động chọn đơn hàng và chỉ định một tài xế cụ thể để thực hiện chuyến đi.
+
+Công dụng:
+- Ưu tiên các đơn hàng quan trọng (VIP, Hỏa tốc, Hàng dễ vỡ).
+- Xử lý các tình huống tài xế ở gần khách nhưng gặp lỗi định vị GPS.
+- Đáp ứng yêu cầu cụ thể của khách hàng (ví dụ: yêu cầu tài xế quen).
+- Đảm bảo mọi đơn hàng đều có người nhận trong giờ cao điểm.
+
+2. QUY TRÌNH THỰC HIỆN
+Bước 1: Lấy danh sách đơn hàng đang chờ (PENDING) từ hệ thống, tức là chưa có tài xế nhận.
+Bước 2: Xem chi tiết đơn hàng (vị trí đi, vị trí đến, yêu cầu đặc biệt).
+Bước 3: Tìm kiếm tài xế đang Online xung quanh khu vực lấy hàng thông qua Bản đồ tài xế.
+Bước 4: Thực hiện Lệnh gán (Assign) tài xế vào đơn hàng.
+Bước 5: Hệ thống gửi thông báo cho tài xế và chuyển đơn hàng sang trạng thái ACCEPTED.
+
+3. CHI TIẾT CÁC API HỖ TRỢ (MODULE DISPATCHER)
+### 3.1. Lấy danh sách đơn hàng lọc theo trạng thái
+**Description:** API này cho phép Người điều phối lấy danh sách các đơn hàng trong hệ thống. Dispatcher thường dùng API này với tham số `status=PENDING` để tìm các đơn hàng chưa có người nhận để thực hiện phân chuyến.
+
+- **Method:** `GET`
+- **Path:** `/dispatcher/orders`
+- **Access:** Private (Dispatcher/Admin)
+- **Query Params:** 
+  - `status` (String, Optional): Trạng thái đơn hàng (PENDING, ACCEPTED, DELIVERED,...)
+- **Response:**
+```json
+{
+  "statusCode": 200,
+  "message": "Lấy danh sách đơn hàng thành công",
+  "data": [
+    {
+      "_id": "67a5db1f993309a96e594d25",
+      "customerId": { "name": "Nguyễn Văn A", "phone": "0987654321" },
+      "pickup": { "address": "Số 1 Lý Tự Trọng, Đà Nẵng" },
+      "dropoff": { "address": "Sân bay Đà Nẵng" },
+      "status": "PENDING",
+      "priority": "NORMAL",
+      "createdAt": "2025-02-07T10:00:00Z"
+    }
+  ]
+}
+```
+
+### 3.2. Tìm kiếm tài xế trên bản đồ (Vị trí thực tế)
+**Description:** API này trả về danh sách các tài xế đang hoạt động (Online) xung quanh một tọa độ cụ thể. Dispatcher dùng API này để tìm xem tài xế nào đang ở gần khách hàng nhất để thực hiện phân chuyến thủ công.
+
+- **Method:** `GET`
+- **Path:** `/dispatcher/drivers`
+- **Access:** Private (Dispatcher/Admin)
+- **Query Params:**
+  - `lat` (Number): Vĩ độ của vị trí cần tìm xung quanh.
+  - `lng` (Number): Kinh độ của vị trí cần tìm xung quanh.
+  - `radius` (Number): Bán kính tìm kiếm (mét).
+- **Response:**
+```json
+{
+  "statusCode": 200,
+  "message": "Lấy danh sách tài xế thành công",
+  "data": [
+    {
+      "id": "67a5db1f993309a96e594d99",
+      "name": "Tài xế Trần Văn B",
+      "phone": "0912345678",
+      "location": { "lat": 16.0678, "lng": 108.2201 },
+      "status": "ONLINE"
+    }
+  ]
+}
+```
+
+### 3.3. Thực hiện gán tài xế vào đơn hàng (Manual Assign)
+**Description:** Đây là API lõi của chức năng Phân chuyến thủ công. Nó sẽ kết nối trực tiếp `driverId` (Tài xế đã chọn) vào `orderId` (Đơn hàng đã chọn). Hệ thống sẽ kiểm tra xem tài xế có đang Online và đã được duyệt hồ sơ hay chưa trước khi thực hiện.
+
+- **Method:** `POST`
+- **Path:** `/dispatcher/assign`
+- **Access:** Private (Dispatcher/Admin)
+- **Payload:**
+```json
+{
+  "orderId": "67a5db1f993309a96e594d25",
+  "driverId": "67a5db1f993309a96e594d99"
+}
+```
+- **Response:**
+```json
+{
+  "statusCode": 201,
+  "message": "Gán tài xế thành công",
+  "data": { "success": true }
+}
+```
+
+### 3.4. Xem chi tiết thông số vận hành của tài xế
+**Description:** API này cung cấp các chỉ số hiệu suất (Performance) của một tài xế trong một khoảng thời gian. Dispatcher sử dụng API này để cân nhắc gán chuyến cho những tài xế có tỷ lệ hoàn thành cao hoặc đánh giá tốt.
+
+- **Method:** `GET`
+- **Path:** `/dispatcher/drivers/:id/performance`
+- **Access:** Private (Dispatcher/Admin)
+- **Params:** `id` (Driver ID)
+- **Query Params:** `from` (ISO Date), `to` (ISO Date)
+- **Response:**
+```json
+{
+  "statusCode": 200,
+  "message": "Lấy hiệu suất tài xế thành công",
+  "data": {
+    "totalTrips": 150,
+    "completedTrips": 145,
+    "cancelledTrips": 5,
+    "rating": 4.9,
+    "acceptanceRate": 98.5
+  }
+}
+```
+
+### 3.5. Xem lịch sử phân chuyến (Assignment History)
+**Description:** API này cho phép Người điều phối xem lại tất cả các lệnh gán thủ công đã thực hiện thành công. Dữ liệu bao gồm thông tin về đơn hàng, tài xế được gán, và người đã thực hiện lệnh gán.
+
+- **Method:** `GET`
+- **Path:** `/dispatcher/history`
+- **Access:** Private (Dispatcher/Admin)
+- **Query Params:**
+  - `page` (Number, Default: 1): Số trang cần lấy.
+  - `limit` (Number, Default: 10): Số lượng bản ghi mỗi trang.
+- **Response:**
+```json
+{
+  "statusCode": 200,
+  "message": "Lấy danh sách lịch sử phân chuyến thành công",
+  "data": {
+    "data": [
+      {
+        "_id": "67a5db1f993309a96e594d11",
+        "orderId": { "id": "67a5db1f993309a96e594d25", "totalPrice": 50000 },
+        "driverId": { "id": "67a5db1f993309a96e594d99", "name": "Tài xế Trần Văn B" },
+        "dispatcherId": { "name": "Dispatcher 01", "phone": "0900000000" },
+        "status": "SUCCESS",
+        "createdAt": "2025-02-07T10:05:00Z"
+      }
+    ],
+    "total": 125,
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+

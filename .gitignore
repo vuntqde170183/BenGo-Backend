@@ -47,5 +47,3 @@ pids
 pnpm-lock.yaml
 env
 .env
-docs
-.docs

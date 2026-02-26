@@ -202,10 +202,11 @@ export class AdminController {
   @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
   async getAllOrders(
     @Query('status') status?: string,
+    @Query('search') search?: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
   ): Promise<any> {
-    return this.adminService.getAllOrders(status, page, limit);
+    return this.adminService.getAllOrders(status, search, page, limit);
   }
 
   @Get('orders/special')

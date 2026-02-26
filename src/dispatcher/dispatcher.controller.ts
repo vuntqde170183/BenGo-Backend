@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -56,7 +57,7 @@ export class DispatcherController {
   @Get('drivers/all')
   @ApiOperation({ summary: 'Get all drivers for list/reports' })
   @ApiResponse({ status: 200, type: [DriverMapResponseDto] })
-  async getAllDrivers(): Promise<DriverMapResponseDto[]> {
+  async getAllDrivers(): Promise<any[]> {
     return this.dispatcherService.getAllDrivers();
   }
 
@@ -90,7 +91,7 @@ export class DispatcherController {
     @Query('lat') lat: number,
     @Query('lng') lng: number,
     @Query('radius') radius: number,
-  ): Promise<DriverMapResponseDto[]> {
+  ): Promise<any[]> {
     return this.dispatcherService.getDrivers(
       Number(lat),
       Number(lng),
@@ -114,10 +115,22 @@ export class DispatcherController {
   @ApiResponse({ status: 201, description: 'Driver assigned' })
   async assignDriver(
     @Body() dto: AssignDriverDto,
+    @Req() req: any,
   ): Promise<{ success: boolean }> {
-    await this.dispatcherService.assignDriver(dto);
+    await this.dispatcherService.assignDriver({ ...dto, dispatcherId: req.user.id });
     return { success: true };
   }
+
+  @Get('history')
+  @ApiOperation({ summary: 'Get assignment history' })
+  @ApiResponse({ status: 200, description: 'List of assignment history' })
+  async getAssignmentHistory(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<any> {
+    return this.dispatcherService.getAssignmentHistory(Number(page), Number(limit));
+  }
+
 
   @Get('support')
   @ApiOperation({ summary: 'List support tickets' })

@@ -14,6 +14,8 @@ import {
 import { Order } from '../orders/orders.schema';
 import { Driver } from '../driver/driver.schema';
 import { SupportTicket } from './support-ticket.schema';
+import { AssignmentHistory } from './assignment-history.schema';
+
 
 @Injectable()
 export class DispatcherService {
@@ -21,7 +23,9 @@ export class DispatcherService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicket>,
+    @InjectModel(AssignmentHistory.name) private assignmentHistoryModel: Model<AssignmentHistory>,
   ) { }
+
 
   async getDashboardStats(): Promise<DashboardStatsResponseDto> {
     const today = new Date();
@@ -83,18 +87,22 @@ export class DispatcherService {
     return order;
   }
 
-  async getAllDrivers(): Promise<DriverMapResponseDto[]> {
-    const drivers = await this.driverModel.find().populate('userId', 'name phone').exec();
-    return drivers.map(driver => ({
-      id: driver._id.toString(),
-      name: (driver.userId as any)?.name || 'Unknown',
-      location: {
-        lat: driver.location.coordinates[1],
-        lng: driver.location.coordinates[0],
-      },
-      status: driver.isOnline ? 'ONLINE' : 'OFFLINE',
-      phone: (driver.userId as any)?.phone,
-    }));
+  async getAllDrivers(): Promise<any[]> {
+    const drivers = await this.driverModel.find().populate('userId', 'name phone email avatar rating').exec();
+    return drivers.map(driver => {
+      const driverObj = driver.toObject();
+      return {
+        ...driverObj,
+        id: driver._id.toString(),
+        name: (driver.userId as any)?.name || 'Unknown',
+        location: {
+          lat: driver.location.coordinates[1],
+          lng: driver.location.coordinates[0],
+        },
+        status: driver.isOnline ? 'ONLINE' : 'OFFLINE',
+        phone: (driver.userId as any)?.phone,
+      };
+    });
   }
 
   async getSpecialOrders(): Promise<any[]> {
@@ -138,7 +146,7 @@ export class DispatcherService {
     lat: number,
     lng: number,
     radius: number,
-  ): Promise<DriverMapResponseDto[]> {
+  ): Promise<any[]> {
     // Find drivers within radius using geospatial query
     const drivers = await this.driverModel
       .find({
@@ -147,24 +155,28 @@ export class DispatcherService {
           $near: {
             $geometry: {
               type: 'Point',
-              coordinates: [lng, lat],
+              coordinates: [Number(lng), Number(lat)],
             },
-            $maxDistance: radius * 1000, // Convert km to meters
+            $maxDistance: Number(radius) * 1000, // Convert km to meters
           },
         },
       })
-      .populate('userId', 'name phone rating')
+      .populate('userId', 'name phone email avatar rating')
       .exec();
 
-    return drivers.map(driver => ({
-      id: driver._id.toString(),
-      name: (driver.userId as any)?.name || 'Unknown',
-      location: {
-        lat: driver.location.coordinates[1],
-        lng: driver.location.coordinates[0],
-      },
-      status: driver.isOnline ? 'ONLINE' : 'OFFLINE',
-    }));
+    return drivers.map(driver => {
+      const driverObj = driver.toObject();
+      return {
+        ...driverObj,
+        id: driver._id.toString(),
+        name: (driver.userId as any)?.name || 'Unknown',
+        location: {
+          lat: driver.location.coordinates[1],
+          lng: driver.location.coordinates[0],
+        },
+        status: driver.isOnline ? 'ONLINE' : 'OFFLINE',
+      };
+    });
   }
 
   async getDriverPerformance(
@@ -202,7 +214,8 @@ export class DispatcherService {
     };
   }
 
-  async assignDriver(dto: AssignDriverDto): Promise<void> {
+  async assignDriver(dto: AssignDriverDto & { dispatcherId: string }): Promise<void> {
+
     const order = await this.orderModel.findById(dto.orderId);
 
     if (!order) {
@@ -226,6 +239,46 @@ export class DispatcherService {
     order.driverId = dto.driverId;
     order.status = 'ACCEPTED';
     await order.save();
+
+    // Save assignment history
+    await this.assignmentHistoryModel.create({
+      orderId: dto.orderId,
+      driverId: dto.driverId,
+      dispatcherId: dto.dispatcherId,
+      status: 'SUCCESS',
+    });
+  }
+
+  async getAssignmentHistory(page: number = 1, limit: number = 10): Promise<any> {
+    const skip = (page - 1) * limit;
+    const [history, total] = await Promise.all([
+      this.assignmentHistoryModel
+        .find()
+        .populate('orderId')
+        .populate({
+          path: 'driverId',
+          populate: {
+            path: 'userId',
+            select: 'name phone email avatar rating',
+          },
+        })
+        .populate({
+          path: 'dispatcherId',
+          select: 'name phone email avatar',
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.assignmentHistoryModel.countDocuments(),
+    ]);
+
+    return {
+      data: history,
+      total,
+      page,
+      limit,
+    };
   }
 
   async getSupportTickets(status: string): Promise<any[]> {
