@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
+
 
 export class AssignDriverDto {
   @ApiProperty()
@@ -83,16 +84,22 @@ export class UpdateTicketDto {
     required: false,
     description: 'Trạng thái mới của ticket'
   })
+  @IsOptional()
   @IsString()
   status?: string;
 
+
   @ApiProperty({ required: false, description: 'Ghi chú hoặc giải pháp' })
+  @IsOptional()
   @IsString()
   note?: string;
 
+
   @ApiProperty({ required: false, description: 'Giải pháp xử lý (khi RESOLVED)' })
+  @IsOptional()
   @IsString()
   resolution?: string;
+
 }
 
 export class DashboardStatsResponseDto {
@@ -116,8 +123,10 @@ export class MarkSpecialDto {
   priority: string;
 
   @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   specialNote?: string;
+
 
   @ApiProperty({ type: [String], required: false })
   tags?: string[];

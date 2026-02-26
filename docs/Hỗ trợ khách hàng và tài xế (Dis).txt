@@ -1,0 +1,96 @@
+CHỨC NĂNG: HỖ TRỢ KHÁCH HÀNG & TÀI XẾ (SUPPORT CUSTOMERS & DRIVERS)
+1. MÔ TẢ TỔNG QUAN
+-----------------
+Chức năng Hỗ trợ khách hàng và tài xế cho phép Người điều phối (Dispatcher) tiếp nhận, xử lý và giải quyết các khiếu nại hoặc yêu cầu hỗ trợ từ người dùng trong hệ thống. Dispatcher đóng vai trò là cầu nối để đảm bảo trải nghiệm của khách hàng và tài xế luôn suôn sẻ.
+
+Công dụng:
+- Xử lý các sự cố đơn hàng (sai địa chỉ, không gọi được tài xế).
+- Giải đáp thắc mắc về giá cước, khuyến mãi.
+- Tiếp nhận các phản hồi về chất lượng dịch vụ.
+- Đóng và lưu trữ hồ sơ giải quyết khiếu nại.
+
+2. QUY TRÌNH THỰC HIỆN CHI TIẾT
+Bước 1: Lấy danh sách phiếu hỗ trợ mới cần xử lý.
+- Sử dụng API: `GET /dispatcher/support?status=OPEN` (Xem chi tiết tại mục 3.1)
+- Mục đích: Tìm các yêu cầu mới nhất từ khách hàng/tài xế chưa có người tiếp nhận.
+
+Bước 2: Nghiên cứu nội dung khiếu nại.
+- Dữ liệu trả về từ API trên sẽ bao gồm `subject`, `content`, `userId`, `orderId`.
+- Dispatcher dựa vào `orderId` để tra cứu thêm thông tin chuyến đi nếu cần.
+
+Bước 3: Tiếp nhận xử lý phiếu.
+- Sử dụng API: `PUT /dispatcher/support/:id` (Xem chi tiết tại mục 3.2)
+- Payload: `{ "status": "IN_PROGRESS", "note": "Đang liên hệ với các bên để xác minh" }`
+- Mục đích: Đánh dấu phiếu đang được xử lý, tránh Dispatcher khác trùng lặp.
+
+Bước 4: Ghi nhận kết quả và Đóng phiếu.
+- Sử dụng API: `PUT /dispatcher/support/:id` (Xem chi tiết tại mục 3.2)
+- Payload: `{ "status": "RESOLVED", "resolution": "Đã hoàn tiền cho khách hàng do lỗi hệ thống" }`
+- Mục đích: Hoàn tất quy trình hỗ trợ và lưu lại giải pháp xử lý.
+
+3. CHI TIẾT CÁC API HỖ TRỢ (MODULE DISPATCHER)
+### 3.1. API Lấy danh sách phiếu hỗ trợ (List Tickets)
+**Description:** API này cho phép Người điều phối lấy danh sách các yêu cầu hỗ trợ. Thường dùng với filter `status` để quản lý luồng công việc.
+
+- **Method:** `GET`
+- **Path:** `/dispatcher/support`
+- **Access:** Private (Dispatcher/Admin)
+- **Query Params:** 
+  - `status` (String, Optional): OPEN, IN_PROGRESS, RESOLVED, CLOSED.
+- **Example Request:** `GET /dispatcher/support?status=OPEN`
+- **Response JSON:**
+```json
+{
+  "statusCode": 200,
+  "message": "Success",
+  "data": [
+    {
+      "_id": "67a5db1f993309a96e594e01",
+      "userId": {
+        "_id": "67a5db1f993309a96e594a10",
+        "name": "Nguyên Văn A",
+        "phone": "0987654321",
+        "role": "CUSTOMER"
+      },
+      "orderId": "67a5db1f993309a96e594d25",
+      "subject": "Không thấy tài xế đến lấy hàng",
+      "content": "Tôi đã đợi 20 phút nhưng chưa thấy tài xế liên hệ...",
+      "status": "OPEN",
+      "priority": "HIGH",
+      "createdAt": "2025-02-07T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+### 3.2. API Cập nhật trạng thái và xử lý (Update/Resolve Ticket)
+**Description:** API dùng để thay đổi trạng thái phiếu (sang đang xử lý hoặc đã xong) và ghi lại các ghi chú vận hành.
+
+- **Method:** `PUT`
+- **Path:** `/dispatcher/support/:id`
+- **Access:** Private (Dispatcher/Admin)
+- **Params:** `id` (Mã phiếu hỗ trợ)
+- **Payload JSON (Tiếp nhận phiếu):**
+```json
+{
+  "status": "IN_PROGRESS",
+  "note": "Đã tiếp nhận yêu cầu, đang gọi cho tài xế Trần Văn B."
+}
+```
+- **Payload JSON (Hoàn tất/Giải quyết phiếu):**
+```json
+{
+  "status": "RESOLVED",
+  "resolution": "Đã điều phối tài xế khác đến hỗ trợ khách hàng. Khách hàng hài lòng."
+}
+```
+- **Response JSON:**
+```json
+{
+  "statusCode": 200,
+  "message": "Success",
+  "data": {
+    "success": true
+  }
+}
+```
