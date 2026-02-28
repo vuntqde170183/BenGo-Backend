@@ -12,6 +12,7 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -124,6 +125,14 @@ export class DriverController {
 
   @Get('orders')
   @ApiOperation({ summary: 'Get driver order history' })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 10 })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['ALL', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERED', 'CANCELLED'],
+    description: 'Filter orders by status',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of driver orders',
