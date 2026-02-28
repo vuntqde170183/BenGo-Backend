@@ -87,3 +87,35 @@ export class StatsResponseDto {
   @ApiProperty()
   rating: number;
 }
+
+export class DriverOrderDto {
+  @ApiProperty({ example: '60d0fe4f5311236168a109ca' })
+  id: string;
+
+  @ApiProperty({ example: 'ACCEPTED' })
+  status: string;
+
+  @ApiProperty({ example: '123 Pickup St, City' })
+  pickupAddress: string;
+
+  @ApiProperty({ example: '456 Dropoff St, City' })
+  dropoffAddress: string;
+
+  @ApiProperty({ example: 150000 })
+  totalPrice: number;
+
+  @ApiProperty({ example: '2023-05-15T08:30:00Z' })
+  createdAt: Date;
+}
+
+export class DriverOrderHistoryResponseDto {
+  @ApiProperty({ type: [DriverOrderDto] })
+  data: DriverOrderDto[];
+
+  @ApiProperty({ example: { total: 10, page: 1, limit: 10 } })
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+  };
+}

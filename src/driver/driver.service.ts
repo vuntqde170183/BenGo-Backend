@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
+  DriverOrderHistoryResponseDto,
   PendingOrderResponseDto,
   StatsResponseDto,
   ToggleStatusDto,
@@ -19,11 +20,11 @@ export class DriverService {
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(User.name) private userModel: Model<User>,
-  ) {}
+  ) { }
 
   async toggleStatus(driverId: string, dto: ToggleStatusDto): Promise<void> {
     const driver = await this.driverModel.findOne({ userId: driverId });
-    
+
     if (!driver) {
       throw new NotFoundException('Driver profile not found');
     }
@@ -74,7 +75,7 @@ export class DriverService {
 
   async acceptOrder(driverId: string, orderId: string): Promise<any> {
     const order = await this.orderModel.findById(orderId);
-    
+
     if (!order) {
       throw new NotFoundException('Order not found');
     }
@@ -84,7 +85,7 @@ export class DriverService {
     }
 
     const driver = await this.driverModel.findOne({ userId: driverId });
-    
+
     if (!driver) {
       throw new NotFoundException('Driver profile not found');
     }
@@ -114,7 +115,7 @@ export class DriverService {
     dto: UpdateTripStatusDto,
   ): Promise<void> {
     const order = await this.orderModel.findById(orderId);
-    
+
     if (!order) {
       throw new NotFoundException('Order not found');
     }
@@ -129,7 +130,7 @@ export class DriverService {
     }
 
     order.status = dto.status;
-    
+
     if (dto.status === 'DELIVERED') {
       order.paymentStatus = 'PAID';
       // TODO: Update driver earnings and customer wallet if payment method is WALLET
@@ -140,7 +141,7 @@ export class DriverService {
 
   async updateLocation(driverId: string, dto: UpdateLocationDto): Promise<void> {
     const driver = await this.driverModel.findOne({ userId: driverId });
-    
+
     if (!driver) {
       throw new NotFoundException('Driver profile not found');
     }
@@ -155,7 +156,7 @@ export class DriverService {
 
   async uploadDocument(driverId: string, dto: UploadDocumentDto): Promise<void> {
     const driver = await this.driverModel.findOne({ userId: driverId });
-    
+
     if (!driver) {
       throw new NotFoundException('Driver profile not found');
     }
@@ -188,6 +189,47 @@ export class DriverService {
       totalEarnings,
       totalTrips,
       rating,
+    };
+  }
+
+  async getOrders(
+    driverId: string,
+    page: number,
+    limit: number,
+    status?: string,
+  ): Promise<DriverOrderHistoryResponseDto> {
+    const query: any = { driverId };
+
+    if (status && status !== 'ALL') {
+      query.status = status;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      this.orderModel
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.orderModel.countDocuments(query),
+    ]);
+
+    return {
+      data: orders.map(order => ({
+        id: order._id.toString(),
+        status: order.status,
+        pickupAddress: order.pickup.address,
+        dropoffAddress: order.dropoff.address,
+        totalPrice: order.totalPrice,
+        createdAt: (order as any).createdAt,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+      },
     };
   }
 }

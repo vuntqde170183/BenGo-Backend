@@ -17,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { DriverService } from './driver.service';
 import {
+  DriverOrderHistoryResponseDto,
   PendingOrderResponseDto,
   StatsResponseDto,
   ToggleStatusDto,
@@ -31,7 +32,7 @@ import { JwtGuard } from '../auth/jwt-auth.guard';
 @UseGuards(JwtGuard)
 @Controller('driver')
 export class DriverController {
-  constructor(private readonly driverService: DriverService) {}
+  constructor(private readonly driverService: DriverService) { }
 
   @Put('status')
   @ApiOperation({ summary: 'Toggle Online/Offline' })
@@ -119,5 +120,26 @@ export class DriverController {
     @Query('to') to: string,
   ): Promise<StatsResponseDto> {
     return this.driverService.getStats(req.user.id, from, to);
+  }
+
+  @Get('orders')
+  @ApiOperation({ summary: 'Get driver order history' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of driver orders',
+    type: DriverOrderHistoryResponseDto,
+  })
+  async getOrders(
+    @Req() req: any,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('status') status?: string,
+  ): Promise<DriverOrderHistoryResponseDto> {
+    return this.driverService.getOrders(
+      req.user.id,
+      Number(page),
+      Number(limit),
+      status,
+    );
   }
 }
