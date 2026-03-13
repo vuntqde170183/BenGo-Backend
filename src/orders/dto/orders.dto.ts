@@ -106,7 +106,40 @@ export class OrderResponseDto {
   status: string;
 
   @ApiPropertyOptional()
-  driver?: any; 
+  pickup?: LocationDto;
+
+  @ApiPropertyOptional()
+  dropoff?: LocationDto;
+
+  @ApiPropertyOptional({ example: 'VAN' })
+  vehicleType?: string;
+
+  @ApiPropertyOptional({ example: 150000 })
+  totalPrice?: number;
+
+  @ApiPropertyOptional({ example: 5.2 })
+  distanceKm?: number;
+
+  @ApiPropertyOptional({ example: 'CASH' })
+  paymentMethod?: string;
+
+  @ApiPropertyOptional({ example: 'UNPAID' })
+  paymentStatus?: string;
+
+  @ApiPropertyOptional({ example: ['http://img1.jpg'] })
+  goodsImages?: string[];
+
+  @ApiPropertyOptional({ example: '2024-03-20T10:00:00.000Z' })
+  createdAt?: string;
+
+  @ApiPropertyOptional()
+  driver?: {
+    name: string;
+    phone: string;
+    avatar?: string;
+    rating?: number;
+  };
+
   @ApiPropertyOptional()
   trackingPath?: any;
 }
@@ -115,8 +148,14 @@ export class OrderHistoryResponseDto {
   @ApiProperty({ type: [OrderResponseDto] })
   data: OrderResponseDto[];
 
-  @ApiProperty({ example: { total: 10, page: 1 } })
-  meta: any;
+  @ApiPropertyOptional()
+  pagination?: {
+    total: number;
+    count: number;
+    per_page: number;
+    current_page: number;
+    total_pages: number;
+  };
 }
 
 export class NearbyDriverResponseDto {

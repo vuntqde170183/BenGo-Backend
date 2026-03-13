@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Order } from './orders.schema';
+import { User } from '../user/user.schema';
+import { Driver } from '../driver/driver.schema';
 import {
   CancelOrderDto,
   CreateOrderDto,
@@ -10,9 +13,6 @@ import {
   OrderResponseDto,
   RateDriverDto,
 } from './dto/orders.dto';
-import { Order } from './orders.schema';
-import { User } from '../user/user.schema';
-import { Driver } from '../driver/driver.schema';
 
 @Injectable()
 export class OrdersService {
@@ -123,12 +123,22 @@ export class OrdersService {
     return {
       id: order._id.toString(),
       status: order.status,
+      pickup: order.pickup,
+      dropoff: order.dropoff,
+      vehicleType: order.vehicleType,
+      totalPrice: order.totalPrice,
+      distanceKm: order.distanceKm,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      goodsImages: order.goodsImages,
+      createdAt: (order as any).createdAt,
       driver: order.driverId ? {
         name: (order.driverId as any).name || 'Unknown',
         phone: (order.driverId as any).phone || 'N/A',
+        avatar: (order.driverId as any).avatar,
         rating: driverRating,
       } : null,
-      trackingPath: null, // TODO: Implement real-time tracking
+      trackingPath: null,
     };
   }
 
@@ -197,7 +207,7 @@ export class OrdersService {
     const [orders, total] = await Promise.all([
       this.orderModel
         .find(query)
-        .populate('driverId', 'name phone')
+        .populate('driverId', 'name phone avatar')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -209,14 +219,27 @@ export class OrdersService {
       data: orders.map(order => ({
         id: order._id.toString(),
         status: order.status,
+        pickup: order.pickup,
+        dropoff: order.dropoff,
+        vehicleType: order.vehicleType,
+        totalPrice: order.totalPrice,
+        distanceKm: order.distanceKm,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        goodsImages: order.goodsImages,
+        createdAt: (order as any).createdAt,
         driver: order.driverId ? {
           name: (order.driverId as any).name || 'Unknown',
           phone: (order.driverId as any).phone || 'N/A',
+          avatar: (order.driverId as any).avatar,
         } : null,
       })),
-      meta: {
+      pagination: {
         total,
-        page,
+        count: orders.length,
+        per_page: limit,
+        current_page: page,
+        total_pages: Math.ceil(total / limit),
       },
     };
   }

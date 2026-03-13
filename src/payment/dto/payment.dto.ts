@@ -55,3 +55,13 @@ export class CreateQrResponseDto {
   @ApiProperty()
   bankInfo: any;
 }
+
+export class PayOrderDto {
+  @ApiProperty({ example: '60d0fe4f5311236168a109ca' })
+  @IsString()
+  orderId: string;
+
+  @ApiProperty({ example: 'WALLET', enum: ['WALLET', 'CASH'] })
+  @IsString()
+  paymentMethod: string;
+}

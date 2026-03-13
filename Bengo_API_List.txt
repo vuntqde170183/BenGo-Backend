@@ -110,9 +110,36 @@ II. ORDERS (Khách hàng) - OrdersController
      }
 
 2. Lấy lịch sử đơn hàng (GET /orders/history)
-   - Params: ?page=1&limit=10&status=...
-   - Response Data (Mảng các object Order như trên):
-     [ { "_id": "...", "status": "...", "totalPrice": 150000, ... } ]
+   - Params: ?page=1&limit=10&status=ALL|PENDING|ACCEPTED|PICKED_UP|DELIVERED|CANCELLED
+   - Response Data (Mảng các object Order):
+     [
+       {
+         "_id": "60d0fe4f5311236168a109ca",
+         "pickup": { 
+           "address": "123 Đường A, Quận 1, TP.HCM", 
+           "lat": 10.762622, 
+           "lng": 106.660172 
+         },
+         "dropoff": { 
+           "address": "456 Đường B, Quận 3, TP.HCM", 
+           "lat": 10.772622, 
+           "lng": 106.670172 
+         },
+         "vehicleType": "VAN",
+         "status": "DELIVERED",
+         "totalPrice": 150000,
+         "distanceKm": 5.2,
+         "paymentMethod": "CASH",
+         "paymentStatus": "PAID",
+         "goodsImages": ["https://res.cloudinary.com/.../img1.jpg"],
+         "createdAt": "2024-03-20T10:00:00.000Z",
+         "driver": { 
+           "name": "Nguyen Van B", 
+           "phone": "0909876543",
+           "avatar": "https://..." 
+         } // null nếu chưa có tài xế
+       }
+     ]
 
 4. Tính giá cước ước tính (POST /orders/estimate)
    - Payload JSON:
@@ -151,6 +178,14 @@ II. ORDERS (Khách hàng) - OrdersController
         "id": "60d0fe4f5311236168a109ca",
         "status": "PENDING"
       }
+
+ 6. Đánh giá tài xế (POST /orders/:id/rate)
+    - Payload JSON:
+      {
+        "star": 5, // 1-5
+        "comment": "Tài xế rất nhiệt tình" // Tùy chọn
+      }
+    - Response Data: { "success": true }
 
 3. Lấy danh sách tài xế xung quanh (GET /orders/drivers-nearby)
    - Params: ?lat=10.76&lng=106.66&radius=5
@@ -461,6 +496,27 @@ VII. UPLOAD (Tải ảnh)
        "format": "jpg",
        "bytes": 102400
      }
+================================================================================
+VIII. PAYMENT (Thanh toán) - PaymentController
+================================================================================
+
+1. Tạo mã QR thanh toán (POST /payment/create-qr)
+   - Payload: { "amount": 150000, "orderId": "..." }
+   - Response Data:
+     {
+       "qrRaw": "000201...",
+       "bankInfo": { "bank": "MB", "acc": "..." }
+     }
+
+2. Thanh toán đơn hàng qua Ví (POST /payment/pay)
+   - Payload: { "orderId": "...", "paymentMethod": "WALLET"|"CASH" }
+   - Response Data:
+     {
+       "success": true,
+       "message": "Thanh toán bằng ví thành công",
+       "newBalance": 850000
+     }
+
 ================================================================================
 GHI CHÚ:
 - Các field có dạng "_id" là MongoDB ObjectId (String).

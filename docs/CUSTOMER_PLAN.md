@@ -184,70 +184,46 @@ Response Data:
 #### A. Màn hình Lịch sử đơn hàng (`OrderHistoryScreen`)
 
 **0. Vị trí & Luồng xuất hiện:**
-- Thuộc Tab **Hoạt động**.
+- Là màn hình chính thuộc Tab **"Hoạt động" (Activities)** trên thanh Bottom Tab Navigator.
+- Xuất hiện khi người dùng nhấn vào biểu tượng `receipt` ở thanh điều hướng dưới cùng.
 
 **1. Danh sách các thành phần (Components):**
-- **H1:** Tab chuyển đổi (Top Tab: Đang diễn ra | Lịch sử).
-- **H2:** Danh sách thẻ đơn hàng (FlatList Order Cards).
+- **H1:** Thanh điều hướng Tab phụ (Sub-tab Navigator).
+- **H2:** Danh sách đơn hàng (Order FlatList).
+- **H3:** Thẻ tóm tắt đơn hàng (Order Item Card).
+- **H4:** Trạng thái trống (Empty History State).
 
 **2. Đặc tả thiết kế & Công nghệ:**
-- **H1:** Sử dụng `@react-navigation/material-top-tabs`. Active tab có gạch chân màu Blue.
-- **H2:** Mỗi thẻ (Card) gồm: Mã đơn (#1234), Trạng thái (Badge), Thời gian, và Icon loại xe (`ios-car`).
+- **H1:** Sử dụng thư viện `@react-navigation/material-top-tabs`. Chia làm 2 tab: **"Đang diễn ra"** và **"Lịch sử"**. Indicator màu Blue `#0047AB`.
+- **H2:** Sử dụng `FlatList` với `RefreshControl`. Tích hợp Skeleton Loading khi đang tải dữ liệu.
+- **H3:** Card trắng bo góc 12px. Icon: `ios-barcode` (Mã đơn), `ios-radio-button-on` (Điểm đi), `ios-location` (Điểm đến), `ios-car` (Loại xe). 
+- **H4:** Icon `ios-document-text-outline` lớn màu xám. Text: "Bạn chưa có đơn hàng nào".
 
 **3. Tương tác & Xử lý (Logic):**
-- **H2:** Khi nhấn vào một thẻ đơn hàng, điều hướng sang `CustomerOrderDetailScreen`.
+- **H1:** Chuyển đổi tab lọc theo trạng thái đơn hàng.
+- **H3:** Nhấn vào Card điều hướng sang `CustomerOrderDetailScreen` kèm `orderId`.
+- **H3 (Action):** Nút "Đặt lại" cho các đơn đã hoàn thành để chuyển sang `BookingSetupScreen`.
 
 **4. Tích hợp API:**
-- **H2:** `GET /orders/history` (Phân trang và lọc theo trạng thái).
+- **H2/H3:** `GET /orders/history`.
+  - **Params:** `?status=...&page=1&limit=10`.
+  - **Data Map:** Hiển thị `totalPrice`, Status badge màu sắc động, địa chỉ `pickup`/`dropoff` rút gọn.
 
----
 
 #### B. Màn hình Chi tiết đơn hàng (`CustomerOrderDetailScreen`)
-
-**0. Vị trí & Luồng xuất hiện:**
-- Màn hình chi tiết (Stack). Xuất hiện khi nhấn vào item từ Lịch sử.
-
-**1. Danh sách các thành phần (Components):**
-- **CH1:** Bản đồ lộ trình tĩnh (Static Route Map).
-- **CH2:** Thông tin chi tiết hóa đơn (Billing Detail).
-- **CH3:** Nút chức năng (Re-order / Support).
-
-**2. Đặc tả thiết kế & Công nghệ:**
-- **CH1:** Snapshot bản đồ với Polyline lộ trình cũ.
-- **CH2:** View liệt kê: Phí dịch vụ, Giảm giá, Tổng thanh toán. Icon: `ios-document-text`.
-- **CH3:** Button "Đặt lại đơn này" màu Blue; Button "Hỗ trợ" icon `ios-help-circle`.
-
-**3. Tương tác & Xử lý (Logic):**
-- **CH3:** "Đặt lại" sẽ copy dữ liệu cũ và quay về `BookingSetupScreen`.
-
-**4. Tích hợp API:**
-- **CH2:** `GET /orders/:id`.
+- **Thành phần:** Bản đồ lộ trình, Chi tiết hóa đơn, Nút "Đặt lại" (Re-order), Đánh giá tài xế.
 
 ---
 
 ### 2.3. Phân vùng: Tab Tài khoản
 
 #### A. Màn hình Hồ sơ Khách hàng (`CustomerProfileScreen`)
-
-**0. Vị trí & Luồng xuất hiện:**
-- Thuộc Tab **Tài khoản**.
-
-**1. Danh sách các thành phần (Components):**
-- **P1:** Thẻ ví BenGo (Wallet Card).
-- **P2:** Danh sách cài đặt & Menu (Settings Menu).
-- **P3:** Nút Đăng xuất (Logout Button).
-
-**2. Đặc tả thiết kế & Công nghệ:**
-- **P1:** Background Gradient, hiển thị số dư lớn. Icon: `ios-wallet`. Nút "Nạp tiền" icon `ios-add-circle`.
-- **P2:** Danh sách các dòng icon trái - text giữa - icon chevron phải. Các icon: `ios-person`, `ios-location`, `ios-notifications`, `ios-shield-checkmark`.
-- **P3:** Text màu đỏ, icon `ios-log-out`.
-
-**3. Tương tác & Xử lý (Logic):**
-- **P2:** Nhấn "Địa chỉ đã lưu" để quản lý Home/Work address.
-- **P3:** Hiển thị Alert xác nhận trước khi xóa token và về màn Login.
-
-**4. Tích hợp API:**
-- **P1/P2:** `GET /auth/profile`.
+- **Thành phần:** 
+    1. **Card Ví BenGo:** Số dư (`walletBalance`) & Button "Nạp tiền".
+    2. **Thông tin cá nhân:** Tên, SĐT, Email.
+    3. **Địa chỉ đã lưu:** Quản lý địa chỉ yêu thích.
+- **API sử dụng:** 
+  - `GET /auth/profile`: Lấy thông tin cá nhân và số dư ví.
 
 ---
 

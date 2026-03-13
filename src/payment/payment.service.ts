@@ -69,4 +69,40 @@ export class PaymentService {
       },
     };
   }
+
+  async payOrder(userId: string, dto: any): Promise<any> {
+    const order = await this.orderModel.findById(dto.orderId);
+    if (!order) {
+      throw new Error('Không tìm thấy đơn hàng');
+    }
+
+    if (order.paymentStatus === 'PAID') {
+      throw new Error('Đơn hàng đã được thanh toán');
+    }
+
+    if (dto.paymentMethod === 'WALLET') {
+      const user = await this.userModel.findById(userId);
+      if (!user || user.walletBalance < order.totalPrice) {
+        throw new Error('Số dư ví không đủ');
+      }
+
+      user.walletBalance -= order.totalPrice;
+      await user.save();
+
+      order.paymentStatus = 'PAID';
+      order.paymentMethod = 'WALLET';
+      await order.save();
+
+      return {
+        success: true,
+        message: 'Thanh toán bằng ví thành công',
+        newBalance: user.walletBalance,
+      };
+    }
+
+    // Với tiền mặt (CASH), chỉ cập nhật phương thức thanh toán
+    order.paymentMethod = dto.paymentMethod;
+    await order.save();
+    return { success: true, message: 'Đã chọn phương thức thanh toán ' + dto.paymentMethod };
+  }
 }

@@ -1,11 +1,13 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import {
   CreateQrDto,
   CreateQrResponseDto,
+  PayOrderDto,
   SePayWebhookDto,
 } from './dto/payment.dto';
+import { JwtGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('payment')
 @Controller('payment')
@@ -31,5 +33,14 @@ export class PaymentController {
   })
   async createQr(@Body() dto: CreateQrDto): Promise<CreateQrResponseDto> {
     return this.paymentService.createQr(dto);
+  }
+
+  @Post('pay')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtGuard)
+  @ApiOperation({ summary: 'Thực hiện thanh toán đơn hàng bằng ví điện tử' })
+  @ApiResponse({ status: 200, description: 'Thanh toán thành công' })
+  async payOrder(@Req() req: any, @Body() dto: PayOrderDto): Promise<any> {
+    return this.paymentService.payOrder(req.user.id, dto);
   }
 }
