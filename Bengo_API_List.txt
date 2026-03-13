@@ -301,6 +301,7 @@ IV. ADMIN (Quản trị viên) - AdminController
      ]
 
 6. Danh sách khuyến mãi (GET /admin/promotions)
+   - Chú thích: Cho phép mọi vai trò (Customer, Driver, Admin...) truy cập.
    - Response Data:
      [
        {

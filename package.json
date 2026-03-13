@@ -21,7 +21,8 @@
     "seed:promotions": "ts-node src/scripts/seed-promotions.ts",
     "seed:chart": "ts-node src/scripts/seed-orders-chart.ts",
     "update:driver-passwords": "ts-node src/scripts/update-driver-passwords.ts",
-    "seed:driver": "ts-node src/scripts/seed-driver-data.ts"
+    "seed:driver": "ts-node src/scripts/seed-driver-data.ts",
+    "update:customer-passwords": "ts-node src/scripts/update-customer-passwords.ts"
   },
   "dependencies": {
     "@nestjs/axios": "^3.1.2",

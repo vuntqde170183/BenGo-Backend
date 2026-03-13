@@ -297,12 +297,14 @@ export class AdminController {
 
   // ============= QUẢN LÝ KHUYẾN MÃI =============
   @Get('promotions')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'CUSTOMER', 'DRIVER', 'DISPATCHER', 'SUPERADMIN')
   @ApiOperation({
-    summary: '[ADMIN] Lấy danh sách khuyến mãi',
-    description: 'API lấy danh sách các chương trình khuyến mãi. Lọc theo trạng thái: ACTIVE (còn hạn & lượt), INACTIVE (hết hạn hoặc hết lượt hoặc bị tắt), EXPIRED (hết hạn), USAGE_LIMIT (hết lượt).'
+    summary: 'Lấy danh sách khuyến mãi',
+    description: 'API lấy danh sách các chương trình khuyến mãi dành cho mọi vai trò. Lọc theo trạng thái: ACTIVE (còn hạn & lượt), INACTIVE (hết hạn hoặc hết lượt hoặc bị tắt), EXPIRED (hết hạn), USAGE_LIMIT (hết lượt).'
   })
   @ApiResponse({ status: 200, description: 'Lấy danh sách khuyến mãi thành công' })
-  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập' })
   async getAllPromotions(
     @Query('status') status?: string,
     @Query('search') search?: string,
