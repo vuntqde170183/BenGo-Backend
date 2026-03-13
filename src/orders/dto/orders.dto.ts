@@ -118,3 +118,18 @@ export class OrderHistoryResponseDto {
   @ApiProperty({ example: { total: 10, page: 1 } })
   meta: any;
 }
+
+export class NearbyDriverResponseDto {
+  @ApiProperty({ example: '60d0fe4f5311236168a109ca' })
+  id: string;
+
+  @ApiProperty({ example: 'VAN' })
+  vehicleType: string;
+
+  @ApiProperty({ example: { lat: 10.762622, lng: 106.660172 } })
+  location: { lat: number; lng: number };
+
+  @ApiProperty({ example: 4.8 })
+  rating: number;
+}
+

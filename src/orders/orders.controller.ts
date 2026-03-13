@@ -24,6 +24,7 @@ import {
   OrderHistoryResponseDto,
   OrderResponseDto,
   RateDriverDto,
+  NearbyDriverResponseDto,
 } from './dto/orders.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
@@ -116,4 +117,24 @@ export class OrdersController {
     await this.ordersService.rateDriver(req.user.id, id, dto);
     return { success: true };
   }
+
+  @Get('drivers-nearby')
+  @ApiOperation({ summary: 'Get nearby online drivers' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of nearby drivers',
+    type: [NearbyDriverResponseDto],
+  })
+  async getNearbyDrivers(
+    @Query('lat') lat: number,
+    @Query('lng') lng: number,
+    @Query('radius') radius: number = 5,
+  ): Promise<NearbyDriverResponseDto[]> {
+    return this.ordersService.getNearbyDrivers(
+      Number(lat),
+      Number(lng),
+      Number(radius),
+    );
+  }
 }
+

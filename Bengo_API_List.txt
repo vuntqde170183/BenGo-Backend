@@ -1,0 +1,430 @@
+DANH SÁCH CHI TIẾT API BENGO DELIVERY SERVICE (FULL FIELD LIST)
+================================================================================
+CẤU TRÚC PHẢN HỒI CHUNG (Global Response Wrapper):
+Mọi API đều được bọc bởi TransformInterceptor với cấu trúc sau:
+
+{
+  "statusCode": 200,
+  "message": "Success",
+  "data": { ... dữu liệu thực tế ... },
+  "meta": {
+    "timestamp": "2024-03-20T10:00:00.000Z",
+    "apiVersion": "v1.2"
+  }
+}
+
+Nếu có phân trang (Pagination), sẽ có thêm object "pagination":
+{
+  "statusCode": 200,
+  "message": "...",
+  "data": [ ... ],
+  "pagination": {
+    "total": 100,      // Tổng số bản ghi
+    "count": 20,      // Số bản ghi trong trang hiện tại
+    "per_page": 20,   // Số bản ghi mỗi trang
+    "current_page": 1, 
+    "total_pages": 5
+  },
+  "meta": { ... }
+}
+
+================================================================================
+I. AUTHENTICATION (Xác thực) - AuthController
+================================================================================
+
+1. Đăng ký tài khoản (POST /auth/register)
+   - Payload: { "phone", "password", "name", "type": "CUSTOMER"|"DRIVER" }
+   - Response Data:
+     {
+       "user": {
+         "_id": "694eea...",
+         "phone": "0901234567",
+         "name": "Nguyen Van A",
+         "role": "CUSTOMER",
+         "active": true,
+         "walletBalance": 0,
+         "createdAt": "2024-03-20...",
+         "updatedAt": "2024-03-20..."
+       },
+       "accessToken": "ey..."
+     }
+
+2. Đăng nhập (POST /auth/login)
+   - Payload JSON:
+     {
+       "phone": "0901234567", // Tùy chọn (nếu không dùng email)
+       "email": "user@example.com", // Tùy chọn (nếu không dùng phone)
+       "password": "password123"
+     }
+   - Response Data:
+     {
+       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+       "user": {
+         "id": "694eea39736c474360b86b15",
+         "phone": "0901234567",
+         "name": "Nguyen Van A",
+         "role": "CUSTOMER" // CUSTOMER, DRIVER, ADMIN, DISPATCHER...
+       }
+     }
+
+
+3. Lấy thông tin cá nhân (GET /auth/profile)
+   - Response Data:
+     {
+       "_id": "694eea...",
+       "phone": "0901234567",
+       "email": "user@example.com",
+       "name": "Nguyen Van A",
+       "role": "CUSTOMER",
+       "avatar": "http://...",
+       "walletBalance": 100000,
+       "active": true,
+       "createdAt": "...",
+       "updatedAt": "..."
+     }
+
+================================================================================
+II. ORDERS (Khách hàng) - OrdersController
+================================================================================
+
+1. Xem chi tiết một đơn hàng (GET /orders/:id)
+   - Response Data:
+     {
+       "_id": "60d0fe4f...",
+       "customerId": { "_id": "...", "name": "...", "phone": "..." },
+       "driverId": { "_id": "...", "name": "...", "phone": "...", "avatar": "..." }, // null nếu chưa có
+       "pickup": { "address": "...", "lat": 10.76, "lng": 106.66 },
+       "dropoff": { "address": "...", "lat": 10.77, "lng": 106.67 },
+       "vehicleType": "VAN",
+       "goodsImages": ["http://..."],
+       "status": "PENDING"|"ACCEPTED"|"PICKED_UP"|"DELIVERED"|"CANCELLED",
+       "totalPrice": 150000,
+       "distanceKm": 5.2,
+       "paymentMethod": "CASH"|"WALLET",
+       "paymentStatus": "UNPAID"|"PAID",
+       "priority": "NORMAL"|"VIP"|"URGENT"|"FRAGILE",
+       "specialNote": "...",
+       "tags": ["..."],
+       "createdAt": "...",
+       "updatedAt": "..."
+     }
+
+2. Lấy lịch sử đơn hàng (GET /orders/history)
+   - Params: ?page=1&limit=10&status=...
+   - Response Data (Mảng các object Order như trên):
+     [ { "_id": "...", "status": "...", "totalPrice": 150000, ... } ]
+
+3. Lấy danh sách tài xế xung quanh (GET /orders/drivers-nearby)
+   - Params: ?lat=10.76&lng=106.66&radius=5
+   - Response Data:
+     [
+       {
+         "id": "60d0fe...",
+         "vehicleType": "VAN",
+         "location": { "lat": 10.762, "lng": 106.660 },
+         "rating": 4.8
+       }
+     ]
+
+
+================================================================================
+III. DRIVER (Tài xế) - DriverController
+================================================================================
+
+1. Cập nhật trạng thái hoạt động (PUT /driver/status)
+   - Payload JSON:
+     {
+       "isOnline": true,
+       "location": { "lat": 10.76, "lng": 106.66 }
+     }
+   - Response Data: { "success": true }
+
+2. Lấy danh sách đơn chờ gần đây (GET /driver/orders/pending)
+   - Params: ?lat=10.7&lng=106.6&radius=5
+   - Response Data:
+     [
+       {
+         "orderId": "60d0fe...",
+         "distance": 1.5,
+         "price": 50000
+       }
+     ]
+
+3. Chấp nhận đơn hàng (POST /driver/orders/:id/accept)
+   - Response Data:
+     {
+       "success": true,
+       "order": {
+         "id": "60d0fe...",
+         "status": "ACCEPTED",
+         "pickup": { "address": "...", "lat": 10.76, "lng": 106.66 },
+         "dropoff": { "address": "...", "lat": 10.77, "lng": 106.67 },
+         "totalPrice": 150000
+       }
+     }
+
+4. Cập nhật trạng thái chuyến đi (PUT /driver/orders/:id/update)
+   - Payload JSON:
+     {
+       "status": "PICKED_UP"|"DELIVERED",
+       "proofImage": "http://..." // Tùy chọn (ảnh bằng chứng giao hàng)
+     }
+   - Response Data: { "success": true }
+
+5. Cập nhật vị trí GPS thời gian thực (PUT /driver/location)
+   - Payload JSON:
+     {
+       "lat": 10.76,
+       "lng": 106.66,
+       "heading": 90 // Tùy chọn (góc hướng đi)
+     }
+   - Response Data: { "success": true }
+
+6. Tải lên tài liệu tài xế (POST /driver/documents)
+   - Payload JSON:
+     {
+       "type": "LICENSE"|"VEHICLE",
+       "imageUrl": "http://..."
+     }
+   - Response Data: { "success": true }
+
+7. Xem thống kê thu nhập (GET /driver/stats)
+   - Params: ?from=2024-03-01&to=2024-03-20
+   - Response Data:
+     {
+       "totalEarnings": 500000,
+       "totalTrips": 12,
+       "rating": 4.9
+     }
+
+  8. Lấy lịch sử chuyến đi của tài xế (GET /driver/orders)
+    - Params: ?page=1&limit=10&status=ALL|PENDING|ACCEPTED|PICKED_UP|DELIVERED|CANCELLED
+    - Response Data:
+      {
+        "data": [
+          {
+            "id": "...",
+            "status": "DELIVERED",
+            "pickupAddress": "...",
+            "dropoffAddress": "...",
+            "totalPrice": 150000,
+            "createdAt": "..."
+          }
+        ],
+        "meta": {
+          "total": 10,
+          "page": 1,
+          "limit": 10
+        }
+      }
+
+================================================================================
+IV. ADMIN (Quản trị viên) - AdminController
+================================================================================
+
+1. Danh sách người dùng (GET /admin/users)
+   - Response Data:
+     [
+       {
+         "_id": "...",
+         "phone": "...",
+         "email": "...",
+         "name": "...",
+         "role": "...",
+         "active": true,
+         "walletBalance": 0,
+         "createdAt": "..."
+       }
+     ]
+
+2. Chi tiết người dùng (GET /admin/users/:id)
+   - Response Data:
+     {
+       "_id": "...",
+       "phone": "...",
+       "email": "...",
+       "name": "...",
+       "role": "DRIVER",
+       "avatar": "...",
+       "walletBalance": 50000,
+       "active": true,
+       "driverProfile": { // Chỉ xuất hiện nếu role là DRIVER
+         "_id": "...",
+         "vehicleType": "BIKE",
+         "plateNumber": "59-S1...",
+         "status": "APPROVED",
+         "rating": 4.8,
+         "isOnline": false,
+         "bankInfo": { "bankName": "...", "accountNumber": "...", "accountHolder": "..." }
+       }
+     }
+
+3. Danh sách tài xế (GET /admin/drivers)
+   - Response Data:
+     [
+       {
+         "_id": "...",
+         "userId": { "_id": "...", "name": "...", "phone": "..." },
+         "vehicleType": "BIKE",
+         "plateNumber": "...",
+         "status": "PENDING"|"APPROVED"|"LOCKED"|"REJECTED",
+         "rating": 5,
+         "createdAt": "..."
+       }
+     ]
+
+4. Danh sách đơn hàng (GET /admin/orders)
+   - Response Data: (Giống mục II.1 nhưng có populate customer & driver)
+     [
+       {
+         "_id": "...",
+         "customerId": { "name": "...", "phone": "...", "avatar": "..." },
+         "driverId": { "name": "...", "phone": "...", "avatar": "..." },
+         "status": "...",
+         "totalPrice": 150000,
+         "createdAt": "..."
+       }
+     ]
+
+5. Cấu hình giá cước (GET /admin/pricing)
+   - Response Data:
+     [
+       {
+         "_id": "...",
+         "vehicleType": "BIKE",
+         "basePrice": 15000,
+         "perKm": 5000,
+         "peakHourMultiplier": 1.2
+       },
+       { "vehicleType": "VAN", ... },
+       { "vehicleType": "TRUCK", ... }
+     ]
+
+6. Danh sách khuyến mãi (GET /admin/promotions)
+   - Response Data:
+     [
+       {
+         "_id": "...",
+         "code": "SUMMER20",
+         "title": "...",
+         "discountType": "PERCENTAGE"|"FIXED_AMOUNT",
+         "discountValue": 20,
+         "minOrderValue": 50000,
+         "maxDiscountAmount": 100000,
+         "startDate": "...",
+         "endDate": "...",
+         "usageLimit": 100,
+         "usedCount": 5,
+         "isActive": true,
+         "applicableVehicles": ["BIKE", "VAN"]
+       }
+     ]
+
+7. Danh sách phiếu hỗ trợ (GET /admin/tickets)
+   - Response Data:
+     [
+       {
+         "_id": "...",
+         "userId": { "name": "...", "phone": "..." },
+         "orderId": "...",
+         "subject": "...",
+         "content": "...",
+         "status": "OPEN"|"IN_PROGRESS"|"RESOLVED"|"CLOSED",
+         "priority": "LOW"|"MEDIUM"|"HIGH"|"URGENT",
+         "assignedTo": { "name": "...", "email": "..." },
+         "createdAt": "..."
+       }
+     ]
+
+8. Báo cáo thống kê (GET /admin/reports)
+   - Response Data:
+     {
+       "revenue": {
+         "daily": 1500000,
+         "monthly": 45000000,
+         "total": 500000000,
+         "byVehicleType": { "BIKE": 200000000, "VAN": 150000000, "TRUCK": 150000000 },
+         "chartData": [ { "date": "2024-03-01", "value": 1500000 }, ... ]
+       },
+       "topDrivers": [ { "driverId": "...", "name": "...", "revenue": 10000000, "completedOrders": 50, "rating": 4.9 }, ... ],
+       "orderStats": { "total": 1000, "completed": 850, "cancelled": 50 }
+     }
+
+================================================================================
+V. DISPATCHER (Điều phối viên) - DispatcherController
+================================================================================
+
+1. Dashboard Stats (GET /dispatcher/dashboard/stats)
+   - Response Data:
+     {
+       "totalOrders": 100,
+       "pendingOrders": 5,
+       "activeOrders": 10,
+       "completedToday": 45,
+       "onlineDrivers": 12,
+       "openTickets": 3
+     }
+
+2. Bản đồ tài xế (GET /dispatcher/drivers)
+   - Params: ?lat=...&lng=...&radius=...
+   - Response Data:
+     [
+       {
+         "id": "...",
+         "name": "...",
+         "phone": "...",
+         "status": "ONLINE"|"BUSY"|"OFFLINE",
+         "location": { "type": "Point", "coordinates": [106.66, 10.76] }, // [Long, Lat]
+         "vehicleType": "BIKE"
+       }
+     ]
+
+================================================================================
+VI. CHAT (Trò chuyện) - ChatController
+================================================================================
+
+1. Danh sách phòng chat (GET /chat/conversations)
+   - Response Data:
+     [
+       {
+         "roomId": "...", // Thường là Order ID hoặc unique room ID
+         "orderId": "...",
+         "lastMessage": "Chào bạn, mình đang tới",
+         "partner": { "name": "...", "avatar": "...", "role": "..." },
+         "updatedAt": "..."
+       }
+     ]
+
+2. Tin nhắn trong phòng (GET /chat/:id/messages)
+   - Response Data:
+     [
+       {
+         "_id": "...",
+         "senderId": "...",
+         "content": "Chào bạn",
+         "type": "TEXT"|"IMAGE",
+         "timestamp": "2024-03-20T10:05:00Z"
+       }
+     ]
+
+================================================================================
+VII. UPLOAD (Tải ảnh)
+================================================================================
+
+1. Upload hình ảnh (POST /upload)
+   - Payload: FormData { file: binary }
+   - Response Data:
+     {
+       "public_id": "BenGo-BE/abc123",
+       "url": "https://res.cloudinary.com/.../abc123.jpg",
+       "width": 800,
+       "height": 600,
+       "format": "jpg",
+       "bytes": 102400
+     }
+================================================================================
+GHI CHÚ:
+- Các field có dạng "_id" là MongoDB ObjectId (String).
+- Các field "createdAt", "updatedAt" là định dạng ISO Date String.
+- "statusCode" trong JSON wrapper luôn trùng với HTTP Status Code.
+================================================================================

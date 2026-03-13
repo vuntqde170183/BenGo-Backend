@@ -220,4 +220,31 @@ export class OrdersService {
       },
     };
   }
+
+  async getNearbyDrivers(lat: number, lng: number, radius: number = 5): Promise<any[]> {
+    const drivers = await this.driverModel.find({
+      isOnline: true,
+      status: 'APPROVED',
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [lng, lat],
+          },
+          $maxDistance: radius * 1000, // Distance in meters
+        },
+      },
+    }).limit(50).exec();
+
+    return drivers.map(d => ({
+      id: d._id,
+      vehicleType: d.vehicleType,
+      location: {
+        lat: d.location.coordinates[1],
+        lng: d.location.coordinates[0],
+      },
+      rating: d.rating,
+    }));
+  }
 }
+
