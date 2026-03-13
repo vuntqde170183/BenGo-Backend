@@ -83,6 +83,25 @@ export class OrdersController {
     );
   }
 
+  @Get('drivers-nearby')
+  @ApiOperation({ summary: 'Get nearby online drivers' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of nearby drivers',
+    type: [NearbyDriverResponseDto],
+  })
+  async getNearbyDrivers(
+    @Query('lat') lat: number,
+    @Query('lng') lng: number,
+    @Query('radius') radius: number = 5,
+  ): Promise<NearbyDriverResponseDto[]> {
+    return this.ordersService.getNearbyDrivers(
+      Number(lat),
+      Number(lng),
+      Number(radius),
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get order details' })
   @ApiResponse({
@@ -118,23 +137,5 @@ export class OrdersController {
     return { success: true };
   }
 
-  @Get('drivers-nearby')
-  @ApiOperation({ summary: 'Get nearby online drivers' })
-  @ApiResponse({
-    status: 200,
-    description: 'List of nearby drivers',
-    type: [NearbyDriverResponseDto],
-  })
-  async getNearbyDrivers(
-    @Query('lat') lat: number,
-    @Query('lng') lng: number,
-    @Query('radius') radius: number = 5,
-  ): Promise<NearbyDriverResponseDto[]> {
-    return this.ordersService.getNearbyDrivers(
-      Number(lat),
-      Number(lng),
-      Number(radius),
-    );
-  }
 }
 

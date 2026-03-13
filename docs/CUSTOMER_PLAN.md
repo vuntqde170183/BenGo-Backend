@@ -25,7 +25,7 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 - **Thành phần:**
     1. **Bản đồ nền (Background Map):** 
         - **Library:** `react-native-maps`.
-        - **Hiển thị:** Các tài xế xung quanh dưới dạng icon xe di chuyển real-time. Marker tài xế sử dụng `AnimatedRegion` để chuyển động mượt mà khi vị trí thay đổi qua Socket.
+        - **Hiển thị:** Các tài xế xung quanh dưới dạng icon xe di chuyển. Marker tài xế sử dụng `AnimatedRegion` để chuyển động mượt mà khi vị trí được cập nhật định kỳ (Polling API mỗi 10-15s).
     2. **Thanh tìm kiếm (Search Bar):** 
         - **UI:** "Bạn muốn giao hàng đến đâu?" - Nổi trên bản đồ, bo tròn.
         - **Tương tác:** Khi nhấn vào sẽ điều hướng (`navigation.navigate`) sang màn hình `SearchDestinationScreen` để nhập địa chỉ chi tiết.
@@ -67,72 +67,187 @@ Response Data:
          "applicableVehicles": ["BIKE", "VAN"]
        }
      ]
-#### B. Màn hình Nhập địa chỉ & Chọn dịch vụ (`BookingSetupScreen`)
-- **Luồng:** Xuất hiện sau khi chọn địa điểm từ Search Bar.
-- **Thành phần:**
-    1. **Địa điểm:** 
-        - Nhập điểm lấy hàng (Mặc định location hiện tại).
-        - Nhập điểm giao hàng (Sử dụng `react-native-google-places-autocomplete`).
-    2. **Thông tin hàng hóa:**
-        - Tên hàng hóa, Khối lượng (kg).
-        - Ghi chú cho tài xế (VD: "Hàng dễ vỡ").
-        - Hình ảnh hàng hóa: Sử dụng `react-native-image-picker` để chụp/chọn ảnh.
-    3. **Chọn loại xe (Vehicle Selector):** 
-        - Danh sách: Xe máy (BIKE), Xe bán tải (VAN), Xe tải (TRUCK).
-        - Hiển thị dưới dạng Horizontal List với các Card (VehicleCard).
-        - Hệ thống tính **Giá tạm tính** (Estimated Price) ngay khi chọn loại xe.
-    4. **Nút "TẠO ĐƠN":** Gửi yêu cầu lên hệ thống.
-- **API sử dụng:** 
-  - `POST /orders/estimate`: Tính toán giá cước dựa trên khoảng cách và loại xe.
-  - `POST /orders`: Tạo đơn hàng mới.
-  - `GET /admin/promotions`: Lấy danh sách mã giảm giá khả dụng.
+#### B. Màn hình Tìm kiếm điểm đến (`SearchDestinationScreen`)
 
-#### C. Màn hình Theo dõi đơn hàng (`TrackOrderScreen`)
-- **Luồng:** Sau khi nhấn "TẠO ĐƠN" và có tài xế nhận.
-- **Thành phần:**
-    1. **Bản đồ Live:** 
-        - Vẽ lộ trình (Polyline) bằng `react-native-maps-directions`.
-        - Vị trí tài xế di chuyển real-time hướng về điểm lấy/giao (Socket.IO update).
-    2. **Thông tin tài xế & Bottom Sheet:**
-        - Sử dụng `@gorhom/bottom-sheet` để hiển thị thông tin: Tên, SĐT (Nút gọi nhanh qua `Linking`), Biển số xe & Loại xe.
-    3. **Trạng thái thực tế:** View tiến trình: "Đang tới điểm lấy" -> "Đã tới" -> "Đang giao".
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình phụ (Stack Navigation).
+- Xuất hiện khi người dùng nhấn vào **Thanh tìm kiếm (A2)** tại `CustomerHomeScreen`.
 
-#### D. Màn hình Thanh toán & Đánh giá (`PaymentScreen`)
-- **Vị trí:** Tự động mở hoặc Notification khi tài xế nhấn "Hoàn thành đơn".
-- **Thành phần:**
-    1. **Tổng tiền:** Hiển thị số tiền cuối cùng cần thanh toán.
-    2. **Phương thức thanh toán:** Tiền mặt, Ví điện tử (BenGo Wallet), Chuyển khoản QR.
-    3. **Đánh giá (Rating):** Hiển thị sau khi thanh toán thành công. Sử dụng `react-native-ratings`.
-- **API sử dụng:** 
-  - `POST /payment/pay`: Thực hiện thanh toán.
-  - `POST /orders/:id/rate`: Gửi đánh giá tài xế.
+**1. Danh sách các thành phần (Components):**
+- **S1:** Ô nhập liệu địa chỉ (Search Input Box).
+- **S2:** Nút "Vị trí hiện tại" & "Chọn trên bản đồ".
+- **S3:** Danh sách địa điểm đã lưu (Saved Places).
+- **S4:** Danh sách kết quả gợi ý (Search Predictions).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **S1:** Sử dụng `react-native-google-places-autocomplete`. Header bo góc, background trắng. Icon: `ios-arrow-back` (để quay lại) và `ios-search` (IonIcons).
+- **S2:** Hai hàng phím tắt ngay dưới ô nhập. Icon: `ios-locate` và `ios-map` (IonIcons). Text màu Blue `#0047AB`.
+- **S3:** Render các thẻ (rows) nằm ngang hoặc dọc. Icon: `ios-home`, `ios-briefcase`. Text: "Nhà riêng", "Công ty".
+- **S4:** Danh sách các kết quả trả về từ Google API. Mỗi hàng gồm: Icon `ios-pin` (xám), Title (đen đậm), Subtitle (xám nhạt).
+
+**3. Tương tác & Xử lý (Logic):**
+- **S1:** Tự động Focus khi vào màn hình. Khi gõ > 2 ký tự sẽ bắt đầu hiển thị **S4**.
+- **S2:** "Vị trí hiện tại" sẽ gọi Geolocation để lấy tọa độ. "Chọn trên bản đồ" sẽ mở màn hình map trung gian.
+- **S3:** Khi nhấn, lấy trực tiếp Tọa độ + Địa chỉ đã lưu và chuyển sang `BookingSetupScreen`.
+- **S4:** Khi chọn một địa điểm, hệ thống lưu lại thông tin Destination và điều hướng sang `BookingSetupScreen`.
+
+**4. Tích hợp API:**
+- **S1/S4:** Google Places Autocomplete API (Client side).
+- **S3:** `GET /auth/profile` (Lấy mảng `savedAddresses` của người dùng).
+
+---
+
+#### C. Màn hình Nhập địa chỉ & Chọn dịch vụ (`BookingSetupScreen`)
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình chính trong luồng đặt đơn.
+- Xuất hiện sau khi người dùng chọn xong địa điểm tại `SearchDestinationScreen`.
+
+**1. Danh sách các thành phần (Components):**
+- **C1:** Card hiển thị địa chỉ (Pickup & Dropoff).
+- **C2:** Form nhập thông tin hàng hóa (Goods Info Card).
+- **C3:** Slider chọn loại xe (Vehicle Selector).
+- **C4:** Nút tạo đơn hàng (Action Button).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **C1:** Hiển thị 2 dòng địa chỉ. Icon: `ios-pin` (điểm lấy) và `ios-flag` (điểm giao).
+- **C2:** TextInput cho Tên hàng, Khối lượng. Nút upload ảnh icon `ios-camera` (IonIcons).
+- **C3:** Horizontal List các `VehicleCard`. Mỗi Card gồm: Ảnh xe, Tên xe (VAN, TRUCK...), Giá (VND), Thời gian dự kiến.
+- **C4:** Nút fixed ở bottom, màu Blue `#0047AB`. Text: "TẠO ĐƠN".
+
+**3. Tương tác & Xử lý (Logic):**
+- **C1:** Nhấn vào từng dòng địa chỉ để quay lại màn hình tìm kiếm nếu muốn đổi.
+- **C2:** Mở Camera/Library để chụp ảnh hàng hóa.
+- **C3:** Khi chọn loại xe khác, gọi API estimate để cập nhật giá tức thời.
+- **C4:** Kiểm tra validation (phải có đủ ảnh, tên hàng) rồi mới gọi API tạo đơn.
+
+**4. Tích hợp API:**
+- **C3:** `POST /orders/estimate` (Trigger mỗi khi đổi loại xe).
+- **C4:** `POST /orders` (Gửi payload tạo đơn).
+
+---
+
+#### D. Màn hình Theo dõi đơn hàng (`TrackOrderScreen`)
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình Tracking real-time.
+- Tự động xuất hiện sau khi đơn hàng được tạo và có tài xế nhận.
+
+**1. Danh sách các thành phần (Components):**
+- **D1:** Bản đồ lộ trình (Route Map).
+- **D2:** Thông tin Tài xế (Driver Bottom Sheet).
+- **D3:** Thanh trạng thái đơn hàng (Timeline Status).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **D1:** `react-native-maps` + `react-native-maps-directions`. Vẽ đường đi từ Tài xế -> Điểm lấy -> Điểm giao.
+- **D2:** `@gorhom/bottom-sheet`. Hiển thị Avatar (tròn), Tên, Biển số xe. Icon: `ios-call` và `ios-chatbubbles` (IonIcons).
+- **D3:** Horizontal Step Indicator. Các mốc: Đã xác nhận, Đang đến lấy, Đang giao, Hoàn thành.
+
+**3. Tương tác & Xử lý (Logic):**
+- **D1:** Tự động Polling API mỗi 5-10s để cập nhật vị trí Marker tài xế.
+- **D2:** Nhấn icon Call để mở trình gọi điện; Nhấn icon Chat để mở màn hình chat.
+- **D3:** View-only (Cập nhật dựa trên status từ API).
+
+**4. Tích hợp API:**
+- **D1/D2/D3:** `GET /orders/:id` (Polling liên tục để đồng bộ trạng thái & tọa độ).
+
+---
+
+#### E. Màn hình Thanh toán & Đánh giá (`PaymentScreen`)
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình kết thúc dịch vụ.
+- Xuất hiện khi tài xế nhấn "Hoàn thành đơn" hoặc khách hàng nhấn xác nhận nhận hàng.
+
+**1. Danh sách các thành phần (Components):**
+- **E1:** Chi tiết hóa đơn (Receipt Card).
+- **E2:** Phương thức thanh toán (Payment Selector).
+- **E3:** Form đánh giá tài xế (Rating & Review Form).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **E1:** Text lớn hiển thị số tiền. Icon: `ios-card` (IonIcons).
+- **E2:** List lựa chọn: "Tiền mặt", "Ví BenGo", "Chân trang Chuyển khoản". Icon: `ios-wallet`, `ios-cash`.
+- **E3:** `react-native-ratings` (5 sao). TextInput cho comment.
+
+**3. Tương tác & Xử lý (Logic):**
+- **E2:** Khi chọn thanh toán ví, hệ thống trừ số dư tự động (nếu đủ).
+- **E3:** Nhấn gửi đánh giá sẽ gọi API rate và quay về màn hình Home.
+
+**4. Tích hợp API:**
+- **E2:** `POST /payment/pay`.
+- **E3:** `POST /orders/:id/rate`.
 
 ---
 
 ### 2.2. Phân vùng: Tab Hoạt động (Lịch sử)
 
 #### A. Màn hình Lịch sử đơn hàng (`OrderHistoryScreen`)
-- **UI:** Chia làm 2 Tab (`react-navigation/material-top-tabs`): **Đang diễn ra** và **Lịch sử**.
-- **Thành phần:** 
-    - Danh sách các thẻ đơn hàng (Order Cards) sử dụng `FlatList`.
-    - Mỗi thẻ hiện: Mã đơn, Thời gian, Lộ trình rút gọn, Tổng tiền và Trạng thái.
-- **API sử dụng:** 
-  - `GET /orders/history`: Lấy danh sách đơn hàng.
+
+**0. Vị trí & Luồng xuất hiện:**
+- Thuộc Tab **Hoạt động**.
+
+**1. Danh sách các thành phần (Components):**
+- **H1:** Tab chuyển đổi (Top Tab: Đang diễn ra | Lịch sử).
+- **H2:** Danh sách thẻ đơn hàng (FlatList Order Cards).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **H1:** Sử dụng `@react-navigation/material-top-tabs`. Active tab có gạch chân màu Blue.
+- **H2:** Mỗi thẻ (Card) gồm: Mã đơn (#1234), Trạng thái (Badge), Thời gian, và Icon loại xe (`ios-car`).
+
+**3. Tương tác & Xử lý (Logic):**
+- **H2:** Khi nhấn vào một thẻ đơn hàng, điều hướng sang `CustomerOrderDetailScreen`.
+
+**4. Tích hợp API:**
+- **H2:** `GET /orders/history` (Phân trang và lọc theo trạng thái).
+
+---
 
 #### B. Màn hình Chi tiết đơn hàng (`CustomerOrderDetailScreen`)
-- **Thành phần:** Bản đồ lộ trình, Chi tiết hóa đơn, Nút "Đặt lại" (Re-order), Đánh giá tài xế.
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình chi tiết (Stack). Xuất hiện khi nhấn vào item từ Lịch sử.
+
+**1. Danh sách các thành phần (Components):**
+- **CH1:** Bản đồ lộ trình tĩnh (Static Route Map).
+- **CH2:** Thông tin chi tiết hóa đơn (Billing Detail).
+- **CH3:** Nút chức năng (Re-order / Support).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **CH1:** Snapshot bản đồ với Polyline lộ trình cũ.
+- **CH2:** View liệt kê: Phí dịch vụ, Giảm giá, Tổng thanh toán. Icon: `ios-document-text`.
+- **CH3:** Button "Đặt lại đơn này" màu Blue; Button "Hỗ trợ" icon `ios-help-circle`.
+
+**3. Tương tác & Xử lý (Logic):**
+- **CH3:** "Đặt lại" sẽ copy dữ liệu cũ và quay về `BookingSetupScreen`.
+
+**4. Tích hợp API:**
+- **CH2:** `GET /orders/:id`.
 
 ---
 
 ### 2.3. Phân vùng: Tab Tài khoản
 
 #### A. Màn hình Hồ sơ Khách hàng (`CustomerProfileScreen`)
-- **Thành phần:** 
-    1. **Card Ví BenGo:** Số dư (`walletBalance`) & Button "Nạp tiền".
-    2. **Thông tin cá nhân:** Tên, SĐT, Email.
-    3. **Địa chỉ đã lưu:** Quản lý địa chỉ yêu thích.
-- **API sử dụng:** 
-  - `GET /auth/profile`: Lấy thông tin cá nhân và số dư ví.
+
+**0. Vị trí & Luồng xuất hiện:**
+- Thuộc Tab **Tài khoản**.
+
+**1. Danh sách các thành phần (Components):**
+- **P1:** Thẻ ví BenGo (Wallet Card).
+- **P2:** Danh sách cài đặt & Menu (Settings Menu).
+- **P3:** Nút Đăng xuất (Logout Button).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **P1:** Background Gradient, hiển thị số dư lớn. Icon: `ios-wallet`. Nút "Nạp tiền" icon `ios-add-circle`.
+- **P2:** Danh sách các dòng icon trái - text giữa - icon chevron phải. Các icon: `ios-person`, `ios-location`, `ios-notifications`, `ios-shield-checkmark`.
+- **P3:** Text màu đỏ, icon `ios-log-out`.
+
+**3. Tương tác & Xử lý (Logic):**
+- **P2:** Nhấn "Địa chỉ đã lưu" để quản lý Home/Work address.
+- **P3:** Hiển thị Alert xác nhận trước khi xóa token và về màn Login.
+
+**4. Tích hợp API:**
+- **P1/P2:** `GET /auth/profile`.
 
 ---
 

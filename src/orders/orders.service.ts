@@ -222,29 +222,39 @@ export class OrdersService {
   }
 
   async getNearbyDrivers(lat: number, lng: number, radius: number = 5): Promise<any[]> {
-    const drivers = await this.driverModel.find({
-      isOnline: true,
-      status: 'APPROVED',
-      location: {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [lng, lat],
-          },
-          $maxDistance: radius * 1000, // Distance in meters
-        },
-      },
-    }).limit(50).exec();
+    if (isNaN(lat) || isNaN(lng)) {
+      throw new BadRequestException('Latitude và Longitude phải là số hợp lệ');
+    }
 
-    return drivers.map(d => ({
-      id: d._id,
-      vehicleType: d.vehicleType,
-      location: {
-        lat: d.location.coordinates[1],
-        lng: d.location.coordinates[0],
-      },
-      rating: d.rating,
-    }));
+    try {
+      const drivers = await this.driverModel.find({
+        isOnline: true,
+        status: 'APPROVED',
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates: [lng, lat], // [longitude, latitude]
+            },
+            $maxDistance: radius * 1000,
+          },
+        },
+      }).limit(50).exec();
+
+      return drivers.map(d => ({
+        id: d._id,
+        vehicleType: d.vehicleType,
+        location: {
+          lat: d.location?.coordinates?.[1] || 0,
+          lng: d.location?.coordinates?.[0] || 0,
+        },
+        rating: d.rating,
+      }));
+    } catch (error) {
+      console.error('Error in getNearbyDrivers:', error);
+      // Nếu là lỗi index chưa tồn tại hoặc lỗi query, trả về mảng rỗng thay vì 500
+      return [];
+    }
   }
 }
 

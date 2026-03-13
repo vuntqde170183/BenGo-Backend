@@ -114,6 +114,44 @@ II. ORDERS (Khách hàng) - OrdersController
    - Response Data (Mảng các object Order như trên):
      [ { "_id": "...", "status": "...", "totalPrice": 150000, ... } ]
 
+4. Tính giá cước ước tính (POST /orders/estimate)
+   - Payload JSON:
+     {
+       "origin": { "lat": 10.76, "lng": 106.66, "address": "..." },
+       "destination": { "lat": 10.77, "lng": 106.67, "address": "..." },
+       "vehicleType": "VAN" // BIKE, VAN, TRUCK
+     }
+   - Response Data:
+     {
+       "distance": 5.2, // km
+       "duration": 15, // phút
+       "price": 150000, // VND
+       "currency": "VND"
+     }
+ 
+ 5. Tạo đơn đặt hàng mới (POST /orders)
+    - Payload JSON:
+      {
+        "origin": { 
+          "lat": 10.76, 
+          "lng": 106.66, 
+          "address": "123 Đường A, Quận 1" 
+        },
+        "destination": { 
+          "lat": 10.77, 
+          "lng": 106.67, 
+          "address": "456 Đường B, Quận 3" 
+        },
+        "vehicleType": "VAN",
+        "goodsImages": ["http://res.cloudinary.com/.../img1.jpg"],
+        "note": "Hàng dễ vỡ, giao nhẹ tay" // Tùy chọn
+      }
+    - Response Data:
+      {
+        "id": "60d0fe4f5311236168a109ca",
+        "status": "PENDING"
+      }
+
 3. Lấy danh sách tài xế xung quanh (GET /orders/drivers-nearby)
    - Params: ?lat=10.76&lng=106.66&radius=5
    - Response Data:
