@@ -25,6 +25,7 @@ import {
   UpdateLocationDto,
   UpdateTripStatusDto,
   UploadDocumentDto,
+  DriverDocumentsResponseDto,
 } from './dto/driver.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
@@ -106,6 +107,13 @@ export class DriverController {
   ): Promise<{ success: boolean }> {
     await this.driverService.uploadDocument(req.user.id, dto);
     return { success: true };
+  }
+  
+  @Get('documents')
+  @ApiOperation({ summary: 'Get current document status' })
+  @ApiResponse({ status: 200, description: 'List of documents and status', type: DriverDocumentsResponseDto })
+  async getDocuments(@Req() req: any): Promise<DriverDocumentsResponseDto> {
+    return this.driverService.getDocuments(req.user.id);
   }
 
   @Get('stats')

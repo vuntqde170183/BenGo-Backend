@@ -9,6 +9,7 @@ import {
   UpdateLocationDto,
   UpdateTripStatusDto,
   UploadDocumentDto,
+  DriverDocumentsResponseDto,
 } from './dto/driver.dto';
 import { Driver } from './driver.schema';
 import { Order } from '../orders/orders.schema';
@@ -163,6 +164,37 @@ export class DriverService {
 
     driver.licenseImage = dto.imageUrl;
     await driver.save();
+  }
+
+  async getDocuments(driverId: string): Promise<DriverDocumentsResponseDto> {
+    const driver = await this.driverModel.findOne({ userId: driverId });
+
+    if (!driver) {
+      throw new NotFoundException('Driver profile not found');
+    }
+
+    const documents = [];
+    
+    if (driver.licenseImage) {
+      documents.push({
+        type: 'LICENSE',
+        imageUrl: driver.licenseImage,
+        status: driver.status, // Using profile status for now
+      });
+    }
+
+    if (driver.vehicleRegistrationImage) {
+      documents.push({
+        type: 'VEHICLE',
+        imageUrl: driver.vehicleRegistrationImage,
+        status: driver.status,
+      });
+    }
+
+    return {
+      documents,
+      profileStatus: driver.status,
+    };
   }
 
   async getStats(driverId: string, from: string, to: string): Promise<StatsResponseDto> {

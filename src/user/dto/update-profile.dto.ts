@@ -16,4 +16,20 @@ export class UpdateProfileDto {
     required: false,
   })
   age?: number;
+
+  @ApiProperty({
+    name: 'email',
+    description: 'Email của người dùng',
+    example: 'user@example.com',
+    required: false,
+  })
+  email?: string;
+
+  @ApiProperty({
+    name: 'avatar',
+    description: 'Ảnh đại diện của người dùng',
+    example: 'http://...',
+    required: false,
+  })
+  avatar?: string;
 }

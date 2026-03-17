@@ -83,6 +83,22 @@ I. AUTHENTICATION (Xác thực) - AuthController
        "updatedAt": "..."
      }
 
+4. Cập nhật thông tin cá nhân (PUT /auth/profile)
+   - Payload JSON:
+     {
+       "name": "Nguyen Van A",
+       "email": "user@example.com",
+       "avatar": "http://..."
+     }
+   - Response Data:
+     {
+       "_id": "694eea...",
+       "phone": "0901234567",
+       "name": "Nguyen Van A",
+       "avatar": "http://...",
+       "updatedAt": "..."
+     }
+
 ================================================================================
 II. ORDERS (Khách hàng) - OrdersController
 ================================================================================
@@ -187,6 +203,13 @@ II. ORDERS (Khách hàng) - OrdersController
       }
     - Response Data: { "success": true }
 
+ 7. Hủy đơn hàng (PUT /orders/:id/cancel)
+    - Payload JSON:
+      {
+        "reason": "Tôi muốn đổi địa chỉ khác"
+      }
+    - Response Data: { "success": true }
+
 3. Lấy danh sách tài xế xung quanh (GET /orders/drivers-nearby)
    - Params: ?lat=10.76&lng=106.66&radius=5
    - Response Data:
@@ -260,6 +283,24 @@ III. DRIVER (Tài xế) - DriverController
        "imageUrl": "http://..."
      }
    - Response Data: { "success": true }
+
+7. Xem trạng thái duyệt tài liệu (GET /driver/documents)
+   - Response Data:
+     {
+       "documents": [
+         {
+           "type": "LICENSE",
+           "imageUrl": "http://...",
+           "status": "APPROVED"|"PENDING"|"REJECTED"
+         },
+         {
+           "type": "VEHICLE",
+           "imageUrl": "http://...",
+           "status": "PENDING"
+         }
+       ],
+       "profileStatus": "APPROVED"|"PENDING"|"REJECTED"|"LOCKED"
+     }
 
 7. Xem thống kê thu nhập (GET /driver/stats)
    - Params: ?from=2024-03-01&to=2024-03-20

@@ -35,147 +35,208 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 ### 2.2. Phân vùng: Tab Trang chủ (Điều khiển chính)
 
 #### A. Màn hình Dashboard Tài xế (`DriverDashboardScreen`)
-- **Vị trí:** **Tab Trang chủ**.
-- **Chức năng:** Nhận đơn hàng real-time.
-- **Thành phần chi tiết:**
-    1. **Bản đồ (Map Layer):** Hiển thị vị trí hiện tại và các điểm `PENDING` đơn hàng.
-    2. **Danh sách đơn hàng gần đây (Bottom Sheet):**
-        - Hiển thị các thẻ đơn cư trú quanh vị trí tài xế.
-        - **Thông tin mỗi thẻ:**
-            - Điểm lấy hàng & Điểm giao hàng (Địa chỉ ngắn).
-            - Khoảng cách từ tài xế tới điểm lấy (VD: `1.2 km`).
-            - Giá chuyến đi (Số tiền thực nhận).
-            - Thời gian đăng đơn (VD: `2 phút trước`).
-        - **Nút hành động:**
-            - Nút **"XEM CHI TIẾT"**: Xem ảnh hàng hóa, khối lượng, ghi chú.
-            - Nút **"NHẬN ĐƠN"**: Chấp nhận đơn hàng ngay lập tức.
-- **Cơ chế:** Khi có đơn mới, hệ thống push realtime lên danh sách. Tài xế nhấn "Nhận đơn" nhanh nhất sẽ được hệ thống khóa đơn (Lock) để tránh nhiều người nhận cùng lúc.
+**0. Vị trí & Luồng:** 
+- Màn hình chính thuộc **Tab Trang chủ**. 
+- Xuất hiện ngay sau khi tài xế đăng nhập thành công và hồ sơ đã được duyệt.
+
+**1. Các thành phần (Components):**
+- **A1:** Thanh trạng thái trực tuyến (Status Toggle Bar).
+- **A2:** Bản đồ nhiệt khu vực (Demand Map).
+- **A3:** Danh sách đơn hàng chờ gần đây (Incoming Orders Bottom Sheet).
+- **A4:** Thẻ thông báo đơn hàng ưu tiên (Priority Order Card).
+
+**2. Thiết kế & Công nghệ:**
+- **A1:** Nền trắng, nổi (shadow). Gồm Switch chọn Online/Offline. Text: "Đang ngoại tuyến" / "Sẵn sàng nhận đơn". Icon: `ios-radio-button-on` (màu xám/xanh).
+- **A2:** `react-native-maps`. Hiển thị vị trí thực tế của tài xế. Marker icon xe tải hướng theo `heading`.
+- **A3:** `@gorhom/bottom-sheet`. Danh sách `FlatList` các đơn hàng `PENDING`.
+- **A4:** Card màu vàng nhạt nẳm nổi trên bản đồ khi có đơn mới đẩy riêng cho tài xế. Icon: `ios-flash`.
+
+**3. Tương tác & Xử lý (Logic):**
+- **A1:** Gạt switch để đổi trạng thái. Khi Online mới bắt đầu nhận được tọa độ GPS và danh sách đơn.
+- **A3:** Vuốt lên để xem toàn bộ danh sách đơn đang chờ xung quanh. Click vào đơn hàng sẽ mở Modal chi tiết.
+- **A4:** Click nhanh để chấp nhận ngay (Accept) đơn ưu tiên.
+
+**4. Tích hợp API:**
+- **A1:** `PUT /driver/status` (Cập nhật `isOnline` và tọa độ hiện tại).
+- **A3:** `GET /driver/orders/pending` (Lấy danh sách đơn quanh vị trí với `radius`).
+- **GPS:** `PUT /driver/location` (Cập nhật vị trí thời gian thực mỗi 10s).
 
 #### B. Pop-up/Modal Nhận đơn (`IncomingRequestModal`)
-- **Luồng:** Xuất hiện khi có đơn cực gần hoặc đơn ưu tiên được đẩy riêng.
-- **Thành phần:** Tương tự thẻ đơn hàng ở Dashboard nhưng chiếm diện tích lớn, có âm thanh thông báo.
+**0. Vị trí & Luồng:**
+- Xuất hiện đè lên Dashboard khi có đơn hàng phù hợp nhất được hệ thống điều phối (đơn cực gần hoặc đơn ưu tiên).
+
+**1. Các thành phần (Components):**
+- **M1:** Thông tin đơn hàng (Điểm đón/giao, Số tiền, Loại xe).
+- **M2:** Nút hành động "Chấp nhận" và "Bỏ qua".
+
+**2. Thiết kế & Công nghệ:**
+- Modal chiếm diện tích lớn, có âm thanh thông báo.
+- Tương tự thẻ đơn hàng ở Dashboard nhưng nổi bật hơn.
+
+**3. Tương tác & Xử lý (Logic):**
+- Nhấn "Chấp nhận" để khóa đơn.
+- Nhấn "Bỏ qua" để từ chối đơn.
+- Tự động biến mất sau một khoảng thời gian nếu không có tương tác.
+
+**4. Tích hợp API:**
+- `POST /driver/orders/:id/accept` (Khi nhấn "Chấp nhận").
 
 #### C. Màn hình Chuyến đi hiện tại (`ActiveTripScreen`)
-- **Giai đoạn 1: Di chuyển tới điểm lấy hàng**
-    - Trạng thái: `ACCEPTED`.
-    - Hiển thị: Bản đồ dẫn đường tới điểm lấy, thông tin khách hàng (Tên, SĐT).
-    - Nút: **"ĐÁ TỚI ĐIỂM ĐÓN"**.
-- **Giai đoạn 2: Bắt đầu giao hàng**
-    - Trạng thái: `PICKED_UP`.
-    - Luồng: Tài xế nhận hàng -> Nhấn nút xác nhận.
-    - Hiển thị: Thông tin đơn hàng (Tên hàng, Khối lượng), Bản đồ đường đi tới điểm giao.
-    - Nút: **"BẮT ĐẦU GIAO HÀNG"**.
-- **Giai đoạn 3: Hoàn thành đơn hàng**
-    - Trạng thái: `DELIVERED`.
-    - Hiển thị: Điểm giao hàng, Tổng tiền cần thu (nếu là tiền mặt).
-    - Nút: **"HOÀN THÀNH ĐƠN"**.
-- **API sử dụng:** 
-  - `GET /orders/:id`: Lấy chi tiết đơn.
-  - `PUT /driver/orders/:id/update`: Cập nhật từng trạng thái (`ACCEPTED` -> `PICKED_UP` -> `DELIVERED`).
+**0. Vị trí & Luồng:**
+- Màn hình trạng thái động, thay thế `DriverDashboardScreen` khi tài xế đã chấp nhận một đơn hàng.
+- Kết thúc khi tài xế nhấn "Hoàn thành" hoặc khách hàng hủy đơn.
+
+**1. Các thành phần (Components):**
+- **B1:** Bản đồ chỉ đường thời gian thực (Navigation Map).
+- **B2:** Thẻ thông tin khách hàng & Hàng hóa (Customer & Goods Info).
+- **B3:** Thanh tiến trình trạng thái (Trip Progress Bar).
+- **B4:** Nút hành động chính (Primary Action Button).
+
+**2. Thiết kế & Công nghệ:**
+- **B1:** `react-native-maps` + `react-native-maps-directions`. Vẽ đường đi từ vị trí hiện tại đến Điểm lấy / Điểm giao.
+- **B2:** Card bo góc phía dưới. Hiển thị Avatar khách, tên, nút gọi/chat. Icon: `ios-call`, `ios-chatbubbles`.
+- **B3:** StepIndicator hiển thị lịch trình: "Tới điểm đón" -> "Đã lấy hàng" -> "Tới điểm giao" -> "Hoàn thành".
+- **B4:** Nút lớn cố định ở bottom, màu sắc thay đổi theo bước (Cam cho Pick up, Xanh cho Deliver).
+
+**3. Tương tác & Xử lý (Logic):**
+- **B2:** Click icon Call gọi `Linking.openURL`, click Chat mở `ChatScreen`.
+- **B4:** Nhấn giữ (Long press) để xác nhận trạng thái (để tránh nhấn nhầm). Mỗi lần nhấn sẽ cập nhật status lên server.
+
+**4. Tích hợp API:**
+- **Dữ liệu:** `GET /orders/:id`.
+- **Sự kiện:** `PUT /driver/orders/:id/update` (Gửi status: `ACCEPTED` -> `PICKED_UP` -> `DELIVERED`).
 
 ---
 
 ### 2.3. Phân vùng: Tab Hoạt động (Lịch sử)
 
 #### A. Màn hình Lịch sử Chuyến đi (`ActivityHistoryScreen`)
-- **Vị trí:** **Tab Hoạt động**.
-- **Mục tiêu:** Giúp tài xế tra cứu nhanh các đơn hàng đã thực hiện, đang thực hiện hoặc đã hủy để quản lý công việc.
-- **Thành phần chi tiết:**
-    1. **Top Tab Navigator:**
-        - **Tất cả:** Hiển thị toàn bộ danh sách đơn hàng.
-        - **Hoàn thành:** Lọc các đơn có trạng thái `DELIVERED`.
-        - **Đã hủy:** Lọc các đơn có trạng thái `CANCELLED`.
-    2. **Thanh công cụ (Tools):**
-        - Ô tìm kiếm theo Mã đơn hàng hoặc địa chỉ.
-        - Bộ lọc thời gian: "Hôm nay", "7 ngày qua", "Tùy chọn".
-    3. **Danh sách thẻ chuyến đi (Trip Cards):**
-        - **Header:** Mã đơn hàng (VD: #BG1023) và Tag trạng thái màu sắc (Xanh lá: Thành công, Đỏ: Đã hủy).
-        - **Body:** 
-            - Thời gian: `14:30 - 20/03/2024`.
-            - Lộ trình: Hiển thị 2 điểm (Icon Đón/Giao) kèm địa chỉ rút gọn.
-            - Tổng tiền: Hiển thị số tiền lớn, nổi bật (VD: **150.000đ**).
-        - **Footer:** Nút "Xem chi tiết" hoặc icon mũi tên.
+**0. Vị trí & Luồng:**
+- Màn hình chính của **Tab Hoạt động**.
+- Mục tiêu: Giúp tài xế tra cứu nhanh các đơn hàng đã thực hiện, đang thực hiện hoặc đã hủy để quản lý công việc.
 
-- **Tương tác:**
-    - **Pull-to-refresh:** Kéo xuống để cập nhật danh sách mới nhất.
-    - **Infinite Scroll:** Tự động tải thêm khi cuộn xuống cuối trang (phân trang).
+**1. Các thành phần (Components):**
+- **H1:** Thanh lọc trạng thái (Trip Filter Tabs).
+- **H2:** Thanh công cụ (Tools) gồm ô tìm kiếm và bộ lọc thời gian.
+- **H3:** Danh sách lịch sử đơn hàng (Order History List).
+- **H4:** Thẻ tóm tắt chuyến đi (Trip Summary Card).
 
-- **API sử dụng:** 
-  - `GET /driver/orders`: Lấy danh sách kèm phân trang (`page`, `limit`) và lọc (`status`).
+**2. Thiết kế & Công nghệ:**
+- **H1:** `@react-navigation/material-top-tabs`. Phân loại: "Tất cả", "Hoàn thành", "Đã hủy".
+- **H2:** Ô tìm kiếm theo Mã đơn hàng hoặc địa chỉ. Bộ lọc thời gian: "Hôm nay", "7 ngày qua", "Tùy chọn".
+- **H3:** `FlatList` với `RefreshControl`. Tích hợp phân trang (Lazy load).
+- **H4:** Card trắng, shadow nhẹ. Header: Mã đơn hàng và Tag trạng thái màu sắc. Body: Thời gian, Lộ trình (2 điểm kèm địa chỉ rút gọn), Tổng tiền nổi bật. Footer: Nút "Xem chi tiết" hoặc icon mũi tên.
 
-#### B. Màn hình Chi tiết Hóa đơn (`TripDetailScreen`)
-- **Vị trí:** Thâm nhập sâu từ ActivityHistoryScreen (Stack Navigation).
-- **Thành phần chi tiết:**
-    1. **Bản đồ tóm tắt (Mini Map View):** 
-        - Hiển thị tĩnh (Static Map) vẽ lại cung đường từ điểm đón đến điểm giao.
-    2. **Thông tin chuyến đi:**
-        - Thời gian bắt đầu và kết thúc thực tế.
-        - Quãng đường di chuyển (Km).
-        - Loại xe sử dụng (VAN, TRUCK...).
-    3. **Chi tiết khách hàng:** Tên và thông tin liên lạc (chỉ hiển thị đầy đủ nếu đơn đang hoạt động).
-    4. **Bảng kê tài chính (Billing):**
-        - Giá cước thực tế.
-        - Phí dịch vụ (Hệ thống khấu trừ).
-        - Khuyến mãi khách hàng áp dụng.
-        - **Thu nhập thực tế tài xế nhận được** (Màu xanh lá, cỡ chữ lớn).
-    5. **Ảnh minh chứng (Proof Image):** Hiển thị ảnh chụp hiện trường/hàng hóa nếu là đơn đã hoàn thành.
+**3. Tương tác & Xử lý (Logic):**
+- **H1:** Chạm để lọc nhanh danh sách bên dưới.
+- **H3:** Pull-to-refresh để cập nhật danh sách mới nhất. Infinite Scroll để tải thêm khi cuộn xuống cuối trang.
+- **H4:** Chạm vào thẻ đơn hàng để chuyển sang `TripDetailScreen`.
 
-- **API sử dụng:** 
-  - `GET /orders/:id`: Xem lại toàn bộ dữ liệu đơn hàng và lịch đóng/mở trạng thái.
+**4. Tích hợp API:**
+- **Dữ liệu:** `GET /driver/orders` (Params: `status`, `page`, `limit`, `search`, `timeFilter`).
+
+#### B. Màn hình Chi tiết Chuyến đi (`TripDetailScreen`)
+**0. Vị trí & Luồng:**
+- Màn hình phụ xuất hiện khi nhấn vào một đơn hàng trong lịch sử từ `ActivityHistoryScreen` (Stack Navigation).
+
+**1. Các thành phần (Components):**
+- **D1:** Bản đồ tĩnh lộ trình (Static Route Map).
+- **D2:** Thông tin chi tiết thời gian & Quãng đường (Timeline Detail).
+- **D3:** Chi tiết khách hàng (Customer Details).
+- **D4:** Bảng kê tài chính tài xế (Earnings Breakdown).
+- **D5:** Mục minh chứng hình ảnh (Delivery Proof).
+
+**2. Thiết kế & Công nghệ:**
+- **D1:** Hiển thị Snapshot bản đồ với đường đi đã thực hiện từ điểm đón đến điểm giao.
+- **D2:** List các mốc thời gian: Giờ nhận, Giờ lấy hàng, Giờ giao xong. Quãng đường di chuyển (Km). Loại xe sử dụng. Icon: `ios-time-outline`.
+- **D3:** Tên và thông tin liên lạc khách hàng (chỉ hiển thị đầy đủ nếu đơn đang hoạt động).
+- **D4:** Hiển thị rõ: Giá cước thực tế, Phí dịch vụ (Hệ thống khấu trừ), Khuyến mãi khách hàng áp dụng, **Thu nhập thực tế tài xế nhận được** (Màu xanh lá, cỡ chữ lớn).
+- **D5:** Hiển thị ảnh chụp hiện trường/hàng hóa nếu là đơn đã hoàn thành.
+
+**3. Tương tác & Xử lý (Logic):**
+- **D5:** Click vào ảnh để xem toàn màn hình.
+
+**4. Tích hợp API:**
+- **Dữ liệu:** `GET /orders/:id` (Xem lại toàn bộ dữ liệu đơn hàng và lịch đóng/mở trạng thái).
 
 ---
 
 ### 2.4. Phân vùng: Tab Thu nhập (Ví tiền)
 
 #### A. Màn hình Thống kê Thu nhập (`EarningsScreen`)
-- **Vị trí:** **Tab Thu nhập**.
-- **Thành phần:** Biểu đồ, Tổng số dư, Danh sách giao dịch ví.
-- **API sử dụng:** 
-  - `GET /driver/stats`: Lấy dữ liệu biểu đồ và các chỉ số KPI theo thời gian.
+**0. Vị trí & Luồng:**
+- Màn hình chính của **Tab Thu nhập**.
+
+**1. Các thành phần (Components):**
+- **W1:** Thống kê tổng quan (Earnings Overview Card).
+- **W2:** Biểu đồ doanh thu (Revenue Chart).
+- **W3:** Danh sách giao dịch ví (Wallet Transactions).
+
+**2. Thiết kế & Công nghệ:**
+- **W1:** Header màu Blue, hiển thị số dư ví hiện tại và tổng thu nhập trong ngày/tuần. Icon: `ios-wallet`.
+- **W2:** `react-native-chart-kit`. Biểu đồ cột (Bar Chart) thu nhập 7 ngày gần nhất.
+- **W3:** Danh sách các khoản cộng/trừ tiền sau mỗi đơn hàng hoặc lệnh rút tiền. Icon `ios-add-circle` / `ios-remove-circle`.
+
+**3. Tương tác & Xử lý (Logic):**
+- **W1:** Nút "Rút tiền" để yêu cầu rút về ngân hàng đã đăng ký.
+- **W2:** Chạm vào cột để xem số tiền cụ thể của ngày đó.
+
+**4. Tích hợp API:**
+- **Dữ liệu:** `GET /driver/stats` (Lấy dữ liệu biểu đồ và các chỉ số KPI theo thời gian).
 
 ---
 
 ### 2.5. Phân vùng: Tab Tài khoản (Cá nhân)
 
 #### A. Màn hình Hồ sơ Tài xế (`ProfileScreen`)
-- **Vị trí:** **Tab Tài khoản**.
-- **Mục tiêu:** Quản lý thông tin định danh, trạng thái hoạt động và các thiết lập ứng dụng.
-- **Thành phần chi tiết:**
-    1. **Header Hồ sơ (Profile Header):**
-        - Avatar lớn (hình tròn), có nút biểu tượng camera để đổi ảnh nhanh.
-        - Tên tài xế (VD: **Nguyễn Văn A**) và ID tài xế.
-        - Chỉ số đánh giá: `4.9 ⭐` (Rating trung bình).
-    2. **Thông tin định danh nhanh:**
-        - Loại xe đang đăng ký (VD: Xe tải 500kg).
-        - Biển số xe (VD: 29A-123.45).
-    3. **Danh mục chức năng (Action Menu):**
-        - **Cài đặt tài khoản:** Chỉnh sửa thông tin cá nhân (Tên, Email).
-        - **Quản lý tài liệu:** Xem trạng thái phê duyệt và cập nhật giấy tờ (GPLX, Đăng ký xe).
-        - **Đổi mật khẩu:** Cập nhật bảo mật.
-        - **Trung tâm hỗ trợ:** Gửi phản hồi hoặc báo cáo sự cố (Ticket).
-        - **Điều khoản & Chính sách:** Các quy định của BenGo.
-        - **Đăng xuất:** Nút màu đỏ ở cuối danh sách.
+**0. Vị trí & Luồng:**
+- Màn hình chính của **Tab Tài khoản**.
 
-- **Tương tác:**
-    - Click vào Avatar: Mở thư viện ảnh hoặc Camera (API `POST /upload` -> `PUT /auth/profile`).
-    - Click vào các mục menu: Chuyển hướng đến các màn hình con tương ứng.
+**1. Các thành phần (Components):**
+- **P1:** Header thông tin cá nhân (Profile Header Card).
+- **P2:** Chỉ số hiệu suất tài xế (Driver Performance Stats).
+- **P3:** Danh mục quản lý (Setting Menu List).
 
-- **API sử dụng:** 
-  - `GET /auth/profile`: Lấy toàn bộ thông tin hiển thị.
+**2. Thiết kế & Công nghệ:**
+- **P1:** Avatar tròn phía trái, tên và hạng tài xế phía phải. Icon: `ios-star` hiển thị số sao trung bình.
+- **P2:** Card chia 3 cột: Số chuyến (Trips), Tỷ lệ hoàn thành (Acceptance Rate), Năm gắn bó (Experience).
+- **P3:** Danh sách các item menu. Icon bên trái: `ios-person`, `ios-document-attach`, `ios-settings`, `ios-log-out`.
+
+**3. Tương tác & Xử lý (Logic):**
+- **P1:** Click vào Avatar để cập nhật ảnh hồ sơ.
+- **P3:** Link đến các màn hình `EditProfileScreen`, `DocumentStatusScreen`, `SettingsScreen`.
+- **P3 (Đăng xuất):** Hiện Dialog xác nhận xóa token và chuyển về Trang Login.
+
+**4. Tích hợp API:**
+- **Dữ liệu:** `GET /auth/profile`.
 
 #### B. Màn hình Chỉnh sửa Hồ sơ (`EditProfileScreen`)
-- **Vị trí:** Stack Navigation (Từ ProfileScreen).
-- **Thành phần:** 
-    - Các ô nhập liệu (Input): Tên hiển thị, Email.
-    - Số điện thoại (Chế độ chỉ đọc - Read only để bảo mật).
-    - Nút "LƯU THAY ĐỔI" ở dưới cùng.
-- **API sử dụng:** `PUT /auth/profile` để cập nhật dữ liệu mới.
+**0. Vị trí & Luồng:**
+- Màn hình phụ xuất hiện khi nhấn "Chỉnh sửa thông tin" từ `ProfileScreen`.
+
+**1. Các thành phần (Components):** 
+- Ô nhập liệu Tên, Email, SĐT (Read-only).
+- Nút "Cập nhật".
+
+**2. Thiết kế:** Form nhập liệu chuẩn với validation.
+
+**3. Logic:** Gọi API cập nhật thông tin JSON.
+
+**4. API:** `PUT /auth/profile`.
 
 #### C. Màn hình Quản lý tài liệu (`DocumentStatusScreen`)
-- **Vị trí:** Stack Navigation.
-- **Mục tiêu:** Kiểm tra giấy tờ nào đã được duyệt (Approved), đang chờ (Pending) hoặc bị từ chối (Rejected).
-- **Luồng:** Cho phép chụp lại và tải lên nếu giấy tờ bị từ chối.
-- **API sử dụng:** `POST /driver/documents`.
+**0. Vị trí & Luồng:**
+- Màn hình phụ từ tài khoản.
+
+**1. Các thành phần (Components):**
+- List trạng thái các giấy tờ: GPLX, Đăng ký xe, Bảo hiểm. 
+- Nút "Tải lên lại".
+
+**2. Thiết kế:** Hiển thị Chip trạng thái (Approved/Pending/Rejected).
+
+**3. Logic:** Cho phép chọn ảnh mới nếu bị từ chối.
+
+**4. API:** `POST /driver/documents`.
 
 ---
 

@@ -22,33 +22,31 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 ### 2.1. Phân vùng: Trang chủ & Đặt đơn (Core Flow)
 
 #### A. Màn hình Trang chủ (`CustomerHomeScreen`)
-- **Thành phần:**
-    1. **Bản đồ nền (Background Map):** 
-        - **Library:** `react-native-maps`.
-        - **Hiển thị:** Các tài xế xung quanh dưới dạng icon xe di chuyển. Marker tài xế sử dụng `AnimatedRegion` để chuyển động mượt mà khi vị trí được cập nhật định kỳ (Polling API mỗi 10-15s).
-    2. **Thanh tìm kiếm (Search Bar):** 
-        - **UI:** "Bạn muốn giao hàng đến đâu?" - Nổi trên bản đồ, bo tròn.
-        - **Tương tác:** Khi nhấn vào sẽ điều hướng (`navigation.navigate`) sang màn hình `SearchDestinationScreen` để nhập địa chỉ chi tiết.
-    3. **Shortcut địa chỉ:** Các nút bấm nhanh: "Nhà riêng", "Công ty", "Địa chỉ đã lưu".
-    4. **Promotion Slider:** 
-        - **Library:** `react-native-reanimated-carousel`.
-        - **Chức năng:** Banner các chương trình khuyến mãi đang diễn ra. Lấy dữ liệu từ API `/admin/promotions`.
-- **API sử dụng:** 
-  - `GET /orders/drivers-nearby`: Lấy vị trí tài xế xung quanh để hiển thị trên bản đồ.
-  Lấy danh sách tài xế xung quanh (GET /orders/drivers-nearby)
-   - Params: `?lat=10.76&lng=106.66&radius=5`
-   - Response Data:
-     ```json
-     [
-       {
-         "id": "60d0fe...",
-         "vehicleType": "VAN",
-         "location": { "lat": 10.762, "lng": 106.660 },
-         "rating": 4.8
-       }
-     ]
-     ```
-   - `GET /admin/promotions`: Lấy danh sách banner khuyến mãi.
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình chính thuộc Tab **"Trang chủ" (Home)**.
+- Mặc định xuất hiện khi người dùng mở ứng dụng và đã đăng nhập.
+
+**1. Danh sách các thành phần (Components):**
+- **H1:** Bản đồ nền tương tác (Interactive Background Map).
+- **H2:** Thanh tìm kiếm địa điểm (Floating Search Bar).
+- **H3:** Nhóm phím tắt địa chỉ (Quick Address Chips).
+- **H4:** Carousel khuyến mãi (Promotion Slider).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **H1:** `react-native-maps`. Background toàn màn hình. Hiển thị tài xế dưới dạng Marker icon xe. Sử dụng `Animated` để di chuyển xe mượt mà.
+- **H2:** Box bo tròn 25px, màu trắng, đổ bóng nhẹ. Text: "Bạn muốn giao hàng đến đâu?". Icon: `ios-search` (IonIcons).
+- **H3:** Row chứa các `Chip` thành phần: "Nhà riêng", "Công ty", "Đã lưu". Icon: `ios-home`, `ios-briefcase`, `ios-bookmark` (IonIcons).
+- **H4:** `react-native-reanimated-carousel`. Hiển thị các Banner quảng cáo bo góc 10px. Lồng trong `View` có lùi lề (padding).
+
+**3. Tương tác & Xử lý (Logic):**
+- **H2:** Khi nhấn vào sẽ điều hướng sang màn hình `SearchDestinationScreen`.
+- **H3:** Khi nhấn chọn một địa chỉ đã lưu, hệ thống tự động điền điểm đến và chuyển sang `BookingSetupScreen`.
+- **H4:** Vuốt ngang để xem các banner. Nhấn vào một banner để mở chi tiết khuyến mãi hoặc áp dụng mã.
+
+**4. Tích hợp API:**
+- **H1:** `GET /orders/drivers-nearby` (Polling 15s/lần) để lấy tọa độ tài xế xung quanh.
+- **H4:** `GET /admin/promotions` để lấy danh sách ảnh banner và mã giảm giá.
 Response Data:
      [
        {
@@ -211,19 +209,110 @@ Response Data:
 
 
 #### B. Màn hình Chi tiết đơn hàng (`CustomerOrderDetailScreen`)
-- **Thành phần:** Bản đồ lộ trình, Chi tiết hóa đơn, Nút "Đặt lại" (Re-order), Đánh giá tài xế.
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình chi tiết (Stack Navigation).
+- Xuất hiện khi nhấn vào một thẻ đơn hàng (**H3**) tại `OrderHistoryScreen` hoặc từ thông báo trạng thái.
+
+**1. Danh sách các thành phần (Components):**
+- **CD1:** Thanh tiêu đề & Nút quay lại (Header).
+- **CD2:** Trạng thái đơn hàng & Mã đơn (Status Banner).
+- **CD3:** Bản đồ lộ trình tóm tắt (Route Map Summary).
+- **CD4:** Thông tin địa chỉ chi tiết (Address Info Card).
+- **CD5:** Thông tin hàng hóa & Ghi chú (Goods Section).
+- **CD6:** Thông tin Tài xế (Driver Info Card - Hiện khi đã có tài xế).
+- **CD7:** Chi tiết thanh toán (Payment Summary).
+- **CD8:** Nhóm phím chức năng (Action Button Group).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **CD1:** Icon `ios-arrow-back` (IonIcons). Text: "Chi tiết đơn hàng" (Bold, size 18).
+- **CD2:** Nền thay đổi theo trạng thái (Xanh dương: ACCEPTED, Xanh lá: DELIVERED, Đỏ: CANCELLED). Hiển thị ID đơn hàng rút gọn.
+- **CD3:** `react-native-maps`. Hiển thị Marker điểm Pickup và Dropoff, vẽ Route đơn giản nối hai điểm.
+- **CD4:** Icon `ios-radio-button-on` (Xanh - Pickup) và `ios-location` (Đỏ - Dropoff). Hiển thị địa chỉ đầy đủ.
+- **CD5:** Icon `ios-cube-outline`. Render danh sách ảnh hàng hóa ngang (Thumbnail) và `specialNote`.
+- **CD6:** Hình ảnh `Avatar` tròn, tên, biển số. Icon `ios-call` (Blue) và `ios-chatbubble` (Green).
+- **CD7:** Icon `ios-receipt-outline`. Hiển thị: Giá cước, Giảm giá (nếu có), Tổng tiền (Bold, Blue).
+- **CD8:** Nút "Hủy đơn" (Viền đỏ), "Đặt lại" (Nền Blue), "Đánh giá" (Nền Gold).
+
+**3. Tương tác & Xử lý (Logic):**
+- **CD6:** Nút gọi điện dùng `Linking.openURL`, nút Chat điều hướng sang `ChatScreen`.
+- **CD8 (Hủy đơn):** Hiện Alert xác nhận, nếu OK gọi API và quay về màn hình trước. Chỉ hiện khi status là PENDING/ACCEPTED.
+- **CD8 (Đặt lại):** Copy thông tin địa chỉ/hàng hóa và chuyển người dùng sang màn `BookingSetupScreen`.
+- **CD8 (Đánh giá):** Mở Modal đánh giá hoặc màn hình `PaymentScreen` phần rating nếu đơn đã hoàn thành.
+
+**4. Tích hợp API:**
+- **Toàn màn hình:** `GET /orders/:id`.
+- **CD8 (Hủy đơn):** `PUT /orders/:id/cancel`.
+- **CD8 (Đánh giá):** `POST /orders/:id/rate`.
 
 ---
 
-### 2.3. Phân vùng: Tab Tài khoản
+### 2.3. Phân vùng: Tab Thông báo
+
+#### A. Màn hình Thông báo (`NotificationScreen`)
+
+**0. Vị trí & Luồng xuất hiện:**
+- Là màn hình chính thuộc Tab **"Thông báo" (Notifications)**.
+- Xuất hiện khi khách hàng nhấn vào biểu tượng `notifications`.
+
+**1. Danh sách các thành phần (Components):**
+- **N1:** Header danh sách (Notification Header).
+- **N2:** Thanh lọc loại thông báo (Notification Filter Bar).
+- **N3:** Danh sách thẻ thông báo (Notification FlatList).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **N1:** Tiêu đề "Thông báo" căn trái, font Bold 24px. Icon `ios-settings-outline` bên phải (IonIcons).
+- **N2:** Nhóm các `Chip` lọc: "Tất cả", "Ưu đãi", "Đơn hàng". Màu sắc hài hòa với palette Blue.
+- **N3:** `FlatList` với `RefreshControl`. Mỗi item card: 
+    - Icon trái: `ios-cube` (Đơn hàng), `ios-gift` (Khuyến mãi), `ios-alert-circle` (Cảnh báo).
+    - Text: Tiêu đề (Bold), Mô tả ngắn (Xám), Thời gian (Xám nhạt).
+    - Chấm xanh báo hiệu thông báo chưa đọc.
+
+**3. Tương tác & Xử lý (Logic):**
+- **N2:** Nhấn để lọc danh sách thông báo theo category.
+- **N3:** 
+    - Nhấn vào thông báo đơn hàng: Điều hướng sang `CustomerOrderDetailScreen`.
+    - Nhấn vào thông báo khuyến mãi: Hiển thị Modal chi tiết hoặc điều hướng sang màn Promotion.
+    - Vuốt sang trái (Swipeable): Hiện nút "Xóa" hoặc "Đánh dấu đã đọc".
+
+**4. Tích hợp API:**
+- **Toàn màn hình:** `GET /notifications` (Lấy danh sách thông báo).
+- **Xử lý trạng thái:** `PUT /notifications/:id/read` (Gọi khi người dùng nhấn vào thông báo).
+
+---
+
+### 2.4. Phân vùng: Tab Tài khoản
 
 #### A. Màn hình Hồ sơ Khách hàng (`CustomerProfileScreen`)
-- **Thành phần:** 
-    1. **Card Ví BenGo:** Số dư (`walletBalance`) & Button "Nạp tiền".
-    2. **Thông tin cá nhân:** Tên, SĐT, Email.
-    3. **Địa chỉ đã lưu:** Quản lý địa chỉ yêu thích.
-- **API sử dụng:** 
-  - `GET /auth/profile`: Lấy thông tin cá nhân và số dư ví.
+
+**0. Vị trí & Luồng xuất hiện:**
+- Là màn hình chính thuộc Tab **"Tài khoản" (Account)**.
+- Xuất hiện khi người dùng nhấn vào biểu tượng `person` ở thanh Bottom Tab Navigator.
+
+**1. Danh sách các thành phần (Components):**
+- **P1:** Header thông tin cá nhân (User Identity Header).
+- **P2:** Thẻ số dư ví điện tử (BenGo Wallet Card).
+- **P3:** Danh sách Menu cài đặt (Settings & Actions Menu List).
+- **P4:** Nút Đăng xuất (Logout Action).
+
+**2. Đặc tả thiết kế & Công nghệ:**
+- **P1:** Hiển thị Avatar (tròn, viền trắng), Tên thành viên (Size 20, Bold), Hạng thành viên (Gold/Silver). Icon `ios-brush` (IonIcons) để chỉnh sửa.
+- **P2:** Sử dụng `LinearGradient` (màu Blue `#0047AB`). Text trắng. Hiển thị số dư phong cách thẻ ATM. Nút "Nạp tiền" (Nền trắng, text Blue). Icon: `ios-card` (IonIcons).
+- **P3:** Mỗi hàng gồm: Icon IonIcons trái (vd: `ios-location`, `ios-notifications`, `ios-shield-checkmark`), Label (thường), Icon mũi tên phải `ios-chevron-forward` (màu xám).
+- **P4:** Nút rộng 90%, viền đỏ nhạt, text đỏ. Icon `ios-log-out-outline` (IonIcons).
+
+**3. Tương tác & Xử lý (Logic):**
+- **P1:** Nhấn vào Header hoặc Icon Brush điều hướng sang màn hình `EditProfileScreen`.
+- **P2:** Nhấn "Nạp tiền" chuyển sang màn hình Thanh toán/Nạp ví. Hiển thị Modal QR hoặc các cổng thanh toán.
+- **P3:** 
+    - "Địa chỉ đã lưu": Điều hướng sang quản lý địa chỉ.
+    - "Bảo mật & Mật khẩu": Mở màn hình đổi mã PIN/Mật khẩu.
+    - "Hỗ trợ khách hàng": Mở trình gọi điện hoặc Chat hỗ trợ.
+- **P4:** Hiển thị `Alert.alert` xác nhận. Nếu OK, xóa Token cục bộ và điều hướng về màn hình Đăng nhập.
+
+**4. Tích hợp API:**
+- **P1/P2/P3:** `GET /auth/profile` để lấy thông tin chi tiết và danh sách địa chỉ.
+- **P4:** `POST /auth/logout` (nếu cần xóa session trên server).
 
 ---
 

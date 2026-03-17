@@ -119,3 +119,21 @@ export class DriverOrderHistoryResponseDto {
     limit: number;
   };
 }
+export class DriverDocumentStatusDto {
+  @ApiProperty({ example: 'LICENSE' })
+  type: string;
+
+  @ApiProperty({ example: 'http://doc.jpg' })
+  imageUrl: string;
+
+  @ApiProperty({ example: 'APPROVED', enum: ['PENDING', 'APPROVED', 'REJECTED'] })
+  status: string;
+}
+
+export class DriverDocumentsResponseDto {
+  @ApiProperty({ type: [DriverDocumentStatusDto] })
+  documents: DriverDocumentStatusDto[];
+
+  @ApiProperty({ example: 'APPROVED', enum: ['PENDING', 'APPROVED', 'REJECTED', 'LOCKED'] })
+  profileStatus: string;
+}
