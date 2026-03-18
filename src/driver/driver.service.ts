@@ -162,39 +162,49 @@ export class DriverService {
       throw new NotFoundException('Driver profile not found');
     }
 
-    driver.licenseImage = dto.imageUrl;
+    switch (dto.type) {
+      case 'IDENTITY_FRONT':
+        driver.identityFrontImage = dto.imageUrl;
+        if (dto.identityNumber) driver.identityNumber = dto.identityNumber;
+        break;
+      case 'IDENTITY_BACK':
+        driver.identityBackImage = dto.imageUrl;
+        if (dto.identityNumber) driver.identityNumber = dto.identityNumber;
+        break;
+      case 'DRIVING_LICENSE':
+      case 'LICENSE':
+        driver.licenseImage = dto.imageUrl;
+        if (dto.drivingLicenseNumber)
+          driver.drivingLicenseNumber = dto.drivingLicenseNumber;
+        break;
+      case 'VEHICLE_REGISTRATION':
+      case 'VEHICLE':
+        driver.vehicleRegistrationImage = dto.imageUrl;
+        if (dto.plateNumber) driver.plateNumber = dto.plateNumber;
+        if (dto.vehicleType) driver.vehicleType = dto.vehicleType;
+        break;
+      default:
+        throw new Error('Invalid document type');
+    }
+
     await driver.save();
   }
 
-  async getDocuments(driverId: string): Promise<DriverDocumentsResponseDto> {
-    const driver = await this.driverModel.findOne({ userId: driverId });
+  async getDocuments(userId: string): Promise<any> {
+    const user = await this.userModel.findById(userId).select('-password');
 
-    if (!driver) {
-      throw new NotFoundException('Driver profile not found');
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    const documents = [];
-    
-    if (driver.licenseImage) {
-      documents.push({
-        type: 'LICENSE',
-        imageUrl: driver.licenseImage,
-        status: driver.status, // Using profile status for now
-      });
+    const driver = await this.driverModel.findOne({ userId: userId });
+
+    const userObj: any = user.toObject();
+    if (driver) {
+      userObj.driverProfile = driver.toObject();
     }
 
-    if (driver.vehicleRegistrationImage) {
-      documents.push({
-        type: 'VEHICLE',
-        imageUrl: driver.vehicleRegistrationImage,
-        status: driver.status,
-      });
-    }
-
-    return {
-      documents,
-      profileStatus: driver.status,
-    };
+    return userObj;
   }
 
   async getStats(driverId: string, from: string, to: string): Promise<StatsResponseDto> {

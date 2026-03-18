@@ -57,13 +57,33 @@ export class UpdateLocationDto {
 }
 
 export class UploadDocumentDto {
-  @ApiProperty({ example: 'LICENSE', enum: ['LICENSE', 'VEHICLE'] })
-  @IsEnum(['LICENSE', 'VEHICLE'])
+  @ApiProperty({ example: 'DRIVING_LICENSE', enum: ['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION', 'LICENSE', 'VEHICLE'] })
+  @IsEnum(['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION', 'LICENSE', 'VEHICLE'])
   type: string;
 
   @ApiProperty({ example: 'http://doc.jpg' })
   @IsString()
   imageUrl: string;
+
+  @ApiPropertyOptional({ example: '0123456789' })
+  @IsString()
+  @IsOptional()
+  identityNumber?: string;
+
+  @ApiPropertyOptional({ example: 'B1-123456' })
+  @IsString()
+  @IsOptional()
+  drivingLicenseNumber?: string;
+
+  @ApiPropertyOptional({ example: '29-A 12345' })
+  @IsString()
+  @IsOptional()
+  plateNumber?: string;
+
+  @ApiPropertyOptional({ example: 'VAN', enum: ['BIKE', 'VAN', 'TRUCK'] })
+  @IsString()
+  @IsOptional()
+  vehicleType?: string;
 }
 
 export class PendingOrderResponseDto {
@@ -120,14 +140,25 @@ export class DriverOrderHistoryResponseDto {
   };
 }
 export class DriverDocumentStatusDto {
-  @ApiProperty({ example: 'LICENSE' })
+  @ApiProperty({ example: 'IDENTITY_FRONT', enum: ['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION'] })
   type: string;
 
-  @ApiProperty({ example: 'http://doc.jpg' })
-  imageUrl: string;
+  @ApiProperty({ example: 'http://doc.jpg', nullable: true })
+  imageUrl: string | null;
 
   @ApiProperty({ example: 'APPROVED', enum: ['PENDING', 'APPROVED', 'REJECTED'] })
   status: string;
+}
+
+export class BankInfoDto {
+  @ApiProperty({ example: 'MBBank' })
+  bankName: string;
+
+  @ApiProperty({ example: '0123456789' })
+  accountNumber: string;
+
+  @ApiProperty({ example: 'NGUYEN VAN A' })
+  accountHolder: string;
 }
 
 export class DriverDocumentsResponseDto {
@@ -136,4 +167,31 @@ export class DriverDocumentsResponseDto {
 
   @ApiProperty({ example: 'APPROVED', enum: ['PENDING', 'APPROVED', 'REJECTED', 'LOCKED'] })
   profileStatus: string;
+
+  @ApiPropertyOptional({ example: 'Ảnh mờ, vui lòng chụp lại' })
+  rejectionReason?: string;
+
+  @ApiPropertyOptional({ example: 'Ghi chú nội bộ cho Admin' })
+  adminNote?: string;
+
+  @ApiPropertyOptional({ example: '0123456789' })
+  identityNumber?: string;
+
+  @ApiPropertyOptional({ example: 'B1-123456' })
+  drivingLicenseNumber?: string;
+
+  @ApiPropertyOptional({ example: '29-A 12345' })
+  plateNumber?: string;
+
+  @ApiPropertyOptional({ example: 'VAN' })
+  vehicleType?: string;
+
+  @ApiPropertyOptional({ example: 'Nguyễn Văn A' })
+  name?: string;
+
+  @ApiPropertyOptional({ example: '0901234567' })
+  phone?: string;
+
+  @ApiPropertyOptional({ type: BankInfoDto })
+  bankInfo?: BankInfoDto;
 }

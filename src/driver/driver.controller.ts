@@ -28,6 +28,7 @@ import {
   DriverDocumentsResponseDto,
 } from './dto/driver.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
+import { createApiResponse } from '../utils/response.util';
 
 @ApiTags('driver')
 @ApiBearerAuth('access-token')
@@ -98,22 +99,23 @@ export class DriverController {
     return { success: true };
   }
 
-  @Post('documents')
+  @Post(':id/documents')
   @ApiOperation({ summary: 'Upload documents' })
   @ApiResponse({ status: 201, description: 'Document uploaded' })
   async uploadDocument(
-    @Req() req: any,
+    @Param('id') id: string,
     @Body() dto: UploadDocumentDto,
   ): Promise<{ success: boolean }> {
-    await this.driverService.uploadDocument(req.user.id, dto);
+    await this.driverService.uploadDocument(id, dto);
     return { success: true };
   }
-  
-  @Get('documents')
+
+  @Get(':id/documents')
   @ApiOperation({ summary: 'Get current document status' })
-  @ApiResponse({ status: 200, description: 'List of documents and status', type: DriverDocumentsResponseDto })
-  async getDocuments(@Req() req: any): Promise<DriverDocumentsResponseDto> {
-    return this.driverService.getDocuments(req.user.id);
+  @ApiResponse({ status: 200, description: 'Full user profile with driver documents' })
+  async getDocuments(@Param('id') id: string): Promise<any> {
+    const data = await this.driverService.getDocuments(id);
+    return createApiResponse(data, 'User retrieved successfully');
   }
 
   @Get('stats')

@@ -164,25 +164,33 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 ### 2.4. Phân vùng: Tab Thu nhập (Ví tiền)
 
 #### A. Màn hình Thống kê Thu nhập (`EarningsScreen`)
-**0. Vị trí & Luồng:**
-- Màn hình chính của **Tab Thu nhập**.
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình chính thuộc Tab **"Thu nhập" (Earnings)** trên Bottom Tab Navigator.
+- Tài xế có thể truy cập bất cứ lúc nào để kiểm tra số dư ví bản thân và hiệu quả công việc.
 
 **1. Các thành phần (Components):**
-- **W1:** Thống kê tổng quan (Earnings Overview Card).
-- **W2:** Biểu đồ doanh thu (Revenue Chart).
-- **W3:** Danh sách giao dịch ví (Wallet Transactions).
+- **W1:** Thẻ tổng quan số dư (Wallet Balance Header).
+- **W2:** Biểu đồ doanh thu 7 ngày (Weekly Revenue Chart).
+- **W3:** Bộ lọc thời gian nhanh (Quick Time Filter).
+- **W4:** Danh sách lịch sử giao dịch (Transaction History List).
 
-**2. Thiết kế & Công nghệ:**
-- **W1:** Header màu Blue, hiển thị số dư ví hiện tại và tổng thu nhập trong ngày/tuần. Icon: `ios-wallet`.
-- **W2:** `react-native-chart-kit`. Biểu đồ cột (Bar Chart) thu nhập 7 ngày gần nhất.
-- **W3:** Danh sách các khoản cộng/trừ tiền sau mỗi đơn hàng hoặc lệnh rút tiền. Icon `ios-add-circle` / `ios-remove-circle`.
+**2. Đặc tả thiết kế & Công nghệ:**
+- **W1:** Sử dụng `LinearGradient` từ Blue đậm sang nhạt. Hiển thị "Số dư ví BenGo" (Size 14, White) và Số tiền hiện tại (Size 32, Bold, White). Icon: `ios-wallet` (IonIcons).
+- **W2:** Thư viện `react-native-chart-kit`. Biểu đồ cột (Bar Chart) với các cột màu Blue `#0047AB`. Hiển thị nhãn ngày (thứ trong tuần) ở trục X.
+- **W3:** Nhóm các `Chip` lọc: "Hôm nay", "Tuần này", "Tháng này". Màu nền xanh nhạt khi được chọn.
+- **W4:** `FlatList` các item giao dịch. Mỗi item bao gồm: 
+    - Icon: `ios-add-circle` (Green cho thu nhập đơn).
+    - Nội dung: Tên giao dịch, Thời gian giao dịch.
+    - Giá trị: Số tiền (+) hiển thị nổi bật bên phải.
 
 **3. Tương tác & Xử lý (Logic):**
-- **W1:** Nút "Rút tiền" để yêu cầu rút về ngân hàng đã đăng ký.
-- **W2:** Chạm vào cột để xem số tiền cụ thể của ngày đó.
+- **W2:** Nhấn vào cột trên biểu đồ sẽ hiển thị Toltip chi tiết số tiền của ngày đó.
+- **W3:** Chạm để đổi bộ lọc thời gian, hệ thống sẽ gọi lại API để làm mới dữ liệu.
+- **W4:** Cuộn danh sách để xem lịch sử sâu hơn.
 
 **4. Tích hợp API:**
-- **Dữ liệu:** `GET /driver/stats` (Lấy dữ liệu biểu đồ và các chỉ số KPI theo thời gian).
+- **Thông tin ví/Thống kê:** `GET /driver/stats` (Params: `from`, `to`).
+- **Lịch sử giao dịch:** `GET /driver/wallet/transactions` (Lấy danh sách các biến động ví).
 
 ---
 
@@ -224,19 +232,37 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 
 **4. API:** `PUT /auth/profile`.
 
-#### C. Màn hình Quản lý tài liệu (`DocumentStatusScreen`)
-**0. Vị trí & Luồng:**
-- Màn hình phụ từ tài khoản.
+#### C. Màn hình Quản lý giấy tờ (`DocumentStatusScreen`)
+
+**0. Vị trí & Luồng xuất hiện:**
+- Màn hình phụ thuộc **Stack Navigation**, được mở từ liên kết "Quản lý giấy tờ" tại màn hình `ProfileScreen`.
+- Mục tiêu: Giúp tài xế tra cứu trạng thái phê duyệt hồ sơ từ Admin hoặc tải lên lại các tài liệu bị từ chối.
 
 **1. Các thành phần (Components):**
-- List trạng thái các giấy tờ: GPLX, Đăng ký xe, Bảo hiểm. 
-- Nút "Tải lên lại".
+- **S1:** Biểu ngữ trạng thái tổng quát (Account Approval Banner).
+- **S2:** Danh sách thẻ tài liệu thành phần (Document Item List).
+- **S3:** Thông báo lý do từ chối (Rejection Reason Box - Hiển thị nếu có).
+- **S4:** Nút xác nhận gửi hồ sơ (Submit For Review Button).
 
-**2. Thiết kế:** Hiển thị Chip trạng thái (Approved/Pending/Rejected).
+**2. Đặc tả thiết kế & Công nghệ:**
+- **S1:** Card bo góc lớn phía trên. Màu sắc thay đổi theo trạng thái tài khoản: Xanh lá (`APPROVED`), Vàng cam (`PENDING`), Đỏ (`REJECTED`). Icon: `ios-shield-checkmark` (IonIcons).
+- **S2:** `FlatList` các thẻ con (Cards). Mỗi thẻ bao gồm:
+    - Trái: Thumbnail ảnh nhỏ của tài liệu đã tải lên.
+    - Giữa: Tên loại tài liệu (VD: "Bằng lái xe", "Đăng ký xe") và nhãn status mini.
+    - Phải: Icon `ios-camera-outline` (nếu cần tải mới) hoặc `ios-eye-outline` (nếu đã có).
+- **S3:** Nền màu đỏ nhạt, text màu đỏ sẫm. Hiển thị nội dung `rejectionReason` từ Database nếu hồ sơ bị Admin trả về.
+- **S4:** Nút nền Blue `#0047AB` đặt ở Bottom. Chỉ Active khi có ít nhất một tài liệu mới được cập nhật.
 
-**3. Logic:** Cho phép chọn ảnh mới nếu bị từ chối.
+**3. Tương tác & Xử lý (Logic):**
+- **S2:** Chạm vào thẻ tài liệu:
+    - Nếu đã có ảnh: Mở `Modal` xem ảnh phóng to toàn màn hình.
+    - Nếu trạng thái là `REJECTED` hoặc chưa có: Mở tùy chọn "Chụp ảnh" hoặc "Chọn từ thư viện" (Sử dụng `react-native-image-picker`).
+- **S4:** Khi nhấn, hệ thống sẽ thực hiện upload các tệp mới lên Cloudinary/S3 và sau đó gọi API cập nhật thông tin tài liệu.
 
-**4. API:** `POST /driver/documents`.
+**4. Tích hợp API:**
+- **Dữ liệu:** `GET /driver/documents` (Lấy danh sách link ảnh và trạng thái của từng loại giấy tờ).
+- **Hành động:** `POST /driver/documents` (Gửi Payload gồm `type` và `imageUrl` mới).
+- **Trạng thái:** Tự động lắng nghe thay đổi của field `status` trong `auth/profile` để cập nhật giao diện `S1`.
 
 ---
 

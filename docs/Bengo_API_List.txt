@@ -276,33 +276,51 @@ III. DRIVER (Tài xế) - DriverController
      }
    - Response Data: { "success": true }
 
-6. Tải lên tài liệu tài xế (POST /driver/documents)
+6. Tải lên tài liệu tài xế (POST /driver/:id/documents)
    - Payload JSON:
      {
-       "type": "LICENSE"|"VEHICLE",
-       "imageUrl": "http://..."
+       "type": "IDENTITY_FRONT"|"IDENTITY_BACK"|"DRIVING_LICENSE"|"VEHICLE_REGISTRATION",
+       "imageUrl": "http://...",
+       "identityNumber": "0123456789",         // Tùy chọn
+       "drivingLicenseNumber": "B1-123456",   // Tùy chọn
+       "plateNumber": "29-A 12345",           // Tùy chọn
+       "vehicleType": "VAN"                   // Tùy chọn
      }
    - Response Data: { "success": true }
 
-7. Xem trạng thái duyệt tài liệu (GET /driver/documents)
+7. Xem chi tiết hồ sơ và trạng thái tài liệu (GET /driver/:id/documents)
    - Response Data:
      {
-       "documents": [
-         {
-           "type": "LICENSE",
-           "imageUrl": "http://...",
-           "status": "APPROVED"|"PENDING"|"REJECTED"
-         },
-         {
-           "type": "VEHICLE",
-           "imageUrl": "http://...",
-           "status": "PENDING"
+       "statusCode": 200,
+       "message": "User retrieved successfully",
+       "data": {
+         "_id": "...",
+         "phone": "...",
+         "email": "...",
+         "name": "...",
+         "role": "DRIVER",
+         "walletBalance": 2500000,
+         "active": true,
+         "driverProfile": {
+           "location": { "type": "Point", "coordinates": [...] },
+           "_id": "...",
+           "userId": "...",
+           "vehicleType": "VAN",
+           "plateNumber": "...",
+           "licenseImage": "...",
+           "status": "APPROVED",
+           "identityNumber": "...",
+           "identityFrontImage": "...",
+           "identityBackImage": "...",
+           "drivingLicenseNumber": "...",
+           "vehicleRegistrationImage": "...",
+           "bankInfo": { ... }
          }
-       ],
-       "profileStatus": "APPROVED"|"PENDING"|"REJECTED"|"LOCKED"
+       },
+       "meta": { "timestamp": "...", "apiVersion": "v1.2" }
      }
 
-7. Xem thống kê thu nhập (GET /driver/stats)
+8. Xem thống kê thu nhập (GET /driver/stats)
    - Params: ?from=2024-03-01&to=2024-03-20
    - Response Data:
      {
@@ -311,7 +329,7 @@ III. DRIVER (Tài xế) - DriverController
        "rating": 4.9
      }
 
-  8. Lấy lịch sử chuyến đi của tài xế (GET /driver/orders)
+9. Lấy lịch sử chuyến đi của tài xế (GET /driver/orders)
     - Params: ?page=1&limit=10&status=ALL|PENDING|ACCEPTED|PICKED_UP|DELIVERED|CANCELLED
     - Response Data:
       {
