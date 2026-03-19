@@ -25,46 +25,35 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 
 **0. Vị trí & Luồng xuất hiện:**
 - Màn hình chính thuộc Tab **"Trang chủ" (Home)**.
-- Mặc định xuất hiện khi người dùng mở ứng dụng và đã đăng nhập.
+- Hoạt động theo mô hình **State-based UI**: Giao diện thay đổi linh hoạt theo từng bước của luồng đặt đơn.
 
-**1. Danh sách các thành phần (Components):**
-- **H1:** Bản đồ nền tương tác (Interactive Background Map).
-- **H2:** Thanh tìm kiếm địa điểm (Floating Search Bar).
-- **H3:** Nhóm phím tắt địa chỉ (Quick Address Chips).
-- **H4:** Carousel khuyến mãi (Promotion Slider).
+**1. Các trạng thái giao diện (UI States):**
 
-**2. Đặc tả thiết kế & Công nghệ:**
-- **H1:** `react-native-maps`. Background toàn màn hình. Hiển thị tài xế dưới dạng Marker icon xe. Sử dụng `Animated` để di chuyển xe mượt mà.
-- **H2:** Box bo tròn 25px, màu trắng, đổ bóng nhẹ. Text: "Bạn muốn giao hàng đến đâu?". Icon: `ios-search` (IonIcons).
-- **H3:** Row chứa các `Chip` thành phần: "Nhà riêng", "Công ty", "Đã lưu". Icon: `ios-home`, `ios-briefcase`, `ios-bookmark` (IonIcons).
-- **H4:** `react-native-reanimated-carousel`. Hiển thị các Banner quảng cáo bo góc 10px. Lồng trong `View` có lùi lề (padding).
+| Trạng thái | Thành phần chính | Tương tác & API |
+| :--- | :--- | :--- |
+| **1. Khám phá (Discovery)** | Bản đồ (H1), Thanh tìm kiếm (H2), Địa chỉ lưu (H3), Khuyến mãi (H4) | Mặc định khi mở App. Gọi `GET /orders/drivers-nearby`. |
+| **2. Thiết lập & Tính giá (Booking)** | Card địa chỉ (H5), Selector loại xe (H6), Giá dự kiến (H7) | Xuất hiện sau khi chọn Điểm Đón/Giao. Gọi `POST /orders/estimate`. |
+| **3. Đang tìm tài xế (Searching)** | Radar Animation (H8), Nút "Hủy tìm" (H9) | Xuất hiện khi nhấn "Xác nhận". Đơn hàng trạng thái `PENDING`. |
 
-**3. Tương tác & Xử lý (Logic):**
-- **H2:** Khi nhấn vào sẽ điều hướng sang màn hình `SearchDestinationScreen`.
-- **H3:** Khi nhấn chọn một địa chỉ đã lưu, hệ thống tự động điền điểm đến và chuyển sang `BookingSetupScreen`.
-- **H4:** Vuốt ngang để xem các banner. Nhấn vào một banner để mở chi tiết khuyến mãi hoặc áp dụng mã.
+**2. Đặc tả Chi tiết các Thành phần:**
+- **H1 (Map):** `react-native-maps`. Hiển thị vị trí người dùng và các xe xung quanh.
+- **H2 (Search Bar):** Thanh "Bạn muốn giao tận nơi đâu?". Nhấn vào mở `SearchDestinationScreen`.
+- **H5 (Address Card):** Hiển thị chi tiết Điểm Đón (mặc định là vị trí hiện tại) và Điểm Giao.
+- **H6 (Vehicle Selector):** Carousel/List các loại xe: **BIKE**, **VAN**, **TRUCK**. Mỗi xe kèm tên và icon minh họa.
+- **H7 (Action Bar):** Hiển thị Số tiền dự kiến và nút "XÁC NHẬN ĐẶT XE".
+
+**3. Luồng Hoạt động (Core Workflow - 2. Đặt chuyến):**
+1.  **Nhập thông tin:** Khách hàng chọn Điểm Đón & Điểm Giao (qua H2/H3).
+2.  **Chọn phương tiện:** Khách hàng chọn loại phương tiện (H6).
+3.  **Tính giá:** Hệ thống tự động gọi API `POST /orders/estimate` dựa trên `pickup`, `dropoff` và `vehicleType`.
+4.  **Xác nhận:** Khách hàng nhấn "XÁC NHẬN ĐẶT XE". Ứng dụng gọi `POST /orders`.
+5.  **Chờ đợi:** Màn hình chuyển sang trạng thái **Searching**. Hệ thống lưu đơn hàng với trạng thái `PENDING` và bắt đầu điều phối.
 
 **4. Tích hợp API:**
-- **H1:** `GET /orders/drivers-nearby` (Polling 15s/lần) để lấy tọa độ tài xế xung quanh.
-- **H4:** `GET /admin/promotions` để lấy danh sách ảnh banner và mã giảm giá.
-Response Data:
-     [
-       {
-         "_id": "...",
-         "code": "SUMMER20",
-         "title": "...",
-         "discountType": "PERCENTAGE"|"FIXED_AMOUNT",
-         "discountValue": 20,
-         "minOrderValue": 50000,
-         "maxDiscountAmount": 100000,
-         "startDate": "...",
-         "endDate": "...",
-         "usageLimit": 100,
-         "usedCount": 5,
-         "isActive": true,
-         "applicableVehicles": ["BIKE", "VAN"]
-       }
-     ]
+- `GET /orders/drivers-nearby`: Lấy tọa độ xe xung quanh để hiển thị trên bản đồ (Polling 15s).
+- `POST /orders/estimate`: Gửi `{ pickup, dropoff, vehicleType }` -> Nhận `totalPrice` và `distanceKm`.
+- `POST /orders`: Gửi payload đầy đủ để tạo đơn. 
+- `GET /admin/promotions`: Lấy danh sách banner quảng cáo cho H4.
 #### B. Màn hình Tìm kiếm điểm đến (`SearchDestinationScreen`)
 
 **0. Vị trí & Luồng xuất hiện:**

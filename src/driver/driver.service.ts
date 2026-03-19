@@ -57,10 +57,11 @@ export class DriverService {
           $lte: lng + radius / 111,
         },
       })
+      .sort({ createdAt: -1 })
       .limit(20)
       .exec();
 
-    return orders.map(order => {
+    return orders.map((order) => {
       // Calculate approximate distance (Haversine formula would be more accurate)
       const latDiff = order.pickup.lat - lat;
       const lngDiff = order.pickup.lng - lng;
@@ -70,6 +71,10 @@ export class DriverService {
         orderId: order._id.toString(),
         distance: parseFloat(distance.toFixed(2)),
         price: order.totalPrice,
+        pickupAddress: order.pickup.address,
+        dropoffAddress: order.dropoff.address,
+        vehicleType: order.vehicleType,
+        createdAt: (order as any).createdAt,
       };
     });
   }

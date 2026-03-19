@@ -95,6 +95,18 @@ export class PendingOrderResponseDto {
 
   @ApiProperty()
   price: number;
+
+  @ApiProperty()
+  pickupAddress: string;
+
+  @ApiProperty()
+  dropoffAddress: string;
+
+  @ApiProperty()
+  vehicleType: string;
+
+  @ApiProperty()
+  createdAt: Date;
 }
 
 export class StatsResponseDto {

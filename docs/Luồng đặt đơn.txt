@@ -1,0 +1,39 @@
+1. Chuẩn bị (Tài xế)
+Tài xế mở ứng dụng và bật chế độ "Sẵn sàng nhận đơn" (Gắn trạng thái isOnline = true qua API PUT /driver/status).
+App tài xế bắt đầu gửi vị trí liên tục về cho máy chủ mỗi 10 giây (PUT /driver/location).
+
+2. Đặt chuyến (Khách hàng)
+Khách hàng nhập điểm Đón và điểm Giao, chọn loại phương tiện (BIKE, VAN, TRUCK).
+Ứng dụng khách gọi API tính giá (POST /orders/estimate). Hệ thống tính toán quãng đường và trả về số tiền dự kiến.
+Khách hàng xác nhận tiến hành đặt xe (POST /orders).
+Hệ thống lưu đơn hàng với trạng thái PENDING.
+
+3. Điều phối và Phát đơn (Hệ thống)
+Hệ thống tự động quét tọa độ GPS để tìm các Tài xế đang rảnh (on-line) trong bán kính gần nhất.
+Hệ thống đẩy thông báo (qua FCM/Socket) tới app của các Tài xế phù hợp.
+Màn hình của Tài xế hiện lên Pop-up báo có đơn (Active Request) với thanh thời gian đếm ngược 30 giây (kèm giá tiền, quãng đường). (Lưu ý: Tài xế cũng có thể chủ động vuốt danh sách Bottom Sheet để xem các đơn PENDING quanh mình qua GET /driver/orders/pending).
+
+4. Nhận chuyến (Tài xế)
+Tài xế nhấn "ChẤP NHẬN" (POST /driver/orders/:id/accept).
+Hệ thống khóa đơn cho tài xế vừa xác nhận, cập nhật trạng thái thành ACCEPTED, gán ID tài xế vào đơn.
+Các tài xế khác sẽ không còn thấy đơn này nữa.
+Khách hàng nhận được thông báo: "Đã tìm thấy tài xế", kèm tên, biển số, định vị.
+
+5. Thực hiện lấy hàng (Tài xế & Khách hàng)
+Màn hình của Tài xế tự động chuyển sang Chế độ điều hướng (ActiveTripScreen), hiển thị bản đồ dẫn đường đi tới chỗ khách.
+Khách hàng có thể nhắn tin/gọi điện trực tiếp cho tài xế. (Chat qua GET /chat/...).
+Khi đến điểm Đón Khách và lấy xong hàng hóa, Tài xế trượt thanh trạng thái "Đã lấy hàng" (PUT /driver/orders/:id/update truyền "status: PICKED_UP").
+Hệ thống cập nhật thành trạng thái PICKED_UP.
+Khách hàng nhận thông báo "Tài xế đang giao đơn hàng của bạn".
+
+6. Giao hàng & Hoàn thành (Tài xế)
+Tài xế tiếp tục nhận điều hướng bản đồ đi tới điểm Giao. Trong suốt lúc di chuyển, định vị GPS tài xế tiếp tục được bơm lên hệ thống.
+Khi tới nơi và giao thành công, Tài xế trượt thanh trạng thái sang "Hoàn thành" (PUT /driver/orders/:id/update truyền "status: DELIVERED", có thể upload ảnh bằng chứng nếu cần).
+Hệ thống đổi đơn sang DELIVERED, tự động cập nhật thanh toán thành PAID (nếu khách dùng ví điện tử). Ghi nhận doanh thu vào hồ sơ Thống kê của tài xế.
+Khách hàng nhận thông báo hoàn tất, ứng dụng khách hàng bật màn hình Đánh giá tài xế (POST /orders/:id/rate).
+
+7. Vai trò của Admin / Điều phối
+Trong suốt quá trình trên, Admin / Điều phối viên có thể xem Dashboard trực tiếp tại văn phòng.
+Giám sát mọi tọa độ tài xế online qua Radar (GET /dispatcher/drivers).
+Giám sát trạng thái cụ thể của chuyến đi theo thời gian thực (GET /admin/orders).
+Can thiệp trực tiếp (Liên hệ, Hủy bỏ) trong các sự vụ bất thường. Xem lại lịch sử và thống kê doanh thu.
