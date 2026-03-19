@@ -12,7 +12,7 @@ export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
-  ) {}
+  ) { }
 
   async createUser(data: any): Promise<User> {
     try {
@@ -42,7 +42,7 @@ export class UserService {
     const orConditions = [];
     if (email) orConditions.push({ email });
     if (phone) orConditions.push({ phone });
-    
+
     if (orConditions.length === 0) return null;
 
     return this.userModel.findOne({ $or: orConditions }).select('+password');
@@ -62,7 +62,7 @@ export class UserService {
         );
       }
 
-      let userData = user.toObject();
+      let userData = user.toObject() as any;
       if (userData.role === 'DRIVER') {
         const driver = await this.driverModel.findOne({ userId });
         if (driver) {
