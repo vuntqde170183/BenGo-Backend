@@ -82,29 +82,34 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 - `POST /driver/orders/:id/accept` (Khi nhấn "Chấp nhận").
 
 #### C. Màn hình Chuyến đi hiện tại (`ActiveTripScreen`)
-**0. Vị trí & Luồng:**
-- Màn hình trạng thái động, thay thế `DriverDashboardScreen` khi tài xế đã chấp nhận một đơn hàng.
-- Kết thúc khi tài xế nhấn "Hoàn thành" hoặc khách hàng hủy đơn.
+
+**0. Vị trí & Luồng tương tác:**
+- Xuất hiện ngay lập tức sau khi tài xế nhấn "Chấp nhận" đơn hàng tại `IncomingRequestModal` hoặc danh sách đơn chờ.
+- Màn hình này sẽ thay thế hoàn toàn Dashboard cho đến khi tài xế nhấn "Hoàn thành" chuyến đi hoặc đơn hàng bị hủy.
 
 **1. Các thành phần (Components):**
 - **B1:** Bản đồ chỉ đường thời gian thực (Navigation Map).
-- **B2:** Thẻ thông tin khách hàng & Hàng hóa (Customer & Goods Info).
-- **B3:** Thanh tiến trình trạng thái (Trip Progress Bar).
-- **B4:** Nút hành động chính (Primary Action Button).
+- **B2:** Thanh tiến trình trạng thái (Trip Progress Timeline).
+- **B3:** Thẻ thông tin khách hàng & Giao tiếp (Customer Contact Card).
+- **B4:** Thẻ thông tin địa chỉ & Hàng hóa (Location & Goods Detail Card).
+- **B5:** Nút trượt xác nhận trạng thái (Status Swipe Button).
 
 **2. Thiết kế & Công nghệ:**
-- **B1:** `react-native-maps` + `react-native-maps-directions`. Vẽ đường đi từ vị trí hiện tại đến Điểm lấy / Điểm giao.
-- **B2:** Card bo góc phía dưới. Hiển thị Avatar khách, tên, nút gọi/chat. Icon: `ios-call`, `ios-chatbubbles`.
-- **B3:** StepIndicator hiển thị lịch trình: "Tới điểm đón" -> "Đã lấy hàng" -> "Tới điểm giao" -> "Hoàn thành".
-- **B4:** Nút lớn cố định ở bottom, màu sắc thay đổi theo bước (Cam cho Pick up, Xanh cho Deliver).
+- **B1:** Sử dụng `react-native-maps` phối hợp với `react-native-maps-directions`. Vẽ tuyến đường `Polyline` màu xanh dương từ vị trí tài xế đến điểm hiện tại (Đón hoặc Giao). Icon xe tải di chuyển mượt mà dựa trên GPS.
+- **B2:** Thanh StepIndicator ở sát trên cùng màn hình. Gồm 3 mốc: "Đón khách" -> "Đã lấy hàng" -> "Hoàn thành". Sử dụng icon `ios-ellipse` (chưa đến) và `ios-checkmark-circle` (đã xong).
+- **B3:** Card nổi (shadow) phía trên cùng của cụm thông tin dưới. Hiển thị Avatar tròn, Tên khách hàng, Số sao đánh giá (`ios-star`). Có 2 nút tròn: Gọi điện (`ios-call` - màu xanh lá) và Nhắn tin (`ios-chatbubbles` - màu xanh dương).
+- **B4:** Hiển thị chi tiết địa chỉ Đón/Giao kèm Label "Từ:" và "Đến:". Text địa chỉ Size 14, Bold. Icon: `ios-radio-button-on` (Điểm đón) và `ios-pin` (Điểm giao).
+- **B5:** Sử dụng thư viện dạng Slider (như `rn-swipe-button`). Text thay đổi theo bước: "VUỐT ĐỂ LẤY HÀNG" (Màu cam) $\rightarrow$ "VUỐT ĐỂ GIAO HÀNG" (Màu xanh dương).
 
 **3. Tương tác & Xử lý (Logic):**
-- **B2:** Click icon Call gọi `Linking.openURL`, click Chat mở `ChatScreen`.
-- **B4:** Nhấn giữ (Long press) để xác nhận trạng thái (để tránh nhấn nhầm). Mỗi lần nhấn sẽ cập nhật status lên server.
+- **B1:** Tự động Focus vào vị trí tài xế khi di chuyển.
+- **B3:** Nhấn Icon gọi điện sẽ gọi `Linking.openURL('tel:...')`. Nhấn Chat sẽ điều hướng (Navigate) sang màn hình `ChatScreen`.
+- **B5:** Luồng trượt một chiều (Swipe). Khi trượt hết thanh, hệ thống sẽ thực hiện chuyển trạng thái đơn hàng. Không hỗ trợ Click đơn thuần để tránh nhấn nhầm khi đang lái xe.
 
 **4. Tích hợp API:**
-- **Dữ liệu:** `GET /orders/:id`.
-- **Sự kiện:** `PUT /driver/orders/:id/update` (Gửi status: `ACCEPTED` -> `PICKED_UP` -> `DELIVERED`).
+- **Lấy dữ liệu:** `GET /orders/:id` (Cập nhật thông tin chi tiết đơn hàng).
+- **Gửi sự kiện:** `PUT /driver/orders/:id/update` (Gửi Payload `{ status: 'PICKED_UP' }` hoặc `{ status: 'DELIVERED' }`).
+- **Tọa độ:** Tiếp tục chạy ngầm `PUT /driver/location` để khách hàng theo dõi được vị trí tài xế trên bản đồ của họ.
 
 ---
 
@@ -232,37 +237,54 @@ Tài liệu này chi tiết cấu trúc giao diện, các thành phần UI, lu�
 
 **4. API:** `PUT /auth/profile`.
 
-#### C. Màn hình Quản lý giấy tờ (`DocumentStatusScreen`)
+#### C. Màn hình Quản lý giấy tờ (`DocumentManagementScreen`)
 
 **0. Vị trí & Luồng xuất hiện:**
-- Màn hình phụ thuộc **Stack Navigation**, được mở từ liên kết "Quản lý giấy tờ" tại màn hình `ProfileScreen`.
-- Mục tiêu: Giúp tài xế tra cứu trạng thái phê duyệt hồ sơ từ Admin hoặc tải lên lại các tài liệu bị từ chối.
+- Thuộc **Stack Navigation**, mở từ "Quản lý giấy tờ" tại `ProfileScreen`.
+- Mục tiêu: Xem trạng thái phê duyệt của từng loại giấy tờ và tổng quát hồ sơ.
 
 **1. Các thành phần (Components):**
-- **S1:** Biểu ngữ trạng thái tổng quát (Account Approval Banner).
-- **S2:** Danh sách thẻ tài liệu thành phần (Document Item List).
-- **S3:** Thông báo lý do từ chối (Rejection Reason Box - Hiển thị nếu có).
-- **S4:** Nút xác nhận gửi hồ sơ (Submit For Review Button).
+- **C1:** Banner trạng thái hồ sơ (Approved/Pending/Rejected).
+- **C2:** Danh sách thẻ trạng thái tài liệu (Status Cards).
+- **C3:** Nút điều hướng "Cập nhật thông tin" (Navigate to Update Screen).
+
+**2. Đặc tả thiết kế:**
+- **C1:** Card Gradient lớn. Hiển thị thông báo: "Hồ sơ của bạn đang được xử lý" hoặc "Cần cập nhật lại thông tin".
+- **C2:** Mỗi card hiển thị: Tên loại (CCCD, Bằng lái, Xe), Trạng thái (Đã duyệt/Chờ duyệt/Bị từ chối), và icon trạng thái tương ứng.
+- **C3:** Nút "CẬP NHẬT NGAY" ở phía dưới nếu có mục bị từ chối hoặc thiếu thông tin.
+
+**3. Tích hợp API:**
+- **Dữ liệu:** `GET /driver/:id/documents`.
+
+---
+
+#### D. Màn hình Cập nhật hồ sơ xác thực (`UpdateVerificationScreen`)
+
+**0. Vị trí & Luồng:**
+- Mở khi nhấn nút "Cập nhật" (C3) từ `DocumentManagementScreen` hoặc khi đăng ký mới.
+- Mục tiêu: Cung cấp form nhập liệu và tải ảnh cho toàn bộ hồ sơ.
+
+**1. Các thành phần (Components):**
+- **V1:** Nhóm thông tin Định danh (Identity Section: Số CCCD + 2 mặt ảnh).
+- **V2:** Nhóm thông tin Bằng lái (License Section: Số GPLX + Ảnh).
+- **V3:** Nhóm thông tin Phương tiện (Vehicle Section: Biển số, Loại xe + Ảnh Đăng ký).
+- **V4:** Nhóm thông tin Ngân hàng (Bank Info: Tên ngân hàng, STK, Chủ TK).
+- **V5:** Nút "GỬI YÊU CẦU DUYỆT".
 
 **2. Đặc tả thiết kế & Công nghệ:**
-- **S1:** Card bo góc lớn phía trên. Màu sắc thay đổi theo trạng thái tài khoản: Xanh lá (`APPROVED`), Vàng cam (`PENDING`), Đỏ (`REJECTED`). Icon: `ios-shield-checkmark` (IonIcons).
-- **S2:** `FlatList` các thẻ con (Cards). Mỗi thẻ bao gồm:
-    - Trái: Thumbnail ảnh nhỏ của tài liệu đã tải lên.
-    - Giữa: Tên loại tài liệu (VD: "Bằng lái xe", "Đăng ký xe") và nhãn status mini.
-    - Phải: Icon `ios-camera-outline` (nếu cần tải mới) hoặc `ios-eye-outline` (nếu đã có).
-- **S3:** Nền màu đỏ nhạt, text màu đỏ sẫm. Hiển thị nội dung `rejectionReason` từ Database nếu hồ sơ bị Admin trả về.
-- **S4:** Nút nền Blue `#0047AB` đặt ở Bottom. Chỉ Active khi có ít nhất một tài liệu mới được cập nhật.
+- **V1-V3:** Sử dụng `TextInput` hiện đại với icon bên trái. Khu vực tải ảnh dạng hộp đứt nét (Dashed box) kèm icon Camera.
+- **V4:** Các ô nhập liệu STK và Tên chủ tài khoản (In hoa tự động).
+- **V5:** Nút Primary Blue. Hiển thị Modal "Đang tải lên..." khi nhấn.
 
-**3. Tương tác & Xử lý (Logic):**
-- **S2:** Chạm vào thẻ tài liệu:
-    - Nếu đã có ảnh: Mở `Modal` xem ảnh phóng to toàn màn hình.
-    - Nếu trạng thái là `REJECTED` hoặc chưa có: Mở tùy chọn "Chụp ảnh" hoặc "Chọn từ thư viện" (Sử dụng `react-native-image-picker`).
-- **S4:** Khi nhấn, hệ thống sẽ thực hiện upload các tệp mới lên Cloudinary/S3 và sau đó gọi API cập nhật thông tin tài liệu.
+**3. Tương tác & Logic:**
+- Kiểm tra tính hợp lệ (Validation) trước khi cho phép nhấn nút (V5).
+- Tích hợp `react-native-image-picker` để chọn ảnh.
+- Tự động điền lại (Auto-fill) các thông tin cũ đã có từ API để tài xế chỉ cần sửa chỗ thiếu/sai.
 
 **4. Tích hợp API:**
-- **Dữ liệu:** `GET /driver/documents` (Lấy danh sách link ảnh và trạng thái của từng loại giấy tờ).
-- **Hành động:** `POST /driver/documents` (Gửi Payload gồm `type` và `imageUrl` mới).
-- **Trạng thái:** Tự động lắng nghe thay đổi của field `status` trong `auth/profile` để cập nhật giao diện `S1`.
+- **Tải lên:** `POST /driver/:id/documents` (Sử dụng cho từng loại ảnh và số hiệu).
+- **Cập nhật tổng quát:** Gọi nhiều lần API trên cho các mục thay đổi.
+- **Sau thành công:** Quay lại `DocumentManagementScreen` và hiển thị trạng thái `PENDING`.
 
 ---
 

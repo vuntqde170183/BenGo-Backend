@@ -1,4 +1,4 @@
-Thiết kế màn Màn hình (`EarningsScreen`), và tuân theo format sau:
+Thiết kế màn Màn hình (`ActiveTripScreen`), và tuân theo format sau:
 Ví dụ với A. Màn hình Trang chủ (`CustomerHomeScreen`)
 0. Màn này thuộc tab nào, thuộc luồng tương tác nào để có thể xuất hiện màn này
 1. Có các thành phần (components) nào ? (đặt tittle mỗi thành phần là A1, A2, ...)

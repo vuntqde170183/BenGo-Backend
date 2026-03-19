@@ -93,6 +93,21 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   email?: string;
+
+  @ApiPropertyOptional({ 
+    example: '0901234567',
+    description: 'Số điện thoại của người dùng'
+  })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ 
+    example: { vehicleType: 'VAN', plateNumber: '29A-12345' },
+    description: 'Thông tin hồ sơ tài xế'
+  })
+  @IsOptional()
+  driverProfile?: any;
 }
 
 export class ForgotPasswordDto {

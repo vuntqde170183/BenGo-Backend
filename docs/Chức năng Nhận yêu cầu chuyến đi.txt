@@ -1,0 +1,102 @@
+0. Thực hiện cho tôi chức năng "Nhận yêu cầu chuyến đi" của Driver, theo hướng dẫn
+1. Chức năng này nằm ở màn hình nào?
+Chức năng này tập trung chủ yếu ở màn hình DriverDashboardScreen (Tab Trang chủ) và một thông báo dạng Pop-up. Cụ thể:
+Màn hình Dashboard (DriverDashboardScreen): Nơi tài xế bật/tắt chế độ trực tuyến và quan sát bản đồ nhiệt.
+Pop-up Nhận đơn (IncomingRequestModal): Là một Modal xuất hiện đè lên Dashboard khi có một yêu cầu chuyến đi "đích danh" hoặc ưu tiên được hệ thống đẩy xuống cho tài xế.
+2. Luồng hoạt động (Flow):
+Bước 1: Bật trạng thái Sẵn sàng
+- Tại Dashboard, tài xế gạt switch Thanh trạng thái (A1) sang trạng thái "Sẵn sàng nhận đơn".
+- **API sử dụng:** 
+    * `PUT /driver/status` (Payload: `{ "isOnline": true }`)
+    * `PUT /driver/location` (Payload: `{ "lat": x, "lng": y, "heading": z }` - Cập nhật liên tục mỗi 10s).
+
+ Bước 2: Tiếp nhận yêu cầu (Có 2 cách)
+- **Cách A (Chủ động chọn):** Tài xế kéo Bottom Sheet (A3) lên để xem danh sách các đơn hàng đang chờ (PENDING) xung quanh mình.
+    * **API sử dụng:** `GET /driver/orders/pending?lat=...&lng=...&radius=5`
+    * **Response JSON:**
+      ```json
+      [
+        {
+          "orderId": "65f...",
+          "distance": 1.2, // km
+          "price": 55000
+        }
+      ]
+      ```
+- **Cách B (Hệ thống đẩy đơn - Phổ biến nhất):** Khi có khách đặt xe ở gần, hệ thống sẽ đẩy thông báo qua FCM/Socket hoặc Polling.
+    * **API sử dụng:** `GET /driver/orders/pending` (Lấy đơn hàng cụ thể được gán hoặc lọc tự động).
+
+Bước 3: Quyết định (Accept/Decline)
+- Tài xế có khoảng 15-30 giây để nhấn "Chấp nhận" để khóa đơn hàng cho mình.
+- **API sử dụng:** `POST /driver/orders/:id/accept` (Gửi yêu cầu nhận đơn đích danh).
+
+Bước 4: Thực hiện chuyến đi
+- Ngay sau khi nhấn "Chấp nhận" thành công, App sẽ tự động chuyển sang màn hình Chuyến đi hiện tại (ActiveTripScreen).
+- **API sử dụng:**
+    * `GET /orders/:id` (Lấy chi tiết lộ trình và khách hàng).
+    * **Response JSON:**
+      ```json
+      {
+        "_id": "65f...",
+        "customerId": "...",
+        "pickup": { "address": "123 stress A", "lat": 10.7, "lng": 106.6 },
+        "dropoff": { "address": "456 stress B", "lat": 10.8, "lng": 106.7 },
+        "vehicleType": "VAN",
+        "status": "ACCEPTED",
+        "totalPrice": 150000,
+        "distanceKm": 5.5,
+        "paymentMethod": "CASH",
+        "priority": "NORMAL",
+        "goodsImages": ["http://..."]
+      }
+      ```
+    * `PUT /driver/orders/:id/update` (Gửi status: `PICKED_UP` khi lấy hàng, `DELIVERED` khi hoàn thành).
+3. Các thành phần UI liên quan (Trong tài liệu):
+A3: Incoming Orders Bottom Sheet (Danh sách đơn chờ).
+A4: Priority Order Card (Thẻ đơn hàng ưu tiên trên bản đồ).
+M1/M2: Thành phần bên trong Modal nhận đơn (Thông tin đơn & Nút bấm).
+
+4. Đặc tả thiết kế IncomingRequestModal:
+- **Giao diện:** 
+    * Dạng **Overlay Modal** (chiếm 80-90% diện tích màn hình Dashboard).
+    * Nền mờ (Backdrop blur) để tài xế tập trung vào đơn.
+    * Thẻ thông tin đơn hàng thiết kế bo góc lớn, đổ bóng nhẹ.
+- **Thành phần hiển thị:**
+    * **Header:** Icon sấm sét hoặc chuông rung động.
+    * **Body:** Hiển thị giá tiền (Size chữ lớn, màu Xanh lá), quãng đường di chuyển và loại xe yêu cầu.
+    * **Lộ trình:** Hiển thị dưới dạng Timeline: [Icon Đón] - [Địa chỉ đón] ... [Icon Giao] - [Địa chỉ giao].
+- **Hành vi/Hiệu ứng:**
+    * Có **Thanh đếm ngược (Countdown Bar)** chạy từ trái sang phải trong 30 giây.
+    * Âm thanh thông báo "Ting ting" hoặc tiếng chuông liên tục cho đến khi tài xế tương tác.
+- **Nút bấm:**
+    * Nút **"CHẤP NHẬN"** kích thước lớn, màu Xanh dương đậm hoặc Xanh lá cây.
+    * Nút **"BỎ QUA"** đặt nhỏ hơn phía dưới hoặc nút Icon 'X' ở góc, màu xám mờ.
+5. Màn hình Chuyến đi hiện tại (`ActiveTripScreen`)
+
+**0. Vị trí & Luồng tương tác:**
+- Xuất hiện ngay lập tức sau khi tài xế nhấn "Chấp nhận" đơn hàng tại `IncomingRequestModal` hoặc danh sách đơn chờ.
+- Màn hình này sẽ thay thế hoàn toàn Dashboard cho đến khi tài xế nhấn "Hoàn thành" chuyến đi hoặc đơn hàng bị hủy.
+
+**1. Các thành phần (Components):**
+- **B1:** Bản đồ chỉ đường thời gian thực (Navigation Map).
+- **B2:** Thanh tiến trình trạng thái (Trip Progress Timeline).
+- **B3:** Thẻ thông tin khách hàng & Giao tiếp (Customer Contact Card).
+- **B4:** Thẻ thông tin địa chỉ & Hàng hóa (Location & Goods Detail Card).
+- **B5:** Nút trượt xác nhận trạng thái (Status Swipe Button).
+
+**2. Thiết kế & Công nghệ:**
+- **B1:** Sử dụng `react-native-maps` phối hợp với `react-native-maps-directions`. Vẽ tuyến đường `Polyline` màu xanh dương từ vị trí tài xế đến điểm hiện tại (Đón hoặc Giao). Icon xe tải di chuyển mượt mà dựa trên GPS.
+- **B2:** Thanh StepIndicator ở sát trên cùng màn hình. Gồm 3 mốc: "Đón khách" -> "Đã lấy hàng" -> "Hoàn thành". Sử dụng icon `ios-ellipse` (chưa đến) và `ios-checkmark-circle` (đã xong).
+- **B3:** Card nổi (shadow) phía trên cùng của cụm thông tin dưới. Hiển thị Avatar tròn, Tên khách hàng, Số sao đánh giá (`ios-star`). Có 2 nút tròn: Gọi điện (`ios-call` - màu xanh lá) và Nhắn tin (`ios-chatbubbles` - màu xanh dương).
+- **B4:** Hiển thị chi tiết địa chỉ Đón/Giao kèm Label "Từ:" và "Đến:". Text địa chỉ Size 14, Bold. Icon: `ios-radio-button-on` (Điểm đón) và `ios-pin` (Điểm giao).
+- **B5:** Sử dụng thư viện dạng Slider (như `rn-swipe-button`). Text thay đổi theo bước: "VUỐT ĐỂ LẤY HÀNG" (Màu cam) $\rightarrow$ "VUỐT ĐỂ GIAO HÀNG" (Màu xanh dương).
+
+**3. Tương tác & Xử lý (Logic):**
+- **B1:** Tự động Focus vào vị trí tài xế khi di chuyển.
+- **B3:** Nhấn Icon gọi điện sẽ gọi `Linking.openURL('tel:...')`. Nhấn Chat sẽ điều hướng (Navigate) sang màn hình `ChatScreen`.
+- **B5:** Luồng trượt một chiều (Swipe). Khi trượt hết thanh, hệ thống sẽ thực hiện chuyển trạng thái đơn hàng. Không hỗ trợ Click đơn thuần để tránh nhấn nhầm khi đang lái xe.
+
+**4. Tích hợp API:**
+- **Lấy dữ liệu:** `GET /orders/:id` (Cập nhật thông tin chi tiết đơn hàng).
+- **Gửi sự kiện:** `PUT /driver/orders/:id/update` (Gửi Payload `{ status: 'PICKED_UP' }` hoặc `{ status: 'DELIVERED' }`).
+- **Tọa độ:** Tiếp tục chạy ngầm `PUT /driver/location` để khách hàng theo dõi được vị trí tài xế trên bản đồ của họ.

@@ -32,4 +32,20 @@ export class UpdateProfileDto {
     required: false,
   })
   avatar?: string;
+
+  @ApiProperty({
+    name: 'phone',
+    description: 'Số điện thoại của người dùng',
+    example: '0901234567',
+    required: false,
+  })
+  phone?: string;
+
+  @ApiProperty({
+    name: 'driverProfile',
+    description: 'Thông tin hồ sơ tài xế',
+    example: { vehicleType: 'VAN', plateNumber: '29A-12345' },
+    required: false,
+  })
+  driverProfile?: any;
 }
