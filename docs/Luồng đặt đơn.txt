@@ -13,7 +13,7 @@ Hệ thống tự động quét tọa độ GPS để tìm các Tài xế đang 
 Hệ thống đẩy thông báo (qua FCM/Socket) tới app của các Tài xế phù hợp.
 Màn hình của Tài xế hiện lên Pop-up báo có đơn (Active Request) với thanh thời gian đếm ngược 30 giây (kèm giá tiền, quãng đường). (Lưu ý: Tài xế cũng có thể chủ động vuốt danh sách Bottom Sheet để xem các đơn PENDING quanh mình qua GET /driver/orders/pending).
 
-4. Nhận chuyến (Tài xế)
+4. Nhận chuyến (Tài xế) 
 Tài xế nhấn "ChẤP NHẬN" (POST /driver/orders/:id/accept).
 Hệ thống khóa đơn cho tài xế vừa xác nhận, cập nhật trạng thái thành ACCEPTED, gán ID tài xế vào đơn.
 Các tài xế khác sẽ không còn thấy đơn này nữa.
