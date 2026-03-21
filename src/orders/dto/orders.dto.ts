@@ -141,6 +141,13 @@ export class OrderResponseDto {
   };
 
   @ApiPropertyOptional()
+  customer?: {
+    name: string;
+    phone: string;
+    email?: string;
+  };
+
+  @ApiPropertyOptional()
   trackingPath?: any;
 }
 

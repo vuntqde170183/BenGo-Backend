@@ -138,6 +138,11 @@ export class OrdersService {
         avatar: (order.driverId as any).avatar,
         rating: driverRating,
       } : null,
+      customer: order.customerId ? {
+        name: (order.customerId as any).name || 'Khách hàng',
+        phone: (order.customerId as any).phone || 'N/A',
+        email: (order.customerId as any).email,
+      } : null,
       trackingPath: null,
     };
   }
