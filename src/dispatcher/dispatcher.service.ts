@@ -193,7 +193,7 @@ export class DispatcherService {
     const endDate = to ? new Date(to) : new Date();
 
     const orders = await this.orderModel.find({
-      driverId,
+      driverId: driver.userId,
       createdAt: { $gte: startDate, $lte: endDate },
     });
 
@@ -236,7 +236,7 @@ export class DispatcherService {
       throw new Error('Driver is not approved');
     }
 
-    order.driverId = dto.driverId;
+    order.driverId = driver.userId as any;
     order.status = 'ACCEPTED';
     await order.save();
 

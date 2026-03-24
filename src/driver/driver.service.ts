@@ -213,8 +213,8 @@ export class DriverService {
   }
 
   async getStats(driverId: string, from: string, to: string): Promise<StatsResponseDto> {
-    const startDate = new Date(from);
-    const endDate = new Date(to);
+    const startDate = from ? new Date(from) : new Date(new Date().setDate(new Date().getDate() - 30));
+    const endDate = to ? new Date(to) : new Date();
 
     const orders = await this.orderModel.find({
       driverId,
