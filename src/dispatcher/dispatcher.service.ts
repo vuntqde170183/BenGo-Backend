@@ -15,6 +15,7 @@ import { Order } from '../orders/orders.schema';
 import { Driver } from '../driver/driver.schema';
 import { SupportTicket } from './support-ticket.schema';
 import { AssignmentHistory } from './assignment-history.schema';
+import { NotificationService } from '../utils/notification.service';
 
 
 @Injectable()
@@ -24,6 +25,7 @@ export class DispatcherService {
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicket>,
     @InjectModel(AssignmentHistory.name) private assignmentHistoryModel: Model<AssignmentHistory>,
+    private readonly notificationService: NotificationService,
   ) { }
 
 
@@ -222,7 +224,7 @@ export class DispatcherService {
       throw new NotFoundException('Order not found');
     }
 
-    const driver = await this.driverModel.findById(dto.driverId);
+    const driver = await this.driverModel.findById(dto.driverId).populate('userId', 'name');
 
     if (!driver) {
       throw new NotFoundException('Driver not found');
@@ -239,6 +241,14 @@ export class DispatcherService {
     order.driverId = driver.userId as any;
     order.status = 'ACCEPTED';
     await order.save();
+
+    await this.notificationService.createNotification(
+      order.customerId,
+      'Tài xế đã nhận đơn',
+      `Tài xế ${(driver.userId as any)?.name || 'BenGo'} đang trên đường đến điểm lấy hàng.`,
+      'ORDER_STATUS',
+      { orderId: order._id.toString(), status: 'ACCEPTED' }
+    );
 
     // Save assignment history
     await this.assignmentHistoryModel.create({

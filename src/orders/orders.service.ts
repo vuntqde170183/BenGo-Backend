@@ -140,10 +140,9 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
 
-    let driverRating = 5;
+    let driverProfile = null;
     if (order.driverId) {
-      const driver = await this.driverModel.findOne({ userId: (order.driverId as any)._id });
-      if (driver) driverRating = driver.rating;
+      driverProfile = await this.driverModel.findOne({ userId: (order.driverId as any)._id });
     }
 
     return {
@@ -162,7 +161,11 @@ export class OrdersService {
         name: (order.driverId as any).name || 'Unknown',
         phone: (order.driverId as any).phone || 'N/A',
         avatar: (order.driverId as any).avatar,
-        rating: driverRating,
+        rating: driverProfile?.rating || 5,
+        location: driverProfile?.location?.coordinates ? {
+          lat: driverProfile.location.coordinates[1],
+          lng: driverProfile.location.coordinates[0],
+        } : null,
       } : null,
       customer: order.customerId ? {
         name: (order.customerId as any).name || 'Khách hàng',

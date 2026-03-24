@@ -6,7 +6,7 @@ import { Order, OrderSchema } from '../orders/orders.schema';
 import { Driver, DriverSchema } from '../driver/driver.schema';
 import { SupportTicket, SupportTicketSchema } from './support-ticket.schema';
 import { AssignmentHistory, AssignmentHistorySchema } from './assignment-history.schema';
-
+import { NotificationModule } from '../utils/notification.module';
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { AssignmentHistory, AssignmentHistorySchema } from './assignment-history
       { name: SupportTicket.name, schema: SupportTicketSchema },
       { name: AssignmentHistory.name, schema: AssignmentHistorySchema },
     ]),
-
+    NotificationModule,
   ],
   controllers: [DispatcherController],
   providers: [DispatcherService],

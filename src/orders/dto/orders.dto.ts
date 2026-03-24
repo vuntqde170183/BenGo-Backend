@@ -163,6 +163,7 @@ export class OrderResponseDto {
     phone: string;
     avatar?: string;
     rating?: number;
+    location?: { lat: number; lng: number };
   };
 
   @ApiPropertyOptional()

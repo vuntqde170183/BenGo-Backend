@@ -14,6 +14,7 @@ import {
 import { Driver } from './driver.schema';
 import { Order } from '../orders/orders.schema';
 import { User } from '../user/user.schema';
+import { NotificationService } from '../utils/notification.service';
 
 @Injectable()
 export class DriverService {
@@ -21,6 +22,7 @@ export class DriverService {
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(User.name) private userModel: Model<User>,
+    private readonly notificationService: NotificationService,
   ) { }
 
   async toggleStatus(driverId: string, dto: ToggleStatusDto): Promise<void> {
@@ -104,6 +106,15 @@ export class DriverService {
     order.status = 'ACCEPTED';
     await order.save();
 
+    const userDriver = await this.userModel.findById(driverId);
+    await this.notificationService.createNotification(
+      order.customerId,
+      'Tài xế đã nhận đơn',
+      `Tài xế ${userDriver?.name || 'BenGo'} đang trên đường đến điểm lấy hàng.`,
+      'ORDER_STATUS',
+      { orderId: order._id.toString(), status: 'ACCEPTED' }
+    );
+
     return {
       success: true,
       order: {
@@ -139,7 +150,44 @@ export class DriverService {
 
     if (dto.status === 'DELIVERED') {
       order.paymentStatus = 'PAID';
-      // TODO: Update driver earnings and customer wallet if payment method is WALLET
+      
+      const adminCommission = order.totalPrice * 0.2;
+      const driverEarnings = order.totalPrice * 0.8;
+
+      if (order.paymentMethod === 'WALLET') {
+        const customer = await this.userModel.findById(order.customerId);
+        if (customer) {
+          customer.walletBalance -= order.totalPrice;
+          await customer.save();
+        }
+        const userDriver = await this.userModel.findById(order.driverId);
+        if (userDriver) {
+          userDriver.walletBalance += driverEarnings;
+          await userDriver.save();
+        }
+      } else if (order.paymentMethod === 'CASH') {
+        const userDriver = await this.userModel.findById(order.driverId);
+        if (userDriver) {
+          userDriver.walletBalance -= adminCommission;
+          await userDriver.save();
+        }
+      }
+
+      await this.notificationService.createNotification(
+        order.customerId,
+        'Giao hàng thành công',
+        `Đơn hàng của bạn đã được giao thành công. Cảm ơn bạn đã sử dụng dịch vụ!`,
+        'ORDER_STATUS',
+        { orderId: order._id.toString(), status: 'DELIVERED' }
+      );
+    } else if (dto.status === 'PICKED_UP') {
+      await this.notificationService.createNotification(
+        order.customerId,
+        'Tài xế đã lấy hàng',
+        `Tài xế đã lấy hàng và đang trên đường giao đến bạn.`,
+        'ORDER_STATUS',
+        { orderId: order._id.toString(), status: 'PICKED_UP' }
+      );
     }
 
     await order.save();

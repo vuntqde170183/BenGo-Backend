@@ -5,6 +5,7 @@ import { DriverService } from './driver.service';
 import { Driver, DriverSchema } from './driver.schema';
 import { Order, OrderSchema } from '../orders/orders.schema';
 import { User, UserSchema } from '../user/user.schema';
+import { NotificationModule } from '../utils/notification.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { User, UserSchema } from '../user/user.schema';
       { name: Order.name, schema: OrderSchema },
       { name: User.name, schema: UserSchema },
     ]),
+    NotificationModule,
   ],
   controllers: [DriverController],
   providers: [DriverService],
