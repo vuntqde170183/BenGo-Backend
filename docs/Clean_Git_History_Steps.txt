@@ -1,0 +1,29 @@
+Dọn dẹp lịch sử commit của kho lưu trữ Git:
+
+1. Kiểm tra trạng thái và lịch sử ban đầu:
+   - Dùng lệnh `git log -n 5` và `git rev-list --count HEAD` (ban đầu có 51 commits).
+   - Kiểm tra hiển thị các tác giả commit bằng lệnh `git log --format="%ae" | sort-object | group-object -noelement`.
+
+2. Tạo nhánh sao lưu (backup branch):
+   - Tạo và chuyển sang nhánh mới để làm việc an toàn, tránh ảnh hưởng làm hỏng nhánh `main` ban đầu trong quá trình bộ lọc đang chạy.
+   - Lệnh: `git checkout -b clean-history-v1`
+
+3. Sử dụng Git Filter-Branch để loại bỏ (skip) các commit:
+   - Chạy lệnh `git filter-branch` quét toàn bộ các commit của nhánh hiện tại (`HEAD`), loại bỏ bất kỳ commit nào thuộc về 4 email mà bạn chỉ định: doduoc2908@gmail.com, tuannade140195@fpt.edu.vn, duongpnhde170240@fpt.edu.vn, tn900225@gmail.com.
+   - Các commit không thuộc 4 email trên sẽ được giữ nguyên và gộp tuần tự sang lịch sử mới (thông qua `git commit-tree`).
+   - Lệnh PowerShell: 
+     git filter-branch -f --commit-filter 'case "$GIT_AUTHOR_EMAIL" in "doduoc2908@gmail.com"|"tuannade140195@fpt.edu.vn"|"duongpnhde170240@fpt.edu.vn"|"tn900225@gmail.com") skip_commit "$@" ;; *) git commit-tree "$@" ;; esac' HEAD
+
+4. Xác nhận lại kết quả ở Local sau khi bộ lọc chạy xong:
+   - Số lượng commit giảm từ 51 xuống còn 42 (`git rev-list --count HEAD`).
+   - Kiểm tra danh sách tác giả mới, hệ thống báo là chỉ còn lại 3 user hợp lệ bao gồm: cuongtqde170639@fpt.edu.vn (16 commits), tungntde160623@fpt.edu.vn (22 commits), vuntqde170183@fpt.edu.vn (4 commits).
+
+5. Áp dụng lịch sử sạch lên nhánh chính `main` (Local):
+   - Cập nhật nhánh nhánh `main` lúc này vẫn đang có lịch sử cũ, nên quay trở lại `main`: `git checkout main`
+   - Reset (đặt lại) cứng cho lịch sử nhánh `main` cập nhật theo với nhánh mới tạo `clean-history-v1`: `git reset --hard clean-history-v1`
+
+6. Ghi đè lịch sử vĩnh viễn lên Github (Remote):
+   - Do hash commit đã bị thay đổi đồng loạt trên máy tính và không còn khớp chiều dài lịch sử trên Github, quá trình cập nhật bắt buộc phải thực hiện lệnh Force theo dạng Push ép buộc (-f).
+   - Lệnh: `git push -f origin main`
+
+Kết luận: Toàn bộ lịch sử commit đã được xoá triệt để dấu vết của 4 thành viên theo yêu cầu, cả ở Local lẫn trên Github.

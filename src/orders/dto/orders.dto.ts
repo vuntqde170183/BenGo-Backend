@@ -64,6 +64,31 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @ApiPropertyOptional({ example: 'STRIPE' })
+  @IsOptional()
+  @IsString()
+  paymentMethod?: string;
+
+  @ApiPropertyOptional({ example: 150000 })
+  @IsOptional()
+  @IsNumber()
+  totalPrice?: number;
+}
+
+export class CreatePaymentIntentDto {
+  @ApiProperty({ example: 150000 })
+  @IsNumber()
+  amount: number;
+
+  @ApiProperty({ example: 'vnd' })
+  @IsString()
+  currency: string;
+}
+
+export class PaymentIntentResponseDto {
+  @ApiProperty({ example: 'pi_...' })
+  client_secret: string;
 }
 
 export class CancelOrderDto {

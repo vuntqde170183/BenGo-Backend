@@ -25,6 +25,8 @@ import {
   OrderResponseDto,
   RateDriverDto,
   NearbyDriverResponseDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResponseDto,
 } from './dto/orders.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
@@ -46,6 +48,19 @@ export class OrdersController {
     @Body() dto: EstimatePriceDto,
   ): Promise<EstimateResponseDto> {
     return this.ordersService.estimatePrice(dto);
+  }
+
+  @Post('create-payment-intent')
+  @ApiOperation({ summary: 'Create Stripe Payment Intent' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment intent created successfully',
+    type: PaymentIntentResponseDto,
+  })
+  async createPaymentIntent(
+    @Body() dto: CreatePaymentIntentDto,
+  ): Promise<PaymentIntentResponseDto> {
+    return this.ordersService.createPaymentIntent(dto);
   }
 
   @Post()

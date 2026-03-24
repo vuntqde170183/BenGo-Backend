@@ -48,7 +48,7 @@ export class Order extends Document {
   @Prop({ type: Number, required: true })
   distanceKm: number;
 
-  @Prop({ type: String, enum: ['CASH', 'WALLET'], default: 'CASH' })
+  @Prop({ type: String, enum: ['CASH', 'WALLET', 'STRIPE', 'QR'], default: 'CASH' })
   paymentMethod: string;
 
   @Prop({ type: String, enum: ['UNPAID', 'PAID'], default: 'UNPAID' })

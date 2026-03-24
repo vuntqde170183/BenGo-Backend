@@ -5,8 +5,8 @@ App tài xế bắt đầu gửi vị trí liên tục về cho máy chủ mỗi
 2. Đặt chuyến (Khách hàng)
 Khách hàng nhập điểm Đón và điểm Giao, chọn loại phương tiện (BIKE, VAN, TRUCK).
 Ứng dụng khách gọi API tính giá (POST /orders/estimate). Hệ thống tính toán quãng đường và trả về số tiền dự kiến.
-Khách hàng xác nhận tiến hành đặt xe (POST /orders).
-Hệ thống lưu đơn hàng với trạng thái PENDING.
+Khách hàng chọn phương thức thanh toán (Tiền mặt, Ví BenGo hoặc Chuyển khoản QR) và xác nhận tiến hành đặt xe (POST /orders).
+Hệ thống lưu đơn hàng với trạng thái PENDING và ghi nhận phương thức thanh toán.
 
 3. Điều phối và Phát đơn (Hệ thống)
 Hệ thống tự động quét tọa độ GPS để tìm các Tài xế đang rảnh (on-line) trong bán kính gần nhất.
@@ -29,7 +29,11 @@ Khách hàng nhận thông báo "Tài xế đang giao đơn hàng của bạn".
 6. Giao hàng & Hoàn thành (Tài xế)
 Tài xế tiếp tục nhận điều hướng bản đồ đi tới điểm Giao. Trong suốt lúc di chuyển, định vị GPS tài xế tiếp tục được bơm lên hệ thống.
 Khi tới nơi và giao thành công, Tài xế trượt thanh trạng thái sang "Hoàn thành" (PUT /driver/orders/:id/update truyền "status: DELIVERED", có thể upload ảnh bằng chứng nếu cần).
-Hệ thống đổi đơn sang DELIVERED, tự động cập nhật thanh toán thành PAID (nếu khách dùng ví điện tử). Ghi nhận doanh thu vào hồ sơ Thống kê của tài xế.
+Thực hiện thanh toán:
+    - Nếu Tiền mặt: Khách hàng thanh toán trực tiếp cho Tài xế. Tài xế xác nhận đã nhận tiền.
+    - Nếu Ví BenGo/Thẻ: Hệ thống tự động khấu trừ số dư ví của Khách (Sử dụng API POST /payment/pay) và cập nhật trạng thái đơn thành PAID.
+    - Nếu QR Code: Khách hàng quét mã QR do hệ thống hoặc tài xế cung cấp (POST /payment/create-qr) để chuyển khoản.
+Hệ thống ghi nhận doanh thu vào hồ sơ Thống kê của tài xế (sau khi trừ phí chiết khấu).
 Khách hàng nhận thông báo hoàn tất, ứng dụng khách hàng bật màn hình Đánh giá tài xế (POST /orders/:id/rate).
 
 7. Vai trò của Admin / Điều phối

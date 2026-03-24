@@ -13,14 +13,40 @@ import {
   OrderResponseDto,
   RateDriverDto,
 } from './dto/orders.dto';
+import { ConfigService } from '@nestjs/config';
+import Stripe from 'stripe';
 
 @Injectable()
 export class OrdersService {
+  private stripe: Stripe;
+
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
-  ) { }
+    private configService: ConfigService,
+  ) {
+    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_mock', {
+      apiVersion: '2024-06-20' as any,
+    });
+  }
+
+  async createPaymentIntent(dto: any): Promise<any> {
+    const { amount, currency } = dto;
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: amount, // assume amount is in smallest unit (cents/vnđ)
+        currency: currency || 'vnd',
+        payment_method_types: ['card'],
+      });
+
+      return {
+        client_secret: paymentIntent.client_secret,
+      };
+    } catch (error) {
+      throw new BadRequestException('Lỗi khởi tạo thanh toán Stripe: ' + error.message);
+    }
+  }
 
   async estimatePrice(dto: EstimatePriceDto): Promise<EstimateResponseDto> {
     // Calculate distance using Haversine formula
@@ -88,10 +114,10 @@ export class OrdersService {
       vehicleType: dto.vehicleType,
       goodsImages: dto.goodsImages,
       status: 'PENDING',
-      totalPrice: estimate.price,
+      totalPrice: dto.totalPrice || estimate.price,
       distanceKm: estimate.distance,
-      paymentMethod: 'CASH',
-      paymentStatus: 'UNPAID',
+      paymentMethod: dto.paymentMethod || 'CASH',
+      paymentStatus: dto.paymentMethod === 'STRIPE' ? 'PAID' : 'UNPAID',
     });
 
     await order.save();
