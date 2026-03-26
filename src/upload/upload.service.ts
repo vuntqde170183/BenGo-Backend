@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import { ConfigService } from '@nestjs/config';
+import { Readable } from 'stream';
 
 @Injectable()
 export class UploadService {
@@ -13,10 +14,8 @@ export class UploadService {
   }
 
   async uploadImage(file: Express.Multer.File): Promise<any> {
-    try {
-      const result = await cloudinary.uploader.upload(
-        file.path ||
-          `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+    return new Promise((resolve, reject) => {
+      const upload = cloudinary.uploader.upload_stream(
         {
           folder: 'BenGo-BE',
           resource_type: 'image',
@@ -26,19 +25,21 @@ export class UploadService {
             { format: 'auto' },
           ],
         },
+        (error, result) => {
+          if (error) return reject(new Error(error.message));
+          resolve({
+            public_id: result.public_id,
+            url: result.secure_url,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+          });
+        },
       );
 
-      return {
-        public_id: result.public_id,
-        url: result.secure_url,
-        width: result.width,
-        height: result.height,
-        format: result.format,
-        bytes: result.bytes,
-      };
-    } catch (error) {
-      throw new Error(`Failed to upload image: ${error.message}`);
-    }
+      Readable.from(file.buffer).pipe(upload);
+    });
   }
 
   async deleteImage(publicId: string): Promise<any> {
