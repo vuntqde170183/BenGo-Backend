@@ -150,7 +150,7 @@ export class DriverService {
 
     if (dto.status === 'DELIVERED') {
       order.paymentStatus = 'PAID';
-      
+
       const adminCommission = order.totalPrice * 0.2;
       const driverEarnings = order.totalPrice * 0.8;
 
@@ -209,10 +209,13 @@ export class DriverService {
   }
 
   async uploadDocument(driverId: string, dto: UploadDocumentDto): Promise<void> {
-    const driver = await this.driverModel.findOne({ userId: driverId });
+    let driver = await this.driverModel.findOne({ userId: driverId });
 
     if (!driver) {
-      throw new NotFoundException('Driver profile not found');
+      driver = new this.driverModel({
+        userId: driverId,
+        status: 'PENDING',
+      });
     }
 
     switch (dto.type) {

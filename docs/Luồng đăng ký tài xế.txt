@@ -1,0 +1,22 @@
+1. Đăng ký tài khoản Khách hàng (Customer Registration)
+Người dùng thực hiện đăng ký tài khoản mới qua ứng dụng (API POST /auth/register).
+Mọi tài khoản mới khi tạo thành công mặc định sẽ có vai trò là "CUSTOMER" (Khách hàng). Tài khoản lúc này chỉ có quyền đặt đơn, chưa có quyền nhận đơn.
+
+2. Gửi hồ sơ đăng ký tài xế (Driver Application)
+Khách hàng có nhu cầu trở thành đối tác tài xế sẽ thực hiện gửi hồ sơ xác minh qua ứng dụng.
+Tài xế thực hiện tải lên các giấy tờ pháp lý (API POST /driver/:id/documents):
+    - Hồ sơ xác minh: CCCD (mặt trước/sau), Bằng lái xe, Đăng ký xe.
+    - Thông tin phương tiện: Biển số xe (plateNumber), Loại xe (BIKE, VAN, TRUCK).
+Hệ thống sẽ tạo một bản ghi hồ sơ Driver liên kết với mã người dùng (userId) với trạng thái mặc định là "PENDING" (Chờ duyệt).
+
+3. Kiểm tra và Phê duyệt (Quản trị viên)
+Quản trị viên (Admin) truy cập Dashboard để xem danh sách khách hàng muốn nâng cấp lên tài xế (GET /admin/drivers?status=PENDING).
+Admin kiểm tra tính xác thực của các tài liệu đã tải lên.
+Khi hồ sơ hợp lệ, Admin thực hiện lệnh phê duyệt và nâng cấp tài khoản (API PUT /admin/users/:id/role):
+    - Cập nhật vai trò người dùng: Chuyển từ "CUSTOMER" thành "DRIVER".
+    - Cập nhật trạng thái hồ sơ: Chuyển sang "APPROVED".
+
+4. Kích hoạt hoạt động (Tài xế)
+Sau khi User chính thức chuyển sang vai trò "DRIVER", tài xế nhận được thông báo thành công.
+Tài xế mở App tài xế, thực hiện bật chế độ "Sẵn sàng nhận đơn" (API PUT /driver/status truyền isOnline = true).
+Lúc này, hệ thống bắt đầu ghi nhận GPS và tài xế chính thức bước vào Luồng hoạt động tại "Bước 1: Chuẩn bị" trong tài liệu Luồng đặt đơn.
