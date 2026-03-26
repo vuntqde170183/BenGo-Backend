@@ -7,10 +7,10 @@ export class Driver extends Document {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   userId: string | User;
 
-  @Prop({ type: String, enum: ['BIKE', 'TRUCK', 'VAN'], required: true })
+  @Prop({ type: String, enum: ['BIKE', 'TRUCK', 'VAN'] })
   vehicleType: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String })
   plateNumber: string;
 
   @Prop({ type: String })

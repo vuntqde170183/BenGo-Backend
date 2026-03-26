@@ -289,6 +289,11 @@ export class AdminService {
     }
 
     // Cập nhật trạng thái
+    if (dto.status === 'APPROVED') {
+      if (!driver.vehicleType || !driver.plateNumber) {
+        throw new BadRequestException('Tài xế cần có thông tin loại xe và biển số xe trước khi được duyệt');
+      }
+    }
     driver.status = dto.status;
 
     // Tự động cập nhật Role User nếu trạng thái là APPROVED hoặc REJECTED/LOCKED
