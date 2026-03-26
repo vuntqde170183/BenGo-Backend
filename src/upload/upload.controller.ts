@@ -92,8 +92,12 @@ export class UploadController {
       throw new BadRequestException('Vui lòng chọn file để upload');
     }
 
+    console.log(`[Upload] Starting upload for file: ${file.originalname} (${file.size} bytes)`);
+
     try {
       const result = await this.uploadService.uploadImage(file);
+
+      console.log(`[Upload] Successfully uploaded to Cloudinary. URL: ${result.url}`);
 
       return createApiResponse({
         statusCode: HttpStatus.OK,
@@ -101,6 +105,7 @@ export class UploadController {
         data: result,
       });
     } catch (error) {
+      console.error(`[Upload] Failed to upload image: ${error.message}`);
       throw new BadRequestException(`Lỗi upload hình ảnh: ${error.message}`);
     }
   }
