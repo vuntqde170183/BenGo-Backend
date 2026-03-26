@@ -124,7 +124,7 @@ export class UserService {
         { new: true },
       );
 
-      if (driverProfile && updatedUser.role === 'DRIVER') {
+      if (driverProfile) {
         const existingDriver = await this.driverModel.findOne({ userId });
         if (existingDriver) {
           await this.driverModel.findOneAndUpdate(

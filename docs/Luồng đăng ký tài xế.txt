@@ -1,22 +1,32 @@
 1. Đăng ký tài khoản Khách hàng (Customer Registration)
-Người dùng thực hiện đăng ký tài khoản mới qua ứng dụng (API POST /auth/register).
-Mọi tài khoản mới khi tạo thành công mặc định sẽ có vai trò là "CUSTOMER" (Khách hàng). Tài khoản lúc này chỉ có quyền đặt đơn, chưa có quyền nhận đơn.
+Người dùng thực hiện đăng ký tài khoản mới qua ứng dụng (API POST /auth/register). 
+Mọi tài khoản mới mặc định sẽ có vai trò là "CUSTOMER" (Khách hàng). 
 
-2. Gửi hồ sơ đăng ký tài xế (Driver Application)
-Khách hàng có nhu cầu trở thành đối tác tài xế sẽ thực hiện gửi hồ sơ xác minh qua ứng dụng.
-Tài xế thực hiện tải lên các giấy tờ pháp lý (API POST /driver/:id/documents):
-    - Hồ sơ xác minh: CCCD (mặt trước/sau), Bằng lái xe, Đăng ký xe.
-    - Thông tin phương tiện: Biển số xe (plateNumber), Loại xe (BIKE, VAN, TRUCK).
-Hệ thống sẽ tạo một bản ghi hồ sơ Driver liên kết với mã người dùng (userId) với trạng thái mặc định là "PENDING" (Chờ duyệt).
+2. Gửi hồ sơ đăng ký đối tác tài xế (Driver Application)
+Khách hàng điền đầy đủ các thông tin xác minh danh tính và phương tiện trên form đăng ký của Ứng dụng.
+Khi nhấn "Nộp hồ sơ", Ứng dụng gọi duy nhất 1 API để gửi toàn bộ dữ liệu (bao gồm các link ảnh đã upload):
+- API: PUT /api/v1/auth/profile
+- Payload mẫu:
+{
+  "driverProfile": {
+    "identityNumber": "0123456789",
+    "identityFrontImage": "http://...",
+    "identityBackImage": "http://...",
+    "licenseImage": "http://...",
+    "vehicleRegistrationImage": "http://...",
+    "plateNumber": "29-A 12345",
+    "vehicleType": "VAN",
+    "drivingLicenseNumber": "B1-123456"
+  }
+}
+Hệ thống sẽ cập nhật thông tin cá nhân và tự động khởi tạo hồ sơ Driver với trạng thái "PENDING" (Chờ duyệt).
 
 3. Kiểm tra và Phê duyệt (Quản trị viên)
-Quản trị viên (Admin) truy cập Dashboard để xem danh sách khách hàng muốn nâng cấp lên tài xế (GET /admin/drivers?status=PENDING).
-Admin kiểm tra tính xác thực của các tài liệu đã tải lên.
-Khi hồ sơ hợp lệ, Admin thực hiện lệnh phê duyệt và nâng cấp tài khoản (API PUT /admin/users/:id/role):
-    - Cập nhật vai trò người dùng: Chuyển từ "CUSTOMER" thành "DRIVER".
-    - Cập nhật trạng thái hồ sơ: Chuyển sang "APPROVED".
+Admin truy cập Dashboard để xem danh sách hồ sơ PENDING (GET /admin/drivers?status=PENDING).
+Sau khi đối chiếu ảnh giấy tờ và thông tin, Admin thực hiện phê duyệt (API PUT /admin/drivers/status).
+Logic Backend: Khi trạng thái hồ sơ chuyển sang "APPROVED", hệ thống sẽ tự động nâng cấp vai trò người dùng từ "CUSTOMER" thành "DRIVER".
 
 4. Kích hoạt hoạt động (Tài xế)
-Sau khi User chính thức chuyển sang vai trò "DRIVER", tài xế nhận được thông báo thành công.
-Tài xế mở App tài xế, thực hiện bật chế độ "Sẵn sàng nhận đơn" (API PUT /driver/status truyền isOnline = true).
-Lúc này, hệ thống bắt đầu ghi nhận GPS và tài xế chính thức bước vào Luồng hoạt động tại "Bước 1: Chuẩn bị" trong tài liệu Luồng đặt đơn.
+Tài xế nhận được thông báo đã trở thành đối tác chính thức.
+Tài xế mở App, bật chế độ "Sẵn sàng nhận đơn" (PUT /driver/status).
+Hệ thống bắt đầu ghi nhận GPS và tài xế chính thức bước vào Luồng hoạt động tại "Bước 1: Chuẩn bị" trong tài liệu Luồng đặt đơn.
