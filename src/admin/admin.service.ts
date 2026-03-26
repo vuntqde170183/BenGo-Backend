@@ -291,6 +291,19 @@ export class AdminService {
     // Cập nhật trạng thái
     driver.status = dto.status;
 
+    // Tự động cập nhật Role User nếu trạng thái là APPROVED hoặc REJECTED/LOCKED
+    if (driver.userId) {
+      const user = await this.userModel.findById(driver.userId);
+      if (user) {
+        if (dto.status === 'APPROVED') {
+          user.role = 'DRIVER';
+        } else if (dto.status === 'REJECTED') {
+          user.role = 'CUSTOMER';
+        }
+        await user.save();
+      }
+    }
+
     // Lưu lý do và ghi chú
     if (dto.reason) {
       driver.rejectionReason = dto.reason;
