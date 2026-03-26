@@ -44,6 +44,14 @@ export class RegisterUserDto {
   phone: string;
 
   @ApiProperty({ 
+    example: 'adminbengo@gmail.com',
+    description: 'Email của người dùng (tùy chọn)'
+  })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @ApiProperty({ 
     example: '123456',
     description: 'Mật khẩu cho tài khoản, tối thiểu 6 ký tự'
   })

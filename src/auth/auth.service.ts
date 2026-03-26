@@ -10,7 +10,7 @@ export class AuthService {
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
-  ) {}
+  ) { }
 
   async login(loginUserDto: LoginUserDto): Promise<ApiResponseType> {
     const user = await this.userService.findByEmailOrPhone(
@@ -44,6 +44,7 @@ export class AuthService {
         user: {
           id: user._id,
           phone: user.phone,
+          email: user.email,
           name: user.name,
           role: user.role,
         },
@@ -65,6 +66,7 @@ export class AuthService {
         user: {
           id: user._id,
           phone: user.phone,
+          email: user.email,
           name: user.name,
           role: user.role,
         },

@@ -17,13 +17,24 @@ export class UserService {
   async createUser(data: any): Promise<User> {
     try {
       const existingUser = await this.userModel.findOne({
-        phone: data.phone,
+        $or: [
+          { phone: data.phone },
+          ...(data.email ? [{ email: data.email }] : []),
+        ],
       });
       if (existingUser) {
-        throw new HttpException(
-          'Số điện thoại đã tồn tại',
-          HttpStatus.BAD_REQUEST,
-        );
+        if (existingUser.phone === data.phone) {
+          throw new HttpException(
+            'Số điện thoại đã tồn tại',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        if (data.email && existingUser.email === data.email) {
+          throw new HttpException(
+            'Email đã tồn tại',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
       }
 
       data.password = await bcrypt.hash(data.password, 10);
