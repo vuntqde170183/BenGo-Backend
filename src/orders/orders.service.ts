@@ -196,13 +196,13 @@ export class OrdersService {
   }
 
   async rateDriver(customerId: string, orderId: string, dto: RateDriverDto): Promise<void> {
-    const order = await this.orderModel.findById(orderId);
+    const order = await this.orderModel.findById(orderId).select('customerId status driverId');
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
 
-    if (order.customerId.toString() !== customerId) {
+    if (order.customerId?.toString() !== customerId.toString()) {
       throw new BadRequestException('You can only rate your own orders');
     }
 
