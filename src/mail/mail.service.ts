@@ -26,7 +26,7 @@ export class MailService implements OnModuleInit {
       family: 4, // Bắt buộc sử dụng IPv4 (Sửa lỗi ENETUNREACH trên Render)
       connectionTimeout: 10000,
       socketTimeout: 15000,
-    });
+    } as any);
 
     try {
       await this.transporter.verify();

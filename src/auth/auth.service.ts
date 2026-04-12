@@ -6,7 +6,6 @@ import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcryptjs';
 import { MailService } from '../mail/mail.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { PendingUser } from './pending-user.schema';
 import { Model } from 'mongoose';
 import { User } from '../user/user.schema';
 
