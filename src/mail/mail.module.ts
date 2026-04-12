@@ -12,11 +12,14 @@ import { join } from 'path';
       useFactory: async (config: ConfigService) => ({
         transport: {
           host: config.get('MAIL_HOST'),
-          secure: false,
-          port: config.get('MAIL_PORT'),
+          secure: true,
+          port: 465, // Sử dụng port 465 cho SSL để ổn định hơn
           auth: {
             user: config.get('MAIL_USER'),
             pass: config.get('MAIL_PASSWORD'),
+          },
+          tls: {
+            rejectUnauthorized: false, // Bỏ qua lỗi SSL nếu có
           },
         },
         defaults: {
