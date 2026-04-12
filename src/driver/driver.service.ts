@@ -29,7 +29,7 @@ export class DriverService {
     const driver = await this.driverModel.findOne({ userId: driverId });
 
     if (!driver) {
-      throw new NotFoundException('Driver profile not found');
+      throw new NotFoundException('Không tìm thấy hồ sơ tài xế');
     }
 
     driver.isOnline = dto.isOnline;
@@ -85,21 +85,21 @@ export class DriverService {
     const order = await this.orderModel.findById(orderId);
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException('Không tìm thấy đơn hàng');
     }
 
     if (order.status !== 'PENDING') {
-      throw new Error('Order is not available');
+      throw new Error('Đơn hàng không khả dụng');
     }
 
     const driver = await this.driverModel.findOne({ userId: driverId });
 
     if (!driver) {
-      throw new NotFoundException('Driver profile not found');
+      throw new NotFoundException('Không tìm thấy hồ sơ tài xế');
     }
 
     if (!driver.isOnline) {
-      throw new Error('Driver must be online to accept orders');
+      throw new Error('Tài xế phải trực tuyến để nhận đơn hàng');
     }
 
     order.driverId = driverId;
@@ -134,16 +134,16 @@ export class DriverService {
     const order = await this.orderModel.findById(orderId);
 
     if (!order) {
-      throw new NotFoundException('Order not found');
+      throw new NotFoundException('Không tìm thấy đơn hàng');
     }
 
     // Validate status transition
     if (dto.status === 'PICKED_UP' && order.status !== 'ACCEPTED') {
-      throw new Error('Order must be accepted before pickup');
+      throw new Error('Đơn hàng phải được chấp nhận trước khi lấy hàng');
     }
 
     if (dto.status === 'DELIVERED' && order.status !== 'PICKED_UP') {
-      throw new Error('Order must be picked up before delivery');
+      throw new Error('Đơn hàng phải được lấy trước khi giao hàng');
     }
 
     order.status = dto.status;
@@ -197,7 +197,7 @@ export class DriverService {
     const driver = await this.driverModel.findOne({ userId: driverId });
 
     if (!driver) {
-      throw new NotFoundException('Driver profile not found');
+      throw new NotFoundException('Không tìm thấy hồ sơ tài xế');
     }
 
     driver.location = {
@@ -240,7 +240,7 @@ export class DriverService {
         if (dto.vehicleType) driver.vehicleType = dto.vehicleType;
         break;
       default:
-        throw new Error('Invalid document type');
+        throw new Error('Loại tài liệu không hợp lệ');
     }
 
     await driver.save();
@@ -250,7 +250,7 @@ export class DriverService {
     const user = await this.userModel.findById(userId).select('-password');
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Người dùng không tồn tại');
     }
 
     const driver = await this.driverModel.findOne({ userId: userId });

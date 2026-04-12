@@ -202,11 +202,11 @@ export class OrdersService {
     }
 
     if (order.customerId.toString() !== customerId) {
-      throw new BadRequestException('You can only cancel your own orders');
+      throw new BadRequestException('Bạn chỉ có thể hủy đơn hàng của chính mình');
     }
 
     if (!['PENDING', 'ACCEPTED'].includes(order.status)) {
-      throw new BadRequestException('Order cannot be cancelled at this stage');
+      throw new BadRequestException('Đơn hàng không thể hủy ở giai đoạn này');
     }
 
     order.status = 'CANCELLED';
@@ -221,15 +221,15 @@ export class OrdersService {
     }
 
     if (order.customerId?.toString() !== customerId.toString()) {
-      throw new BadRequestException('You can only rate your own orders');
+      throw new BadRequestException('Bạn chỉ có thể đánh giá đơn hàng của chính mình');
     }
 
     if (order.status !== 'DELIVERED') {
-      throw new BadRequestException('You can only rate completed orders');
+      throw new BadRequestException('Bạn chỉ có thể đánh giá các đơn hành đã hoàn thành');
     }
 
     if (!order.driverId) {
-      throw new BadRequestException('No driver assigned to this order');
+      throw new BadRequestException('Chưa có tài xế nào được chỉ định cho đơn hàng này');
     }
 
     const driver = await this.driverModel.findOne({ userId: order.driverId });

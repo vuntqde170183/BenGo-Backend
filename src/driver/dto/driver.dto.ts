@@ -21,7 +21,7 @@ class SimpleLocationDto {
 
 export class ToggleStatusDto {
   @ApiProperty({ example: true })
-  @IsBoolean()
+  @IsBoolean({ message: 'Trạng thái trực tuyến phải là kiểu true/false' })
   isOnline: boolean;
 
   @ApiProperty({ type: SimpleLocationDto })
@@ -32,12 +32,12 @@ export class ToggleStatusDto {
 
 export class UpdateTripStatusDto {
   @ApiProperty({ example: 'PICKED_UP', enum: ['PICKED_UP', 'DELIVERED'] })
-  @IsEnum(['PICKED_UP', 'DELIVERED'])
+  @IsEnum(['PICKED_UP', 'DELIVERED'], { message: 'Trạng thái chuyến đi phải là PICKED_UP hoặc DELIVERED' })
   status: string;
 
   @ApiPropertyOptional({ example: 'http://proof.jpg' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Ảnh minh chứng phải là chuỗi ký tự' })
   proofImage?: string;
 }
 
@@ -52,36 +52,36 @@ export class UpdateLocationDto {
 
   @ApiPropertyOptional({ example: 90 })
   @IsOptional()
-  @IsNumber()
+  @IsNumber({}, { message: 'Hướng di chuyển phải là số' })
   heading?: number;
 }
 
 export class UploadDocumentDto {
   @ApiProperty({ example: 'DRIVING_LICENSE', enum: ['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION', 'LICENSE', 'VEHICLE'] })
-  @IsEnum(['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION', 'LICENSE', 'VEHICLE'])
+  @IsEnum(['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION', 'LICENSE', 'VEHICLE'], { message: 'Loại tài liệu không hợp lệ' })
   type: string;
 
   @ApiProperty({ example: 'http://doc.jpg' })
-  @IsString()
+  @IsString({ message: 'URL ảnh phải là chuỗi ký tự' })
   imageUrl: string;
 
   @ApiPropertyOptional({ example: '0123456789' })
-  @IsString()
+  @IsString({ message: 'Số CCCD/CMND phải là chuỗi ký tự' })
   @IsOptional()
   identityNumber?: string;
 
   @ApiPropertyOptional({ example: 'B1-123456' })
-  @IsString()
+  @IsString({ message: 'Số bằng lái xe phải là chuỗi ký tự' })
   @IsOptional()
   drivingLicenseNumber?: string;
 
   @ApiPropertyOptional({ example: '29-A 12345' })
-  @IsString()
+  @IsString({ message: 'Biển số xe phải là chuỗi ký tự' })
   @IsOptional()
   plateNumber?: string;
 
   @ApiPropertyOptional({ example: 'VAN', enum: ['BIKE', 'VAN', 'TRUCK'] })
-  @IsString()
+  @IsString({ message: 'Loại xe phải là chuỗi ký tự' })
   @IsOptional()
   vehicleType?: string;
 }

@@ -11,16 +11,16 @@ import {
 
 export class LocationDto {
   @ApiProperty({ example: 10.762622 })
-  @IsNumber()
+  @IsNumber({}, { message: 'Vĩ độ phải là số' })
   lat: number;
 
   @ApiProperty({ example: 106.660172 })
-  @IsNumber()
+  @IsNumber({}, { message: 'Kinh độ phải là số' })
   lng: number;
 
   @ApiPropertyOptional({ example: '123 Street, HCM' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Địa chỉ phải là chuỗi ký tự' })
   address?: string;
 }
 
@@ -56,33 +56,33 @@ export class CreateOrderDto {
   vehicleType: string;
 
   @ApiProperty({ example: ['http://img1.jpg'] })
-  @IsArray()
-  @IsString({ each: true })
+  @IsArray({ message: 'Danh sách ảnh hàng hóa phải là một mảng' })
+  @IsString({ each: true, message: 'Mỗi ảnh hàng hóa phải là một chuỗi ký tự' })
   goodsImages: string[];
 
   @ApiPropertyOptional({ example: 'Fragile content' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Ghi chú phải là chuỗi ký tự' })
   note?: string;
 
   @ApiPropertyOptional({ example: 'STRIPE' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Phương thức thanh toán phải là chuỗi ký tự' })
   paymentMethod?: string;
 
   @ApiPropertyOptional({ example: 150000 })
   @IsOptional()
-  @IsNumber()
+  @IsNumber({}, { message: 'Tổng giá phải là số' })
   totalPrice?: number;
 }
 
 export class CreatePaymentIntentDto {
   @ApiProperty({ example: 150000 })
-  @IsNumber()
+  @IsNumber({}, { message: 'Số tiền phải là số' })
   amount: number;
 
   @ApiProperty({ example: 'vnd' })
-  @IsString()
+  @IsString({ message: 'Loại tiền tệ phải là chuỗi ký tự' })
   currency: string;
 }
 
@@ -93,19 +93,19 @@ export class PaymentIntentResponseDto {
 
 export class CancelOrderDto {
   @ApiProperty({ example: 'Driver took too long' })
-  @IsString()
+  @IsString({ message: 'Lý do phải là chuỗi ký tự' })
   reason: string;
 }
 
 export class RateDriverDto {
   @ApiProperty({ example: 5, minimum: 1, maximum: 5 })
-  @IsNumber()
-  @Min(1)
+  @IsNumber({}, { message: 'Số sao phải là số' })
+  @Min(1, { message: 'Số sao tối thiểu là 1' })
   star: number;
 
   @ApiPropertyOptional({ example: 'Good service' })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Bình luận phải là chuỗi ký tự' })
   comment?: string;
 }
 

@@ -8,109 +8,109 @@ import {
 } from 'class-validator';
 
 export class LoginUserDto {
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: '0901234567',
     description: 'Số điện thoại của người dùng (tùy chọn nếu dùng email)'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Số điện thoại phải là chuỗi ký tự' })
   phone?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'adminbengo@gmail.com',
     description: 'Email của người dùng (tùy chọn nếu dùng số điện thoại)'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Email phải là chuỗi ký tự' })
   email?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'Admin123!',
     description: 'Mật khẩu của tài khoản, tối thiểu 6 ký tự'
   })
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(6)
+  @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
+  @IsString({ message: 'Mật khẩu phải là chuỗi ký tự' })
+  @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
   password: string;
 }
 
 export class RegisterUserDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '0901234567',
     description: 'Số điện thoại của người dùng, sử dụng để đăng nhập và nhận thông báo'
   })
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
+  @IsString({ message: 'Số điện thoại phải là chuỗi ký tự' })
   phone: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'adminbengo@gmail.com',
     description: 'Email của người dùng (tùy chọn)'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Email phải là chuỗi ký tự' })
   email?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123456',
     description: 'Mật khẩu cho tài khoản, tối thiểu 6 ký tự'
   })
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(6)
+  @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
+  @IsString({ message: 'Mật khẩu phải là chuỗi ký tự' })
+  @MinLength(6, { message: 'Mật khẩu phải có ít nhất 6 ký tự' })
   password: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'Nguyen Van A',
     description: 'Họ và tên đầy đủ của người dùng'
   })
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Họ tên không được để trống' })
+  @IsString({ message: 'Họ tên phải là chuỗi ký tự' })
   name: string;
 
-  @ApiProperty({ 
-    example: 'CUSTOMER', 
+  @ApiProperty({
+    example: 'CUSTOMER',
     enum: ['CUSTOMER', 'DRIVER'],
     description: 'Loại tài khoản: CUSTOMER (khách hàng) hoặc DRIVER (tài xế)'
   })
-  @IsEnum(['CUSTOMER', 'DRIVER'])
+  @IsEnum(['CUSTOMER', 'DRIVER'], { message: 'Loại tài khoản phải là CUSTOMER hoặc DRIVER' })
   type: string;
 }
 
 export class UpdateProfileDto {
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'Nguyen Van A Updated',
     description: 'Họ và tên mới của người dùng'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Họ tên phải là chuỗi ký tự' })
   name?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'http://avatar.url',
     description: 'URL ảnh đại diện của người dùng'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'URL ảnh đại diện phải là chuỗi ký tự' })
   avatar?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: 'email@example.com',
     description: 'Địa chỉ email của người dùng'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Email phải là chuỗi ký tự' })
   email?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: '0901234567',
     description: 'Số điện thoại của người dùng'
   })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Số điện thoại phải là chuỗi ký tự' })
   phone?: string;
 
-  @ApiPropertyOptional({ 
+  @ApiPropertyOptional({
     example: { vehicleType: 'VAN', plateNumber: '29A-12345' },
     description: 'Thông tin hồ sơ tài xế'
   })
@@ -119,38 +119,38 @@ export class UpdateProfileDto {
 }
 
 export class ForgotPasswordDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '0901234567',
     description: 'Số điện thoại đăng ký tài khoản, dùng để nhận mã OTP'
   })
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
+  @IsString({ message: 'Số điện thoại phải là chuỗi ký tự' })
   phone: string;
 }
 
 export class ResetPasswordDto {
-  @ApiProperty({ 
+  @ApiProperty({
     example: '0901234567',
     description: 'Số điện thoại đăng ký tài khoản'
   })
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
+  @IsString({ message: 'Số điện thoại phải là chuỗi ký tự' })
   phone: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: '123456',
     description: 'Mã OTP nhận được qua tin nhắn SMS'
   })
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Mã OTP không được để trống' })
+  @IsString({ message: 'Mã OTP phải là chuỗi ký tự' })
   otp: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     example: 'newpassword123',
     description: 'Mật khẩu mới, tối thiểu 6 ký tự'
   })
-  @IsNotEmpty()
-  @IsString()
-  @MinLength(6)
+  @IsNotEmpty({ message: 'Mật khẩu mới không được để trống' })
+  @IsString({ message: 'Mật khẩu mới phải là chuỗi ký tự' })
+  @MinLength(6, { message: 'Mật khẩu mới phải có ít nhất 6 ký tự' })
   newPassword: string;
 }
