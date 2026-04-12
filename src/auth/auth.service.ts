@@ -83,8 +83,8 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerUserDto.password, 10);
 
     // 4. Lưu vào bảng PendingUser (Ghi đè nếu đã tồn tại email/phone đang chờ duyệt)
-    await this.pendingUserModel.findOneAndDelete({ 
-      $or: [{ email: registerUserDto.email }, { phone: registerUserDto.phone }] 
+    await this.pendingUserModel.findOneAndDelete({
+      $or: [{ email: registerUserDto.email }, { phone: registerUserDto.phone }]
     });
 
     const pendingUser = new this.pendingUserModel({
@@ -95,8 +95,9 @@ export class AuthService {
     });
     await pendingUser.save();
 
-    // 5. Gửi Email OTP
-    await this.mailService.sendVerificationEmail(registerUserDto.email, registerUserDto.name, otp);
+    // 5. Gửi Email OTP (Không dùng await để phản hồi nhanh hơn)
+    this.mailService.sendVerificationEmail(registerUserDto.email, registerUserDto.name, otp)
+      .catch(err => console.error('Lỗi gửi email xác thực đăng ký:', err));
 
     return createApiResponse(
       null,
@@ -163,12 +164,10 @@ export class AuthService {
       throw new HttpException('Tài khoản này chưa liên kết Email để nhận mã OTP', HttpStatus.BAD_REQUEST);
     }
 
-    // Tạo mã OTP ngẫu nhiên 4 chữ số
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
-    
-    // Ở đây thực tế nên lưu OTP vào Redis hoặc Database kèm thời gian hết hạn
-    // Tạm thời ta gửi qua Mail phục vụ demo
-    await this.mailService.sendForgotPasswordOTP(user.email, user.name, otp);
+
+    this.mailService.sendForgotPasswordOTP(user.email, user.name, otp)
+      .catch(err => console.error('Lỗi gửi email quên mật khẩu:', err));
 
     return createApiResponse(null, 'Mã OTP đã được gửi đến Email của bạn', HttpStatus.OK);
   }
