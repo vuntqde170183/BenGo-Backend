@@ -8,7 +8,6 @@ import { UserModule } from '../user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { MongooseModule } from '@nestjs/mongoose';
-import { PendingUser, PendingUserSchema } from './pending-user.schema';
 import { User, UserSchema } from '../user/user.schema';
 
 @Module({
@@ -22,7 +21,6 @@ import { User, UserSchema } from '../user/user.schema';
     }),
     HttpModule,
     MongooseModule.forFeature([
-      { name: PendingUser.name, schema: PendingUserSchema },
       { name: User.name, schema: UserSchema },
     ]),
   ],

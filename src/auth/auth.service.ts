@@ -16,7 +16,6 @@ export class AuthService {
     private jwtService: JwtService,
     private userService: UserService,
     private mailService: MailService,
-    @InjectModel(PendingUser.name) private pendingUserModel: Model<PendingUser>,
     @InjectModel(User.name) private userModel: Model<User>,
   ) { }
 
@@ -72,61 +71,16 @@ export class AuthService {
       throw new HttpException('Email hoặc số điện thoại đã tồn tại', HttpStatus.BAD_REQUEST);
     }
 
-    if (!registerUserDto.email) {
-      throw new HttpException('Vui lòng cung cấp email để nhận mã xác thực', HttpStatus.BAD_REQUEST);
-    }
-
-    // 2. Tạo mã OTP (4 số)
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
-
-    // 3. Mã hóa password trước khi lưu tạm
+    // 2. Tạo user chính thức trực tiếp
     const hashedPassword = await bcrypt.hash(registerUserDto.password, 10);
-
-    // 4. Lưu vào bảng PendingUser (Ghi đè nếu đã tồn tại email/phone đang chờ duyệt)
-    await this.pendingUserModel.findOneAndDelete({
-      $or: [{ email: registerUserDto.email }, { phone: registerUserDto.phone }]
-    });
-
-    const pendingUser = new this.pendingUserModel({
+    const newUser = new this.userModel({
       ...registerUserDto,
       password: hashedPassword,
-      role: registerUserDto.type,
-      otp,
-    });
-    await pendingUser.save();
-
-    // 5. Gửi Email OTP (Không dùng await để phản hồi nhanh hơn)
-    this.mailService.sendVerificationEmail(registerUserDto.email, registerUserDto.name, otp)
-      .catch(err => console.error('Lỗi gửi email xác thực đăng ký:', err));
-
-    return createApiResponse(
-      null,
-      'Mã xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra để hoàn tất đăng ký.',
-      HttpStatus.OK,
-    );
-  }
-
-  async verifyRegistration(email: string, otp: string): Promise<ApiResponseType> {
-    // 1. Tìm thông tin đăng ký tạm thời
-    const pending = await this.pendingUserModel.findOne({ email, otp });
-    if (!pending) {
-      throw new HttpException('Mã xác thực không chính xác hoặc đã hết hạn', HttpStatus.BAD_REQUEST);
-    }
-
-    // 2. Tạo user chính thức
-    const newUser = new this.userModel({
-      phone: pending.phone,
-      email: pending.email,
-      password: pending.password,
-      name: pending.name,
-      role: pending.role,
+      role: registerUserDto.type || 'CUSTOMER',
     });
     await newUser.save();
 
-    // 3. Xóa thông tin đăng ký tạm
-    await this.pendingUserModel.deleteOne({ _id: pending._id });
-
-    // 4. Tạo token và trả về kết quả như đăng nhập
+    // 3. Tạo token và trả về kết quả
     const payload = { sub: newUser._id, phone: newUser.phone, role: newUser.role };
     const token = this.jwtService.sign(payload);
 
@@ -141,7 +95,7 @@ export class AuthService {
           role: newUser.role,
         },
       },
-      'Xác thực thành công và đã tạo tài khoản',
+      'Đăng ký tài khoản thành công',
       HttpStatus.CREATED,
     );
   }

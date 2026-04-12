@@ -23,25 +23,14 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @ApiOperation({ 
-    summary: 'Đăng ký tài khoản mới (Gửi OTP)',
-    description: 'API yêu cầu đăng ký tài khoản. Hệ thống sẽ gửi mã OTP qua email để xác thực trước khi tạo tài khoản chính thức.'
+    summary: 'Đăng ký tài khoản mới',
+    description: 'API đăng ký tài khoản người dùng mới.'
   })
-  @ApiResponse({ status: 200, description: 'Gửi mã OTP thành công' })
+  @ApiResponse({ status: 201, description: 'Đăng ký tài khoản thành công' })
   @ApiResponse({ status: 400, description: 'Dữ liệu không hợp lệ hoặc tài khoản đã tồn tại' })
   @Post('register')
   async register(@Body() dto: RegisterUserDto): Promise<ApiResponseType> {
     return await this.authService.register(dto);
-  }
-
-  @ApiOperation({ 
-    summary: 'Xác nhận mã OTP đăng ký (Tạo tài khoản)',
-    description: 'API xác nhận mã OTP đã gửi qua email để chính thức tạo tài khoản người dùng.'
-  })
-  @ApiResponse({ status: 201, description: 'Xác thực thành công và đã tạo tài khoản' })
-  @ApiResponse({ status: 400, description: 'Mã OTP không chính xác hoặc đã hết hạn' })
-  @Post('verify-register')
-  async verifyRegister(@Body() dto: VerifyRegisterDto): Promise<ApiResponseType> {
-    return await this.authService.verifyRegistration(dto.email, dto.otp);
   }
 
   @ApiOperation({ 
