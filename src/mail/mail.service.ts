@@ -13,9 +13,7 @@ export class MailService implements OnModuleInit {
 
   async onModuleInit() {
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true, // dùng SSL trực tiếp trên port 465
+      service: 'gmail',
       auth: {
         user: this.configService.get('MAIL_USER'),
         pass: this.configService.get('MAIL_PASSWORD'),
@@ -23,7 +21,7 @@ export class MailService implements OnModuleInit {
       tls: {
         rejectUnauthorized: false, // Tránh lỗi SSL cert
       },
-      connectionTimeout: 10000, // 10 giây timeout kết nối
+      connectionTimeout: 10000, 
       greetingTimeout: 10000,
       socketTimeout: 15000,
     });
@@ -62,7 +60,7 @@ export class MailService implements OnModuleInit {
       const html = await this.renderTemplate(options.template, options.context);
 
       const info = await this.transporter.sendMail({
-        from: this.configService.get('MAIL_FROM') || this.configService.get('MAIL_USER'),
+        from: `"BenGo App" <${this.configService.get('MAIL_USER')}>`,
         to: options.to,
         subject: options.subject,
         html,
