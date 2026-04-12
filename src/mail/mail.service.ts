@@ -1,35 +1,84 @@
-import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as nodemailer from 'nodemailer';
+import * as handlebars from 'handlebars';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
-export class MailService {
-  constructor(private mailerService: MailerService) {}
+export class MailService implements OnModuleInit {
+  private transporter: nodemailer.Transporter;
 
-  async sendUserWelcome(email: string, name: string) {
-    await this.mailerService.sendMail({
-      to: email,
-      // from: '"Support Team" <support@example.com>', // override default from
-      subject: 'Welcome to BenGo! Confirm your Email',
-      template: './welcome', // `.hbs` extension is appended automatically
-      context: {
-        name: name,
+  constructor(private configService: ConfigService) { }
+
+  async onModuleInit() {
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: this.configService.get('MAIL_USER'),
+        pass: this.configService.get('MAIL_PASSWORD'),
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
+
+    try {
+      await this.transporter.verify();
+      console.log('✅ MailService: Kết nối SMTP thành công');
+    } catch (error) {
+      console.error('❌ MailService: Lỗi kết nối SMTP:', error);
+    }
   }
 
-  async sendCustomEmail(to: string, subject: string, text: string) {
-    await this.mailerService.sendMail({
-      to,
-      subject,
-      text,
-    });
+  private async renderTemplate(templateName: string, context: any): Promise<string> {
+    const templatePath = path.join(__dirname, 'templates', `${templateName}.hbs`);
+
+    // Kiểm tra file tồn tại (đặc biệt quan trọng trên production/dist)
+    if (!fs.existsSync(templatePath)) {
+      // Thử tìm trong src nếu không thấy trong dist (cho dev)
+      const devPath = path.join(process.cwd(), 'src', 'mail', 'templates', `${templateName}.hbs`);
+      if (fs.existsSync(devPath)) {
+        const source = fs.readFileSync(devPath, 'utf8');
+        const template = handlebars.compile(source);
+        return template(context);
+      }
+      throw new Error(`Template không tồn tại: ${templatePath}`);
+    }
+
+    const source = fs.readFileSync(templatePath, 'utf8');
+    const template = handlebars.compile(source);
+    return template(context);
+  }
+
+  async sendMail(options: { to: string; subject: string; template: string; context: any }) {
+    console.log(`[MailService] Đang gửi email [${options.subject}] đến: ${options.to}`);
+    try {
+      const html = await this.renderTemplate(options.template, options.context);
+
+      const info = await this.transporter.sendMail({
+        from: this.configService.get('MAIL_FROM') || this.configService.get('MAIL_USER'),
+        to: options.to,
+        subject: options.subject,
+        html,
+      });
+
+      console.log(`[MailService] Gửi email thành công: ${info.messageId}`);
+      return info;
+    } catch (error) {
+      console.error(`[MailService] Lỗi gửi email đến ${options.to}:`, error);
+      throw error;
+    }
   }
 
   async sendOrderConfirmation(email: string, name: string, orderDetails: any) {
-    await this.mailerService.sendMail({
+    return this.sendMail({
       to: email,
       subject: `[BenGo] Xác nhận đặt hàng - #${orderDetails.id}`,
-      template: './order-confirmation',
+      template: 'order-confirmation',
       context: {
         name,
         id: orderDetails.id,
@@ -42,10 +91,10 @@ export class MailService {
   }
 
   async sendReceipt(email: string, name: string, orderDetails: any) {
-    await this.mailerService.sendMail({
+    return this.sendMail({
       to: email,
       subject: `[BenGo] Biên lai điện tử - #${orderDetails.id}`,
-      template: './receipt',
+      template: 'receipt',
       context: {
         name,
         id: orderDetails.id,
@@ -60,10 +109,10 @@ export class MailService {
 
   async sendDriverApproval(email: string, name: string, status: 'APPROVED' | 'REJECTED', reason?: string) {
     const isApproved = status === 'APPROVED';
-    await this.mailerService.sendMail({
+    return this.sendMail({
       to: email,
       subject: `[BenGo] Thông báo kết quả duyệt hồ sơ tài xế`,
-      template: './driver-status',
+      template: 'driver-status',
       context: {
         name,
         isApproved,
@@ -74,10 +123,10 @@ export class MailService {
   }
 
   async sendForgotPasswordOTP(email: string, name: string, otp: string) {
-    await this.mailerService.sendMail({
+    return this.sendMail({
       to: email,
       subject: `[BenGo] Mã OTP khôi phục mật khẩu`,
-      template: './forgot-password',
+      template: 'forgot-password',
       context: {
         name,
         otp,
@@ -86,21 +135,14 @@ export class MailService {
   }
 
   async sendVerificationEmail(email: string, name: string, otp: string) {
-    console.log(`[MailService] Đang gửi email xác thực đến: ${email}`);
-    try {
-      await this.mailerService.sendMail({
-        to: email,
-        subject: `[BenGo] Mã xác minh đăng ký tài khoản`,
-        template: './verify-email',
-        context: {
-          name,
-          otp,
-        },
-      });
-      console.log(`[MailService] Đã gửi email xác thực thành công đến: ${email}`);
-    } catch (error) {
-      console.error(`[MailService] Lỗi gửi email đến ${email}:`, error);
-      throw error;
-    }
+    return this.sendMail({
+      to: email,
+      subject: `[BenGo] Mã xác minh đăng ký tài khoản`,
+      template: 'verify-email',
+      context: {
+        name,
+        otp,
+      },
+    });
   }
 }
