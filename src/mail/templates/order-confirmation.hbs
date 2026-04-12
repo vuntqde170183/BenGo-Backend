@@ -1,0 +1,31 @@
+<style>
+  .container { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+  .header { background-color: #f8f8f8; padding: 20px; text-align: center; border-bottom: 2px solid #ddd; }
+  .content { padding: 20px; }
+  .order-info { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
+  .footer { font-size: 12px; color: #777; text-align: center; margin-top: 30px; }
+  .price { font-size: 18px; font-weight: bold; color: #e44d26; }
+</style>
+
+<div class="container">
+  <div class="header">
+    <h1>Order Confirmed!</h1>
+  </div>
+  <div class="content">
+    <p>Hello <strong>{{name}}</strong>,</p>
+    <p>Thank you for choosing BenGo! Your order has been successfully placed and is now being processed.</p>
+    
+    <div class="order-info">
+      <p><strong>Order ID:</strong> #{{id}}</p>
+      <p><strong>Vehicle:</strong> {{vehicleType}}</p>
+      <p><strong>From:</strong> {{pickup}}</p>
+      <p><strong>To:</strong> {{dropoff}}</p>
+      <p><strong>Total Price:</strong> <span class="price">{{price}} VND</span></p>
+    </div>
+
+    <p>We will notify you once a driver has accepted your order.</p>
+  </div>
+  <div class="footer">
+    <p>&copy; 2026 BenGo. All rights reserved.</p>
+  </div>
+</div>

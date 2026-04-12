@@ -15,6 +15,7 @@ import {
 } from './dto/orders.dto';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class OrdersService {
@@ -25,6 +26,7 @@ export class OrdersService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Driver.name) private driverModel: Model<Driver>,
     private configService: ConfigService,
+    private mailService: MailService,
   ) {
     this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_mock', {
       apiVersion: '2024-06-20' as any,
@@ -121,6 +123,22 @@ export class OrdersService {
     });
 
     await order.save();
+
+    // Notify customer via email
+    try {
+      const user = await this.userModel.findById(customerId);
+      if (user && user.email) {
+        this.mailService.sendOrderConfirmation(user.email, user.name, {
+          id: order._id.toString(),
+          pickup: order.pickup.address,
+          dropoff: order.dropoff.address,
+          price: order.totalPrice,
+          vehicleType: order.vehicleType,
+        }).catch(err => console.error('Error sending order confirmation email:', err));
+      }
+    } catch (error) {
+      console.error('Error fetching user for mail notification:', error);
+    }
 
     // TODO: Notify nearby drivers about new order
     return {

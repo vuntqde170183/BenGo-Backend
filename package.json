@@ -25,6 +25,7 @@
     "update:customer-passwords": "ts-node src/scripts/update-customer-passwords.ts"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^2.3.4",
     "@nestjs/axios": "^3.1.2",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.2.3",
@@ -43,8 +44,10 @@
     "cloudinary": "^2.6.1",
     "express": "^5.1.0",
     "express-basic-auth": "^1.2.0",
+    "handlebars": "^4.7.9",
     "mongoose": "^8.14.1",
     "multer": "^2.0.1",
+    "nodemailer": "^8.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.0",

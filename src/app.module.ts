@@ -14,10 +14,13 @@ import { DriverModule } from './driver/driver.module';
 import { PaymentModule } from './payment/payment.module';
 import { DispatcherModule } from './dispatcher/dispatcher.module';
 import { AdminModule } from './admin/admin.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     MongooseModule.forRoot(process.env.MONGO_URI),
     ScheduleModule.forRoot(),
     UserModule,
@@ -30,6 +33,7 @@ import { AdminModule } from './admin/admin.module';
     PaymentModule,
     DispatcherModule,
     AdminModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
