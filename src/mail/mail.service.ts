@@ -13,16 +13,18 @@ export class MailService implements OnModuleInit {
 
   async onModuleInit() {
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: {
         user: this.configService.get('MAIL_USER'),
         pass: this.configService.get('MAIL_PASSWORD'),
       },
       tls: {
-        rejectUnauthorized: false, // Tránh lỗi SSL cert
+        rejectUnauthorized: false,
       },
-      connectionTimeout: 10000, 
-      greetingTimeout: 10000,
+      family: 4, // Bắt buộc sử dụng IPv4 (Sửa lỗi ENETUNREACH trên Render)
+      connectionTimeout: 10000,
       socketTimeout: 15000,
     });
 
