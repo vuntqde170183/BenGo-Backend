@@ -86,14 +86,21 @@ export class MailService {
   }
 
   async sendVerificationEmail(email: string, name: string, otp: string) {
-    await this.mailerService.sendMail({
-      to: email,
-      subject: `[BenGo] Mã xác minh đăng ký tài khoản`,
-      template: './verify-email',
-      context: {
-        name,
-        otp,
-      },
-    });
+    console.log(`[MailService] Đang gửi email xác thực đến: ${email}`);
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: `[BenGo] Mã xác minh đăng ký tài khoản`,
+        template: './verify-email',
+        context: {
+          name,
+          otp,
+        },
+      });
+      console.log(`[MailService] Đã gửi email xác thực thành công đến: ${email}`);
+    } catch (error) {
+      console.error(`[MailService] Lỗi gửi email đến ${email}:`, error);
+      throw error;
+    }
   }
 }
