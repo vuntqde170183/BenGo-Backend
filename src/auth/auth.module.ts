@@ -7,6 +7,9 @@ import { PassportModule } from '@nestjs/passport';
 import { UserModule } from '../user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
+import { MongooseModule } from '@nestjs/mongoose';
+import { PendingUser, PendingUserSchema } from './pending-user.schema';
+import { User, UserSchema } from '../user/user.schema';
 
 @Module({
   imports: [
@@ -18,6 +21,10 @@ import { HttpModule } from '@nestjs/axios';
       signOptions: { expiresIn: '1d' },
     }),
     HttpModule,
+    MongooseModule.forFeature([
+      { name: PendingUser.name, schema: PendingUserSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

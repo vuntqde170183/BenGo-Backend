@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Req, UseGuards, HttpStatus, HttpException } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -12,6 +12,7 @@ import {
   RegisterUserDto,
   ResetPasswordDto,
   UpdateProfileDto,
+  VerifyRegisterDto,
 } from './dto/auth.dto';
 import { ApiResponseType, createApiResponse } from '../utils/response.util';
 import { JwtGuard } from './jwt-auth.guard';
@@ -22,22 +23,33 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @ApiOperation({ 
-    summary: 'Đăng ký tài khoản mới',
-    description: 'API đăng ký tài khoản cho khách hàng hoặc tài xế. Sau khi đăng ký thành công, hệ thống sẽ trả về access token để sử dụng cho các API khác.'
+    summary: 'Đăng ký tài khoản mới (Gửi OTP)',
+    description: 'API yêu cầu đăng ký tài khoản. Hệ thống sẽ gửi mã OTP qua email để xác thực trước khi tạo tài khoản chính thức.'
   })
-  @ApiResponse({ status: 201, description: 'Đăng ký tài khoản thành công, trả về thông tin người dùng và access token' })
-  @ApiResponse({ status: 400, description: 'Dữ liệu đầu vào không hợp lệ hoặc số điện thoại đã tồn tại' })
+  @ApiResponse({ status: 200, description: 'Gửi mã OTP thành công' })
+  @ApiResponse({ status: 400, description: 'Dữ liệu không hợp lệ hoặc tài khoản đã tồn tại' })
   @Post('register')
   async register(@Body() dto: RegisterUserDto): Promise<ApiResponseType> {
     return await this.authService.register(dto);
   }
 
   @ApiOperation({ 
-    summary: 'Đăng nhập',
-    description: 'API đăng nhập vào hệ thống bằng số điện thoại hoặc email và mật khẩu. Trả về access token để xác thực cho các request tiếp theo.'
+    summary: 'Xác nhận mã OTP đăng ký (Tạo tài khoản)',
+    description: 'API xác nhận mã OTP đã gửi qua email để chính thức tạo tài khoản người dùng.'
   })
-  @ApiResponse({ status: 200, description: 'Đăng nhập thành công, trả về access token và thông tin người dùng' })
-  @ApiResponse({ status: 401, description: 'Tài khoản không tồn tại hoặc mật khẩu không chính xác' })
+  @ApiResponse({ status: 201, description: 'Xác thực thành công và đã tạo tài khoản' })
+  @ApiResponse({ status: 400, description: 'Mã OTP không chính xác hoặc đã hết hạn' })
+  @Post('verify-register')
+  async verifyRegister(@Body() dto: VerifyRegisterDto): Promise<ApiResponseType> {
+    return await this.authService.verifyRegistration(dto.email, dto.otp);
+  }
+
+  @ApiOperation({ 
+    summary: 'Đăng nhập',
+    description: 'API đăng nhập vào hệ thống bằng số điện thoại hoặc email và mật khẩu.'
+  })
+  @ApiResponse({ status: 200, description: 'Đăng nhập thành công' })
+  @ApiResponse({ status: 401, description: 'Thông tin đăng nhập không chính xác' })
   @Post('login')
   async login(@Body() dto: LoginUserDto): Promise<ApiResponseType> {
     return await this.authService.login(dto);
@@ -45,10 +57,8 @@ export class AuthController {
 
   @ApiOperation({ 
     summary: 'Lấy thông tin người dùng hiện tại',
-    description: 'API lấy thông tin chi tiết của người dùng đang đăng nhập. Yêu cầu có access token hợp lệ trong header.'
+    description: 'Yêu cầu access token.'
   })
-  @ApiResponse({ status: 200, description: 'Lấy thông tin người dùng thành công' })
-  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc token không hợp lệ' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtGuard)
   @Get('profile')
@@ -57,12 +67,8 @@ export class AuthController {
   }
 
   @ApiOperation({ 
-    summary: 'Cập nhật thông tin cá nhân',
-    description: 'API cập nhật thông tin cá nhân của người dùng như tên, avatar, email. Yêu cầu đăng nhập.'
+    summary: 'Cập nhật thông tin cá nhân'
   })
-  @ApiResponse({ status: 200, description: 'Cập nhật thông tin thành công' })
-  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc token không hợp lệ' })
-  @ApiResponse({ status: 404, description: 'Không tìm thấy người dùng' })
   @ApiBearerAuth('access-token')
   @UseGuards(JwtGuard)
   @Put('profile')
@@ -74,24 +80,19 @@ export class AuthController {
   }
 
   @ApiOperation({ 
-    summary: 'Yêu cầu đặt lại mật khẩu',
-    description: 'API gửi mã OTP về số điện thoại để đặt lại mật khẩu khi người dùng quên mật khẩu.'
+    summary: 'Yêu cầu đặt lại mật khẩu'
   })
-  @ApiResponse({ status: 200, description: 'Gửi mã OTP thành công' })
-  @ApiResponse({ status: 404, description: 'Số điện thoại không tồn tại trong hệ thống' })
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<any> {
     return await this.authService.forgotPassword(dto.phone);
   }
 
   @ApiOperation({ 
-    summary: 'Đặt lại mật khẩu với mã OTP',
-    description: 'API xác nhận mã OTP và đặt lại mật khẩu mới cho tài khoản.'
+    summary: 'Đặt lại mật khẩu với mã OTP'
   })
-  @ApiResponse({ status: 200, description: 'Đặt lại mật khẩu thành công' })
-  @ApiResponse({ status: 400, description: 'Mã OTP không hợp lệ hoặc đã hết hạn' })
   @Post('reset-password')
-  async resetPassword(@Body() _dto: ResetPasswordDto): Promise<any> {
-    return createApiResponse(null, 'Password reset successfully');
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<any> {
+    // Logic reset password thực tế cần OTP verification tương tự register
+    return createApiResponse(null, 'Chức năng đang được hoàn thiện');
   }
 }

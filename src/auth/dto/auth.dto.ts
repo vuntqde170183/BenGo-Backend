@@ -154,3 +154,21 @@ export class ResetPasswordDto {
   @MinLength(6, { message: 'Mật khẩu mới phải có ít nhất 6 ký tự' })
   newPassword: string;
 }
+
+export class VerifyRegisterDto {
+  @ApiProperty({
+    example: 'user@example.com',
+    description: 'Email đã dùng để đăng ký'
+  })
+  @IsNotEmpty({ message: 'Email không được để trống' })
+  @IsString({ message: 'Email phải là chuỗi ký tự' })
+  email: string;
+
+  @ApiProperty({
+    example: '123456',
+    description: 'Mã OTP nhận được qua email'
+  })
+  @IsNotEmpty({ message: 'Mã OTP không được để trống' })
+  @IsString({ message: 'Mã OTP phải là chuỗi ký tự' })
+  otp: string;
+}

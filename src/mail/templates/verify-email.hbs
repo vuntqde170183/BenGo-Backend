@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #f39c12; padding: 30px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { padding: 30px; color: #333; line-height: 1.6; }
+        .footer { background-color: #f9f9f9; padding: 20px; text-align: center; color: #777; font-size: 13px; border-top: 1px solid #eee; }
+        .otp-code { display: block; width: 220px; margin: 30px auto; padding: 15px; background-color: #fcf3cf; border: 2px dashed #f39c12; color: #d35400; font-size: 36px; font-weight: bold; text-align: center; letter-spacing: 5px; border-radius: 8px; }
+        .step-info { background-color: #fef9e7; padding: 15px; border-radius: 5px; border-left: 4px solid #f39c12; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Xác Minh Đăng Ký</h1>
+        </div>
+        <div class="content">
+            <p>Chào <strong>{{name}}</strong>,</p>
+            <p>Cảm ơn bạn đã lựa chọn BenGo! Để hoàn tất quá trình đăng ký tài khoản, vui trọng nhập mã xác thực dưới đây vào ứng dụng:</p>
+            
+            <div class="step-info">
+                Mã này dùng để xác nhận địa chỉ email của bạn là chính xác và đang hoạt động.
+            </div>
+
+            <span class="otp-code">{{otp}}</span>
+
+            <p>Mã sẽ hết hạn trong vòng 10 phút. Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BenGo App. Trải nghiệm di chuyển hiện đại.</p>
+            <p>Hotline: 1900 xxxx | Email: support@bengo.vn</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -84,4 +84,16 @@ export class MailService {
       },
     });
   }
+
+  async sendVerificationEmail(email: string, name: string, otp: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `[BenGo] Mã xác minh đăng ký tài khoản`,
+      template: './verify-email',
+      context: {
+        name,
+        otp,
+      },
+    });
+  }
 }
