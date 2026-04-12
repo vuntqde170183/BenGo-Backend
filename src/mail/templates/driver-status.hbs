@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #3498db; padding: 30px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { padding: 30px; color: #333; line-height: 1.6; }
+        .footer { background-color: #f9f9f9; padding: 20px; text-align: center; color: #777; font-size: 13px; border-top: 1px solid #eee; }
+        .status-badge { display: inline-block; padding: 8px 15px; border-radius: 20px; font-weight: bold; margin-bottom: 20px; }
+        .approved { background-color: #d4edda; color: #155724; }
+        .rejected { background-color: #f8d7da; color: #721c24; }
+        .reason-box { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin-top: 20px; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Thông Báo Hồ Sơ</h1>
+        </div>
+        <div class="content">
+            <p>Chào <strong>{{name}}</strong>,</p>
+            <p>Ban quản trị BenGo đã xem xét hồ sơ đăng ký đối tác tài xế của bạn. Dưới đây là kết quả:</p>
+            
+            <div class="status-badge {{#if isApproved}}approved{{else}}rejected{{/if}}">
+                {{title}}
+            </div>
+
+            {{#if isApproved}}
+            <p>Chúc mừng! Hồ sơ của bạn đã được phê duyệt. Bây giờ bạn có thể bật trạng thái trực tuyến trên ứng dụng BenGo Driver và bắt đầu nhận đơn hàng.</p>
+            <p style="text-align: center;"><a href="#" class="button" style="background-color: #3498db; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">BẮT ĐẦU NGAY</a></p>
+            {{else}}
+            <p>Rất tiếc, hồ sơ của bạn chưa đáp ứng được các yêu cầu hiện tại của chúng tôi.</p>
+            {{#if reason}}
+            <div class="reason-box">
+                <strong>Lý do:</strong> {{reason}}
+            </div>
+            {{/if}}
+            <p>Vui lòng cập nhật lại hồ sơ theo hướng dẫn trong ứng dụng hoặc liên hệ tổng đài để được hỗ trợ.</p>
+            {{/if}}
+
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BenGo App. Trải nghiệm di chuyển hiện đại.</p>
+            <p>Hotline: 1900 xxxx | Email: support@bengo.vn</p>
+        </div>
+    </div>
+</body>
+</html>

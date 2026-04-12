@@ -17,8 +17,8 @@ import { Order } from '../orders/orders.schema';
 import { PricingConfig } from './pricing-config.schema';
 import { Promotion } from './promotion.schema';
 import { SupportTicket } from '../dispatcher/support-ticket.schema';
-import { createApiResponse, createPaginatedResponse } from '../utils/response.util';
 import { SpecialOrderResponseDto } from '../dispatcher/dto/dispatcher.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AdminService {
@@ -29,6 +29,7 @@ export class AdminService {
     @InjectModel(PricingConfig.name) private pricingConfigModel: Model<PricingConfig>,
     @InjectModel(Promotion.name) private promotionModel: Model<Promotion>,
     @InjectModel(SupportTicket.name) private supportTicketModel: Model<SupportTicket>,
+    private readonly mailService: MailService,
   ) { }
 
   // ============= USER MANAGEMENT =============
@@ -324,6 +325,23 @@ export class AdminService {
     }
 
     await driver.save();
+
+    // Gửi email thông báo cho tài xế
+    if (dto.status === 'APPROVED' || dto.status === 'REJECTED') {
+      try {
+        const user = await this.userModel.findById(driver.userId);
+        if (user && user.email) {
+          this.mailService.sendDriverApproval(
+            user.email,
+            user.name,
+            dto.status as any,
+            dto.reason
+          ).catch(err => console.error('Lỗi gửi email thông báo tài xế:', err));
+        }
+      } catch (err) {
+        console.error('Lỗi lấy thông tin tài xế để gửi email thông báo duyệt:', err);
+      }
+    }
   }
 
   async deleteDriver(id: string): Promise<void> {

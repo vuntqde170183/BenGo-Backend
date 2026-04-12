@@ -28,15 +28,59 @@ export class MailService {
   async sendOrderConfirmation(email: string, name: string, orderDetails: any) {
     await this.mailerService.sendMail({
       to: email,
-      subject: `Order Confirmation - #${orderDetails.id}`,
+      subject: `[BenGo] Xác nhận đặt hàng - #${orderDetails.id}`,
       template: './order-confirmation',
       context: {
         name,
         id: orderDetails.id,
         pickup: orderDetails.pickup,
         dropoff: orderDetails.dropoff,
-        price: orderDetails.price,
+        price: orderDetails.price.toLocaleString('vi-VN'),
         vehicleType: orderDetails.vehicleType,
+      },
+    });
+  }
+
+  async sendReceipt(email: string, name: string, orderDetails: any) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `[BenGo] Biên lai điện tử - #${orderDetails.id}`,
+      template: './receipt',
+      context: {
+        name,
+        id: orderDetails.id,
+        pickup: orderDetails.pickup,
+        dropoff: orderDetails.dropoff,
+        price: orderDetails.price.toLocaleString('vi-VN'),
+        vehicleType: orderDetails.vehicleType,
+        date: new Date().toLocaleDateString('vi-VN'),
+      },
+    });
+  }
+
+  async sendDriverApproval(email: string, name: string, status: 'APPROVED' | 'REJECTED', reason?: string) {
+    const isApproved = status === 'APPROVED';
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `[BenGo] Thông báo kết quả duyệt hồ sơ tài xế`,
+      template: './driver-status',
+      context: {
+        name,
+        isApproved,
+        reason,
+        title: isApproved ? 'Hồ sơ đã được duyệt!' : 'Hồ sơ chưa được duyệt',
+      },
+    });
+  }
+
+  async sendForgotPasswordOTP(email: string, name: string, otp: string) {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `[BenGo] Mã OTP khôi phục mật khẩu`,
+      template: './forgot-password',
+      context: {
+        name,
+        otp,
       },
     });
   }

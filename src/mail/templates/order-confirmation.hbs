@@ -1,31 +1,42 @@
-<style>
-  .container { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-  .header { background-color: #f8f8f8; padding: 20px; text-align: center; border-bottom: 2px solid #ddd; }
-  .content { padding: 20px; }
-  .order-info { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0; }
-  .footer { font-size: 12px; color: #777; text-align: center; margin-top: 30px; }
-  .price { font-size: 18px; font-weight: bold; color: #e44d26; }
-</style>
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #e44d26; padding: 30px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { padding: 30px; color: #333; line-height: 1.6; }
+        .footer { background-color: #f9f9f9; padding: 20px; text-align: center; color: #777; font-size: 13px; border-top: 1px solid #eee; }
+        .button { display: inline-block; padding: 12px 25px; background-color: #e44d26; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+        .info-box { background-color: #fef2f0; border: 1px solid #fbd9d1; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .price { font-size: 22px; font-weight: bold; color: #e44d26; }
+        .label { font-weight: bold; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Đặt Hàng Thành Công</h1>
+        </div>
+        <div class="content">
+            <p>Chào <strong>{{name}}</strong>,</p>
+            <p>Yêu cầu đặt xe của bạn đã được tiếp nhận thành công. Chúng tôi đang tìm tài xế gần nhất cho bạn.</p>
+            
+            <div class="info-box">
+                <p><span class="label">Mã đơn hàng:</span> #{{id}}</p>
+                <p><span class="label">Dịch vụ:</span> {{vehicleType}}</p>
+                <p><span class="label">Điểm đón:</span> {{pickup}}</p>
+                <p><span class="label">Điểm đến:</span> {{dropoff}}</p>
+                <p><span class="label">Ước tính phí:</span> <span class="price">{{price}} VND</span></p>
+            </div>
 
-<div class="container">
-  <div class="header">
-    <h1>Order Confirmed!</h1>
-  </div>
-  <div class="content">
-    <p>Hello <strong>{{name}}</strong>,</p>
-    <p>Thank you for choosing BenGo! Your order has been successfully placed and is now being processed.</p>
-    
-    <div class="order-info">
-      <p><strong>Order ID:</strong> #{{id}}</p>
-      <p><strong>Vehicle:</strong> {{vehicleType}}</p>
-      <p><strong>From:</strong> {{pickup}}</p>
-      <p><strong>To:</strong> {{dropoff}}</p>
-      <p><strong>Total Price:</strong> <span class="price">{{price}} VND</span></p>
+            <p>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của BenGo!</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BenGo App. Trải nghiệm di chuyển hiện đại.</p>
+            <p>Hotline: 1900 xxxx | Email: support@bengo.vn</p>
+        </div>
     </div>
-
-    <p>We will notify you once a driver has accepted your order.</p>
-  </div>
-  <div class="footer">
-    <p>&copy; 2026 BenGo. All rights reserved.</p>
-  </div>
-</div>
+</body>
+</html>

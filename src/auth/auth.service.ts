@@ -4,12 +4,14 @@ import { ApiResponseType, createApiResponse } from '../utils/response.util';
 import { LoginUserDto, RegisterUserDto } from './dto/auth.dto';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcryptjs';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private jwtService: JwtService,
     private userService: UserService,
+    private mailService: MailService,
   ) { }
 
   async login(loginUserDto: LoginUserDto): Promise<ApiResponseType> {
@@ -82,5 +84,25 @@ export class AuthService {
 
   async updateProfile(userId: string, dto: any): Promise<ApiResponseType> {
     return this.userService.updateProfile(userId, dto);
+  }
+
+  async forgotPassword(phone: string): Promise<ApiResponseType> {
+    const user = await this.userService.findByPhone(phone);
+    if (!user) {
+      throw new HttpException('Số điện thoại không tồn tại trong hệ thống', HttpStatus.NOT_FOUND);
+    }
+
+    if (!user.email) {
+      throw new HttpException('Tài khoản này chưa liên kết Email để nhận mã OTP', HttpStatus.BAD_REQUEST);
+    }
+
+    // Tạo mã OTP ngẫu nhiên 6 chữ số
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Ở đây thực tế nên lưu OTP vào Redis hoặc Database kèm thời gian hết hạn
+    // Tạm thời ta gửi qua Mail phục vụ demo
+    await this.mailService.sendForgotPasswordOTP(user.email, user.name, otp);
+
+    return createApiResponse(null, 'Mã OTP đã được gửi đến Email của bạn', HttpStatus.OK);
   }
 }

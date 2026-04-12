@@ -80,8 +80,8 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Gửi mã OTP thành công' })
   @ApiResponse({ status: 404, description: 'Số điện thoại không tồn tại trong hệ thống' })
   @Post('forgot-password')
-  async forgotPassword(@Body() _dto: ForgotPasswordDto): Promise<any> {
-    return createApiResponse(null, 'OTP sent');
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<any> {
+    return await this.authService.forgotPassword(dto.phone);
   }
 
   @ApiOperation({ 

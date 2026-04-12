@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #2ecc71; padding: 30px; text-align: center; color: white; }
+        .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { padding: 30px; color: #333; line-height: 1.6; }
+        .footer { background-color: #f9f9f9; padding: 20px; text-align: center; color: #777; font-size: 13px; border-top: 1px solid #eee; }
+        .receipt-box { border-top: 2px dashed #eee; border-bottom: 2px dashed #eee; padding: 20px 0; margin: 20px 0; }
+        .price-row { display: flex; justify-content: space-between; margin: 10px 0; font-size: 16px; }
+        .total-row { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 20px; font-weight: bold; color: #27ae60; }
+        .label { color: #777; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Biên Lai Điện Tử</h1>
+        </div>
+        <div class="content">
+            <p>Chào <strong>{{name}}</strong>,</p>
+            <p>Cảm ơn bạn đã hoàn thành chuyến đi cùng BenGo. Dưới đây là tóm tắt đơn hàng của bạn vào ngày {{date}}.</p>
+            
+            <div class="receipt-box">
+                <p><strong>Mã đơn hàng:</strong> #{{id}}</p>
+                <p><strong>Dịch vụ:</strong> {{vehicleType}}</p>
+                <p><strong>Từ:</strong> {{pickup}}</p>
+                <p><strong>Đến:</strong> {{dropoff}}</p>
+            </div>
+
+            <div class="price-row">
+                <span class="label">Phí chuyến đi</span>
+                <span>{{price}} VND</span>
+            </div>
+            <div class="total-row">
+                <span>Tổng cộng</span>
+                <span>{{price}} VND</span>
+            </div>
+
+            <p style="text-align: center; margin-top: 30px;">Hẹn gặp lại bạn trong những chuyến đi tiếp theo!</p>
+        </div>
+        <div class="footer">
+            <p>&copy; 2026 BenGo App. Trải nghiệm di chuyển hiện đại.</p>
+            <p>Hotline: 1900 xxxx | Email: support@bengo.vn</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -15,6 +15,7 @@ import { Driver } from './driver.schema';
 import { Order } from '../orders/orders.schema';
 import { User } from '../user/user.schema';
 import { NotificationService } from '../utils/notification.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class DriverService {
@@ -23,6 +24,7 @@ export class DriverService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly notificationService: NotificationService,
+    private readonly mailService: MailService,
   ) { }
 
   async toggleStatus(driverId: string, dto: ToggleStatusDto): Promise<void> {
@@ -180,6 +182,22 @@ export class DriverService {
         'ORDER_STATUS',
         { orderId: order._id.toString(), status: 'DELIVERED' }
       );
+
+      // Gửi Biên lai điện tử qua email
+      try {
+        const customer = await this.userModel.findById(order.customerId);
+        if (customer && customer.email) {
+          this.mailService.sendReceipt(customer.email, customer.name, {
+            id: order._id.toString(),
+            pickup: order.pickup.address,
+            dropoff: order.dropoff.address,
+            price: order.totalPrice,
+            vehicleType: order.vehicleType,
+          }).catch(err => console.error('Lỗi gửi email biên lai:', err));
+        }
+      } catch (err) {
+        console.error('Lỗi lấy thông tin khách hàng để gửi biên lai:', err);
+      }
     } else if (dto.status === 'PICKED_UP') {
       await this.notificationService.createNotification(
         order.customerId,
