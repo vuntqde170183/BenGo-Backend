@@ -44,14 +44,21 @@ export class DriverService {
   }
 
   async getPendingOrders(
+    driverId: string,
     lat: number,
     lng: number,
     radius: number,
   ): Promise<PendingOrderResponseDto[]> {
-    // Find pending orders within radius
+    const driver = await this.driverModel.findOne({ userId: driverId });
+    if (!driver) {
+      throw new NotFoundException('Không tìm thấy hồ sơ tài xế');
+    }
+
+    // Find pending orders with matching vehicleType within radius
     const orders = await this.orderModel
       .find({
         status: 'PENDING',
+        vehicleType: driver.vehicleType,
         'pickup.lat': {
           $gte: lat - radius / 111, // Rough conversion: 1 degree ≈ 111km
           $lte: lat + radius / 111,
@@ -102,6 +109,10 @@ export class DriverService {
 
     if (!driver.isOnline) {
       throw new Error('Tài xế phải trực tuyến để nhận đơn hàng');
+    }
+
+    if (driver.vehicleType !== order.vehicleType) {
+      throw new Error(`Phương tiện của bạn (${driver.vehicleType}) không phù hợp với yêu cầu đơn hàng (${order.vehicleType})`);
     }
 
     order.driverId = driverId;

@@ -238,6 +238,10 @@ export class DispatcherService {
       throw new Error('Driver is not approved');
     }
 
+    if (driver.vehicleType !== order.vehicleType) {
+      throw new Error(`Driver vehicle type (${driver.vehicleType}) does not match order requirement (${order.vehicleType})`);
+    }
+
     order.driverId = driver.userId as any;
     order.status = 'ACCEPTED';
     await order.save();

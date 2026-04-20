@@ -109,11 +109,13 @@ export class OrdersController {
     @Query('lat') lat: number,
     @Query('lng') lng: number,
     @Query('radius') radius: number = 5,
+    @Query('vehicleType') vehicleType?: string,
   ): Promise<NearbyDriverResponseDto[]> {
     return this.ordersService.getNearbyDrivers(
       Number(lat),
       Number(lng),
       Number(radius),
+      vehicleType,
     );
   }
 

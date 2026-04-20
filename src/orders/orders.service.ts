@@ -296,25 +296,31 @@ export class OrdersService {
     };
   }
 
-  async getNearbyDrivers(lat: number, lng: number, radius: number = 5): Promise<any[]> {
+  async getNearbyDrivers(lat: number, lng: number, radius: number = 5, vehicleType?: string): Promise<any[]> {
     if (isNaN(lat) || isNaN(lng)) {
       throw new BadRequestException('Latitude và Longitude phải là số hợp lệ');
     }
 
-    try {
-      const drivers = await this.driverModel.find({
-        isOnline: true,
-        status: 'APPROVED',
-        location: {
-          $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates: [lng, lat], // [longitude, latitude]
-            },
-            $maxDistance: radius * 1000,
+    const query: any = {
+      isOnline: true,
+      status: 'APPROVED',
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [lng, lat], // [longitude, latitude]
           },
+          $maxDistance: radius * 1000,
         },
-      }).limit(50).exec();
+      },
+    };
+
+    if (vehicleType) {
+      query.vehicleType = vehicleType;
+    }
+
+    try {
+      const drivers = await this.driverModel.find(query).limit(50).exec();
 
       return drivers.map(d => ({
         id: d._id,

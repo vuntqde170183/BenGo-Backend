@@ -56,11 +56,13 @@ export class DriverController {
     type: [PendingOrderResponseDto],
   })
   async getPendingOrders(
+    @Req() req: any,
     @Query('lat') lat: number,
     @Query('lng') lng: number,
     @Query('radius') radius: number = 5,
   ): Promise<PendingOrderResponseDto[]> {
     return this.driverService.getPendingOrders(
+      req.user.id,
       Number(lat),
       Number(lng),
       Number(radius),
