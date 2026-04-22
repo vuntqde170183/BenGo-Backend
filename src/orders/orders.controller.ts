@@ -90,12 +90,14 @@ export class OrdersController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('status') status?: string,
+    @Query('time') time?: string,
   ): Promise<OrderHistoryResponseDto> {
     return this.ordersService.getHistory(
       req.user.id,
       Number(page),
       Number(limit),
       status,
+      time,
     );
   }
 

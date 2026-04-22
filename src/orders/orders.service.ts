@@ -247,11 +247,23 @@ export class OrdersService {
     page: number,
     limit: number,
     status?: string,
+    time?: string,
   ): Promise<OrderHistoryResponseDto> {
     const query: any = { customerId };
 
     if (status && status !== 'ALL') {
       query.status = status;
+    }
+
+    if (time) {
+      const now = new Date();
+      if (time === 'today') {
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query.createdAt = { $gte: startOfToday };
+      } else if (time === 'week') {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        query.createdAt = { $gte: sevenDaysAgo };
+      }
     }
 
     const skip = (page - 1) * limit;
@@ -332,8 +344,6 @@ export class OrdersService {
         rating: d.rating,
       }));
     } catch (error) {
-      console.error('Error in getNearbyDrivers:', error);
-      // Nếu là lỗi index chưa tồn tại hoặc lỗi query, trả về mảng rỗng thay vì 500
       return [];
     }
   }

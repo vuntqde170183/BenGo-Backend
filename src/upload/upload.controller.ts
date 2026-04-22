@@ -20,7 +20,7 @@ import { createApiResponse, ApiResponseType } from '../utils/response.util';
 @ApiTags('Upload')
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(private readonly uploadService: UploadService) { }
 
   @Post()
   @ApiOperation({ summary: 'Upload hình ảnh lên Cloudinary' })
@@ -81,7 +81,7 @@ export class UploadController {
         callback(null, true);
       },
       limits: {
-        fileSize: 5 * 1024 * 1024, 
+        fileSize: 5 * 1024 * 1024,
       },
     }),
   )
@@ -92,20 +92,14 @@ export class UploadController {
       throw new BadRequestException('Vui lòng chọn file để upload');
     }
 
-    console.log(`[Upload] Starting upload for file: ${file.originalname} (${file.size} bytes)`);
-
     try {
       const result = await this.uploadService.uploadImage(file);
-
-      console.log(`[Upload] Successfully uploaded to Cloudinary. URL: ${result.url}`);
-
       return createApiResponse({
         statusCode: HttpStatus.OK,
         message: 'Upload hình ảnh thành công',
         data: result,
       });
     } catch (error) {
-      console.error(`[Upload] Failed to upload image: ${error.message}`);
       throw new BadRequestException(`Lỗi upload hình ảnh: ${error.message}`);
     }
   }

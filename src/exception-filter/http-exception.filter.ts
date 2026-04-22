@@ -29,7 +29,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else {
-      console.error('Unhandled exception:', exception);
       message = 'Internal server error';
     }
 

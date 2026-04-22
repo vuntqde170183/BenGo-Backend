@@ -30,7 +30,6 @@ export class MailService implements OnModuleInit {
 
     try {
       await this.transporter.verify();
-      console.log('✅ MailService: Kết nối SMTP thành công');
     } catch (error) {
       console.error('❌ MailService: Lỗi kết nối SMTP:', error);
     }
@@ -57,7 +56,6 @@ export class MailService implements OnModuleInit {
   }
 
   async sendMail(options: { to: string; subject: string; template: string; context: any }) {
-    console.log(`[MailService] Đang gửi email [${options.subject}] đến: ${options.to}`);
     try {
       const html = await this.renderTemplate(options.template, options.context);
 
@@ -68,10 +66,8 @@ export class MailService implements OnModuleInit {
         html,
       });
 
-      console.log(`[MailService] Gửi email thành công: ${info.messageId}`);
       return info;
     } catch (error) {
-      console.error(`[MailService] Lỗi gửi email đến ${options.to}:`, error);
       throw error;
     }
   }
