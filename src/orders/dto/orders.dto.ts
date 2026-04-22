@@ -159,6 +159,7 @@ export class OrderResponseDto {
 
   @ApiPropertyOptional()
   driver?: {
+    id: string;
     name: string;
     phone: string;
     avatar?: string;
@@ -168,6 +169,7 @@ export class OrderResponseDto {
 
   @ApiPropertyOptional()
   customer?: {
+    id: string;
     name: string;
     phone: string;
     email?: string;

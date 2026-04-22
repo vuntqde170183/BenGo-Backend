@@ -176,6 +176,7 @@ export class OrdersService {
       goodsImages: order.goodsImages,
       createdAt: (order as any).createdAt,
       driver: order.driverId ? {
+        id: (order.driverId as any)._id.toString(),
         name: (order.driverId as any).name || 'Unknown',
         phone: (order.driverId as any).phone || 'N/A',
         avatar: (order.driverId as any).avatar,
@@ -186,6 +187,7 @@ export class OrdersService {
         } : null,
       } : null,
       customer: order.customerId ? {
+        id: (order.customerId as any)._id.toString(),
         name: (order.customerId as any).name || 'Khách hàng',
         phone: (order.customerId as any).phone || 'N/A',
         email: (order.customerId as any).email,
@@ -201,7 +203,7 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
 
-    if (order.customerId.toString() !== customerId) {
+    if (order.customerId.toString() !== customerId.toString()) {
       throw new BadRequestException('Bạn chỉ có thể hủy đơn hàng của chính mình');
     }
 
@@ -301,6 +303,7 @@ export class OrdersService {
         goodsImages: order.goodsImages,
         createdAt: (order as any).createdAt,
         driver: order.driverId ? {
+          id: (order.driverId as any)._id.toString(),
           name: (order.driverId as any).name || 'Unknown',
           phone: (order.driverId as any).phone || 'N/A',
           avatar: (order.driverId as any).avatar,
