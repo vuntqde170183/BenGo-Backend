@@ -64,6 +64,12 @@ export class Order extends Document {
   @Prop({ type: String })
   specialNote: string;
 
+  @Prop({ type: String })
+  deliveryProofImage: string;
+
+  @Prop({ type: String })
+  deliveryNotes: string;
+
   @Prop({ type: [String], default: [] })
   tags: string[];
 }

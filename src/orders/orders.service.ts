@@ -337,5 +337,40 @@ export class OrdersService {
       return [];
     }
   }
+
+  async submitDeliveryProof(orderId: string, dto: { proofImage: string, notes?: string }): Promise<void> {
+    const order = await this.orderModel.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+
+    if (order.status !== 'PICKED_UP') {
+      throw new BadRequestException('Đơn hàng phải ở trạng thái Đã lấy hàng mới có thể xác thực giao hàng');
+    }
+
+    order.status = 'DELIVERED';
+    order.deliveryProofImage = dto.proofImage;
+    order.deliveryNotes = dto.notes;
+    order.paymentStatus = 'PAID';
+
+    await order.save();
+
+    // Notify customer
+    try {
+      const customer = await this.userModel.findById(order.customerId);
+      if (customer && customer.email) {
+        this.mailService.sendReceipt(customer.email, customer.name, {
+          id: order._id.toString(),
+          pickup: order.pickup.address,
+          dropoff: order.dropoff.address,
+          price: order.totalPrice,
+          vehicleType: order.vehicleType,
+        }).catch(err => console.error('Error sending receipt email:', err));
+      }
+    } catch (error) {
+      console.error('Error processing post-delivery logic:', error);
+    }
+  }
 }
 

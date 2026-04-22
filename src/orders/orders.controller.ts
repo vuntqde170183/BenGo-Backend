@@ -27,6 +27,7 @@ import {
   NearbyDriverResponseDto,
   CreatePaymentIntentDto,
   PaymentIntentResponseDto,
+  SubmitDeliveryProofDto,
 } from './dto/orders.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
@@ -154,5 +155,15 @@ export class OrdersController {
     return { success: true };
   }
 
+  @Post('delivery-proof/:id')
+  @ApiOperation({ summary: 'Submit delivery proof' })
+  @ApiResponse({ status: 201, description: 'Delivery proof submitted successfully' })
+  async submitDeliveryProof(
+    @Param('id') id: string,
+    @Body() dto: SubmitDeliveryProofDto,
+  ): Promise<{ success: boolean }> {
+    await this.ordersService.submitDeliveryProof(id, dto);
+    return { success: true };
+  }
 }
 

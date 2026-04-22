@@ -205,3 +205,14 @@ export class NearbyDriverResponseDto {
   rating: number;
 }
 
+export class SubmitDeliveryProofDto {
+  @ApiProperty({ example: 'https://res.cloudinary.com/...' })
+  @IsString({ message: 'Ảnh xác thực phải là chuỗi ký tự' })
+  proofImage: string;
+
+  @ApiPropertyOptional({ example: 'Delivered to security guard' })
+  @IsOptional()
+  @IsString({ message: 'Ghi chú phải là chuỗi ký tự' })
+  notes?: string;
+}
+
