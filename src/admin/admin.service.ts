@@ -311,7 +311,6 @@ export class AdminService {
       }
     }
 
-    // Lưu lý do và ghi chú
     if (dto.reason) {
       driver.rejectionReason = dto.reason;
     }
@@ -319,7 +318,6 @@ export class AdminService {
       driver.adminNote = dto.note;
     }
 
-    // Xóa lý do nếu chuyển về APPROVED hoặc PENDING
     if (dto.status === 'APPROVED' || dto.status === 'PENDING') {
       driver.rejectionReason = undefined;
       driver.adminNote = undefined;
@@ -327,7 +325,6 @@ export class AdminService {
 
     await driver.save();
 
-    // Gửi email thông báo cho tài xế
     if (dto.status === 'APPROVED' || dto.status === 'REJECTED') {
       try {
         const user = await this.userModel.findById(driver.userId);
@@ -353,16 +350,13 @@ export class AdminService {
 
     const userId = driver.userId;
 
-    // Xóa hồ sơ driver
     await this.driverModel.findByIdAndDelete(id);
 
-    // Xóa tài khoản user tương ứng nếu có
     if (userId) {
       await this.userModel.findByIdAndDelete(userId);
     }
   }
 
-  // ============= ORDER MANAGEMENT =============
   async getAllOrders(status?: string, search?: string, page: number = 1, limit: number = 20): Promise<any> {
     const query: any = {};
     if (status && status !== 'ALL') {

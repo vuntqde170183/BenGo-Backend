@@ -155,12 +155,16 @@ export class DriverController {
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
     @Query('status') status?: string,
-  ): Promise<DriverOrderHistoryResponseDto> {
+    @Query('search') search?: string,
+    @Query('time') time?: string,
+  ): Promise<any> {
     return this.driverService.getOrders(
       req.user.id,
       Number(page),
       Number(limit),
       status,
+      search,
+      time,
     );
   }
 }

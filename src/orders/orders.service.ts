@@ -248,11 +248,19 @@ export class OrdersService {
     limit: number,
     status?: string,
     time?: string,
+    search?: string,
   ): Promise<OrderHistoryResponseDto> {
     const query: any = { customerId };
 
     if (status && status !== 'ALL') {
       query.status = status;
+    }
+
+    if (search) {
+      query.$or = [
+        { 'pickup.address': { $regex: search, $options: 'i' } },
+        { 'dropoff.address': { $regex: search, $options: 'i' } },
+      ];
     }
 
     if (time) {

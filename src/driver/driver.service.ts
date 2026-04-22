@@ -324,11 +324,31 @@ export class DriverService {
     page: number,
     limit: number,
     status?: string,
-  ): Promise<DriverOrderHistoryResponseDto> {
+    search?: string,
+    time?: string,
+  ): Promise<any> {
     const query: any = { driverId };
 
     if (status && status !== 'ALL') {
       query.status = status;
+    }
+
+    if (search) {
+      query.$or = [
+        { 'pickup.address': { $regex: search, $options: 'i' } },
+        { 'dropoff.address': { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    if (time) {
+      const now = new Date();
+      if (time === 'today') {
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query.createdAt = { $gte: startOfToday };
+      } else if (time === 'week') {
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        query.createdAt = { $gte: sevenDaysAgo };
+      }
     }
 
     const skip = (page - 1) * limit;
@@ -336,6 +356,7 @@ export class DriverService {
     const [orders, total] = await Promise.all([
       this.orderModel
         .find(query)
+        .populate('customerId', 'name phone avatar')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -347,15 +368,27 @@ export class DriverService {
       data: orders.map(order => ({
         id: order._id.toString(),
         status: order.status,
-        pickupAddress: order.pickup.address,
-        dropoffAddress: order.dropoff.address,
+        pickup: order.pickup,
+        dropoff: order.dropoff,
+        vehicleType: order.vehicleType,
         totalPrice: order.totalPrice,
+        distanceKm: order.distanceKm,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        goodsImages: order.goodsImages,
         createdAt: (order as any).createdAt,
+        customer: order.customerId ? {
+          name: (order.customerId as any).name || 'Khách hàng',
+          phone: (order.customerId as any).phone || 'N/A',
+          avatar: (order.customerId as any).avatar,
+        } : null,
       })),
-      meta: {
+      pagination: {
         total,
-        page,
-        limit,
+        count: orders.length,
+        per_page: limit,
+        current_page: page,
+        total_pages: Math.ceil(total / limit),
       },
     };
   }

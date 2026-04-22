@@ -36,7 +36,7 @@ import { JwtGuard } from '../auth/jwt-auth.guard';
 @UseGuards(JwtGuard)
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @Post('estimate')
   @ApiOperation({ summary: 'Get price estimation' })
@@ -91,6 +91,7 @@ export class OrdersController {
     @Query('limit') limit: number = 10,
     @Query('status') status?: string,
     @Query('time') time?: string,
+    @Query('search') search?: string,
   ): Promise<OrderHistoryResponseDto> {
     return this.ordersService.getHistory(
       req.user.id,
@@ -98,6 +99,7 @@ export class OrdersController {
       Number(limit),
       status,
       time,
+      search,
     );
   }
 
