@@ -40,7 +40,6 @@ import { SpecialOrderResponseDto } from '../dispatcher/dto/dispatcher.dto';
 export class AdminController {
   constructor(private readonly adminService: AdminService) { }
 
-  // ============= QUẢN LÝ NGƯỜI DÙNG =============
   @Get('users')
   @ApiOperation({
     summary: '[ADMIN] Lấy danh sách người dùng',
@@ -147,7 +146,6 @@ export class AdminController {
     return this.adminService.updateUserRole(id, dto.role, dto.driverProfile, dto.reason);
   }
 
-  // ============= QUẢN LÝ TÀI XẾ =============
   @Get('drivers')
   @ApiOperation({
     summary: '[ADMIN] Lấy danh sách tài xế',
