@@ -16,7 +16,7 @@ export class PaymentService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(User.name) private userModel: Model<User>,
-  ) {}
+  ) { }
 
   async handleWebhook(dto: SePayWebhookDto): Promise<void> {
     const { orderId, amount, status, transactionId } = dto as any;
@@ -45,7 +45,7 @@ export class PaymentService {
           }
         }
       }
-    } 
+    }
   }
 
   async createQr(dto: CreateQrDto): Promise<CreateQrResponseDto> {
@@ -112,7 +112,7 @@ export class PaymentService {
     try {
       const date = new Date();
       const createDate = this.formatDate(date);
-      
+
       const tmnCode = process.env.VNP_TMN_CODE;
       const secretKey = process.env.VNP_HASH_SECRET;
       let vnpUrl = process.env.VNP_URL;
@@ -154,7 +154,6 @@ export class PaymentService {
 
       return { paymentUrl: vnpUrl };
     } catch (error) {
-      console.error('Lỗi createVnpayUrl:', error);
       throw error;
     }
   }
@@ -184,7 +183,6 @@ export class PaymentService {
             order.paymentStatus = 'PAID';
             order.paymentMethod = 'VNPAY';
             await order.save();
-            console.log(`✅ [VNPay IPN] Đã cập nhật đơn ${orderId} thành PAID`);
 
             const amount = parseInt(vnp_Params['vnp_Amount']) / 100;
             if (order.driverId) {
@@ -198,15 +196,12 @@ export class PaymentService {
           }
           return { RspCode: '00', Message: 'Confirm Success' };
         } else {
-          console.log(`ℹ️ [VNPay IPN] Giao dịch không thành công. Order: ${orderId}, RspCode: ${rspCode}`);
-          return { RspCode: '00', Message: 'Confirm Success' }; 
+          return { RspCode: '00', Message: 'Confirm Success' };
         }
       } else {
-        console.error('❌ [VNPay IPN] Chữ ký không hợp lệ!');
         return { RspCode: '97', Message: 'Invalid Checksum' };
       }
     } catch (error) {
-      console.error('❌ [VNPay IPN] Lỗi xử lý:', error);
       return { RspCode: '99', Message: 'Unknow Error' };
     }
   }
@@ -215,7 +210,7 @@ export class PaymentService {
     try {
       const isDemo = vnp_Params['isDemo'];
       const secureHash = vnp_Params['vnp_SecureHash'];
-      
+
       if (!isDemo) {
         delete vnp_Params['vnp_SecureHash'];
         delete vnp_Params['vnp_SecureHashType'];
@@ -237,8 +232,6 @@ export class PaymentService {
 
       const orderId = vnp_Params['vnp_TxnRef'];
       const responseCode = vnp_Params['vnp_ResponseCode'];
-      console.log(`ℹ️ [VNPay Verify] Đang xử lý đơn: ${orderId}, ResponseCode: ${responseCode}, Demo: ${!!isDemo}`);
-
       if (responseCode === '00') {
         const order = await this.orderModel.findById(orderId);
         if (order) {
@@ -246,7 +239,6 @@ export class PaymentService {
             order.paymentStatus = 'PAID';
             order.paymentMethod = 'VNPAY';
             await order.save();
-            console.log(`✅ [VNPay Verify] Đã cập nhật đơn ${orderId} thành PAID`);
           }
           return { success: true, message: 'Thanh toán thành công', orderId };
         } else {
@@ -255,7 +247,6 @@ export class PaymentService {
       }
       return { success: false, message: 'Thanh toán thất bại hoặc không tìm thấy đơn hàng' };
     } catch (error) {
-      console.error('Lỗi validateVnpayResponse:', error);
       throw error;
     }
   }
