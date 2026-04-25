@@ -65,3 +65,24 @@ export class PayOrderDto {
   @IsString()
   paymentMethod: string;
 }
+
+export class CreateVnpayUrlDto {
+  @ApiProperty({ example: 50000 })
+  @IsNumber()
+  amount: number;
+
+  @ApiPropertyOptional({ example: 'BenGo://payment-result' })
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
+
+  @ApiPropertyOptional({ example: 'Payment for order #123' })
+  @IsOptional()
+  @IsString()
+  orderInfo?: string;
+}
+
+export class CreateVnpayUrlResponseDto {
+  @ApiProperty()
+  paymentUrl: string;
+}

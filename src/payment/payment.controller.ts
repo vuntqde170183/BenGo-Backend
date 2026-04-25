@@ -6,6 +6,8 @@ import {
   CreateQrResponseDto,
   PayOrderDto,
   SePayWebhookDto,
+  CreateVnpayUrlDto,
+  CreateVnpayUrlResponseDto,
 } from './dto/payment.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 
@@ -42,5 +44,19 @@ export class PaymentController {
   @ApiResponse({ status: 200, description: 'Thanh toán thành công' })
   async payOrder(@Req() req: any, @Body() dto: PayOrderDto): Promise<any> {
     return this.paymentService.payOrder(req.user.id, dto);
+  }
+
+  @Post('create-vnpay-url')
+  @ApiOperation({ summary: 'Tạo URL thanh toán VNPay' })
+  @ApiResponse({
+    status: 201,
+    description: 'URL Created',
+    type: CreateVnpayUrlResponseDto,
+  })
+  async createVnpayUrl(
+    @Req() req: any,
+    @Body() dto: CreateVnpayUrlDto,
+  ): Promise<CreateVnpayUrlResponseDto> {
+    return this.paymentService.createVnpayUrl(req, dto);
   }
 }

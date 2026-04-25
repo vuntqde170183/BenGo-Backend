@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import * as crypto from 'crypto';
+import * as queryString from 'querystring';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -104,5 +106,75 @@ export class PaymentService {
     order.paymentMethod = dto.paymentMethod;
     await order.save();
     return { success: true, message: 'Đã chọn phương thức thanh toán ' + dto.paymentMethod };
+  }
+
+  async createVnpayUrl(req: any, dto: any): Promise<any> {
+    const date = new Date();
+    const createDate = this.formatDate(date);
+    
+    const tmnCode = process.env.VNP_TMN_CODE;
+    const secretKey = process.env.VNP_HASH_SECRET;
+    let vnpUrl = process.env.VNP_URL;
+    const returnUrl = dto.returnUrl || process.env.VNP_RETURN_URL;
+
+    const amount = dto.amount;
+    const bankCode = dto.bankCode || '';
+
+    const locale = dto.language || 'vn';
+    const currCode = 'VND';
+    let vnp_Params = {};
+    vnp_Params['vnp_Version'] = '2.1.0';
+    vnp_Params['vnp_Command'] = 'pay';
+    vnp_Params['vnp_TmnCode'] = tmnCode;
+    vnp_Params['vnp_Locale'] = locale;
+    vnp_Params['vnp_CurrCode'] = currCode;
+    vnp_Params['vnp_TxnRef'] = Date.now().toString();
+    vnp_Params['vnp_OrderInfo'] = dto.orderInfo || 'Thanh toan don hang bengo';
+    vnp_Params['vnp_OrderType'] = 'other';
+    vnp_Params['vnp_Amount'] = amount * 100;
+    vnp_Params['vnp_ReturnUrl'] = returnUrl;
+    vnp_Params['vnp_IpAddr'] = '127.0.0.1';
+    vnp_Params['vnp_CreateDate'] = createDate;
+    if (bankCode !== null && bankCode !== '') {
+      vnp_Params['vnp_BankCode'] = bankCode;
+    }
+
+    vnp_Params = this.sortObject(vnp_Params);
+
+    const signData = queryString.stringify(vnp_Params, { encode: false });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    vnp_Params['vnp_SecureHash'] = signed;
+    vnpUrl += '?' + queryString.stringify(vnp_Params, { encode: false });
+
+    return { paymentUrl: vnpUrl };
+  }
+
+  private sortObject(obj) {
+    const sorted = {};
+    const str = [];
+    let key;
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        str.push(encodeURIComponent(key));
+      }
+    }
+    str.sort();
+    for (key = 0; key < str.length; key++) {
+      sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
+    }
+    return sorted;
+  }
+
+  private formatDate(date: Date): string {
+    const pad = (n: number) => (n < 10 ? '0' + n : n);
+    return (
+      date.getFullYear() +
+      pad(date.getMonth() + 1).toString() +
+      pad(date.getDate()).toString() +
+      pad(date.getHours()).toString() +
+      pad(date.getMinutes()).toString() +
+      pad(date.getSeconds()).toString()
+    );
   }
 }
