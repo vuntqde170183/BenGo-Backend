@@ -84,6 +84,11 @@ export class CreatePaymentIntentDto {
   @ApiProperty({ example: 'vnd' })
   @IsString({ message: 'Loại tiền tệ phải là chuỗi ký tự' })
   currency: string;
+
+  @ApiPropertyOptional({ example: '60d0fe4f5311236168a109ca' })
+  @IsOptional()
+  @IsString({ message: 'ID đơn hàng phải là chuỗi ký tự' })
+  orderId?: string;
 }
 
 export class PaymentIntentResponseDto {

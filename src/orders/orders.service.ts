@@ -12,6 +12,8 @@ import {
   OrderHistoryResponseDto,
   OrderResponseDto,
   RateDriverDto,
+  CreatePaymentIntentDto,
+  PaymentIntentResponseDto,
 } from './dto/orders.dto';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
@@ -33,13 +35,16 @@ export class OrdersService {
     });
   }
 
-  async createPaymentIntent(dto: any): Promise<any> {
-    const { amount, currency } = dto;
+  async createPaymentIntent(dto: CreatePaymentIntentDto): Promise<PaymentIntentResponseDto> {
+    const { amount, currency, orderId } = dto;
     try {
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: amount, // assume amount is in smallest unit (cents/vnđ)
         currency: currency || 'vnd',
         payment_method_types: ['card'],
+        metadata: {
+          orderId: orderId || '',
+        },
       });
 
       return {
