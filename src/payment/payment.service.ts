@@ -184,6 +184,7 @@ export class PaymentService {
             order.paymentStatus = 'PAID';
             order.paymentMethod = 'VNPAY';
             await order.save();
+            console.log(`✅ [VNPay IPN] Đã cập nhật đơn ${orderId} thành PAID`);
 
             const amount = parseInt(vnp_Params['vnp_Amount']) / 100;
             if (order.driverId) {
@@ -197,9 +198,11 @@ export class PaymentService {
           }
           return { RspCode: '00', Message: 'Confirm Success' };
         } else {
+          console.log(`ℹ️ [VNPay IPN] Giao dịch không thành công. Order: ${orderId}, RspCode: ${rspCode}`);
           return { RspCode: '00', Message: 'Confirm Success' }; 
         }
       } else {
+        console.error('❌ [VNPay IPN] Chữ ký không hợp lệ!');
         return { RspCode: '97', Message: 'Invalid Checksum' };
       }
     } catch (error) {
