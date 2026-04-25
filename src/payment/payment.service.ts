@@ -109,93 +109,142 @@ export class PaymentService {
   }
 
   async createVnpayUrl(req: any, dto: any): Promise<any> {
-    const date = new Date();
-    const createDate = this.formatDate(date);
-    
-    const tmnCode = process.env.VNP_TMN_CODE;
-    const secretKey = process.env.VNP_HASH_SECRET;
-    let vnpUrl = process.env.VNP_URL;
-    const returnUrl = dto.returnUrl || process.env.VNP_RETURN_URL;
+    try {
+      const date = new Date();
+      const createDate = this.formatDate(date);
+      
+      const tmnCode = process.env.VNP_TMN_CODE;
+      const secretKey = process.env.VNP_HASH_SECRET;
+      let vnpUrl = process.env.VNP_URL;
+      const returnUrl = dto.returnUrl || process.env.VNP_RETURN_URL;
 
-    const amount = dto.amount;
-    const bankCode = dto.bankCode || '';
+      const amount = dto.amount;
+      const bankCode = dto.bankCode || '';
 
-    const locale = dto.language || 'vn';
-    const currCode = 'VND';
-    let vnp_Params = {};
-    vnp_Params['vnp_Version'] = '2.1.0';
-    vnp_Params['vnp_Command'] = 'pay';
-    vnp_Params['vnp_TmnCode'] = tmnCode;
-    vnp_Params['vnp_Locale'] = locale;
-    vnp_Params['vnp_CurrCode'] = currCode;
-    vnp_Params['vnp_TxnRef'] = dto.orderId || Date.now().toString();
-    vnp_Params['vnp_OrderInfo'] = dto.orderInfo || 'Thanh toan don hang bengo';
-    vnp_Params['vnp_OrderType'] = 'other';
-    vnp_Params['vnp_Amount'] = amount * 100;
-    vnp_Params['vnp_ReturnUrl'] = returnUrl;
-    vnp_Params['vnp_IpAddr'] = '127.0.0.1';
-    vnp_Params['vnp_CreateDate'] = createDate;
-    if (bankCode !== null && bankCode !== '') {
-      vnp_Params['vnp_BankCode'] = bankCode;
+      const locale = dto.language || 'vn';
+      const currCode = 'VND';
+      let vnp_Params = {};
+      vnp_Params['vnp_Version'] = '2.1.0';
+      vnp_Params['vnp_Command'] = 'pay';
+      vnp_Params['vnp_TmnCode'] = tmnCode;
+      vnp_Params['vnp_Locale'] = locale;
+      vnp_Params['vnp_CurrCode'] = currCode;
+      vnp_Params['vnp_TxnRef'] = dto.orderId || Date.now().toString();
+      vnp_Params['vnp_OrderInfo'] = dto.orderInfo || 'Thanh toan don hang bengo';
+      vnp_Params['vnp_OrderType'] = 'other';
+      vnp_Params['vnp_Amount'] = amount * 100;
+      vnp_Params['vnp_ReturnUrl'] = returnUrl;
+      vnp_Params['vnp_IpAddr'] = '127.0.0.1';
+      vnp_Params['vnp_CreateDate'] = createDate;
+      if (bankCode !== null && bankCode !== '') {
+        vnp_Params['vnp_BankCode'] = bankCode;
+      }
+
+      vnp_Params = this.sortObject(vnp_Params);
+
+      const signData = queryString.stringify(vnp_Params, '&', '=', {
+        encodeURIComponent: (str) => str,
+      });
+      const hmac = crypto.createHmac('sha512', secretKey);
+      const signed = hmac.update(signData).digest('hex');
+      vnp_Params['vnp_SecureHash'] = signed;
+      vnpUrl += '?' + queryString.stringify(vnp_Params);
+
+      return { paymentUrl: vnpUrl };
+    } catch (error) {
+      console.error('Lỗi createVnpayUrl:', error);
+      throw error;
     }
-
-    vnp_Params = this.sortObject(vnp_Params);
-
-    const signData = queryString.stringify(vnp_Params, '&', '=', {
-      encodeURIComponent: (str) => str,
-    });
-    const hmac = crypto.createHmac('sha512', secretKey);
-    const signed = hmac.update(signData).digest('hex');
-    vnp_Params['vnp_SecureHash'] = signed;
-    vnpUrl += '?' + queryString.stringify(vnp_Params, '&', '=', {
-      encodeURIComponent: (str) => str,
-    });
-
-    return { paymentUrl: vnpUrl };
   }
 
   async handleVnpayIpn(vnp_Params: any): Promise<any> {
-    const secretKey = process.env.VNP_HASH_SECRET;
-    const secureHash = vnp_Params['vnp_SecureHash'];
+    try {
+      const secretKey = process.env.VNP_HASH_SECRET;
+      const secureHash = vnp_Params['vnp_SecureHash'];
 
-    delete vnp_Params['vnp_SecureHash'];
-    delete vnp_Params['vnp_SecureHashType'];
+      delete vnp_Params['vnp_SecureHash'];
+      delete vnp_Params['vnp_SecureHashType'];
 
-    const sortedParams = this.sortObject(vnp_Params);
-    const signData = queryString.stringify(sortedParams, '&', '=', {
-      encodeURIComponent: (str) => str,
-    });
-    const hmac = crypto.createHmac('sha512', secretKey);
-    const signed = hmac.update(signData).digest('hex');
+      const sortedParams = this.sortObject(vnp_Params);
+      const signData = queryString.stringify(sortedParams, '&', '=', {
+        encodeURIComponent: (str) => str,
+      });
+      const hmac = crypto.createHmac('sha512', secretKey);
+      const signed = hmac.update(signData).digest('hex');
 
-    if (secureHash === signed) {
+      if (secureHash === signed) {
+        const orderId = vnp_Params['vnp_TxnRef'];
+        const rspCode = vnp_Params['vnp_ResponseCode'];
+
+        if (rspCode === '00') {
+          const order = await this.orderModel.findById(orderId);
+          if (order && order.paymentStatus !== 'PAID') {
+            order.paymentStatus = 'PAID';
+            order.paymentMethod = 'VNPAY';
+            await order.save();
+
+            const amount = parseInt(vnp_Params['vnp_Amount']) / 100;
+            if (order.driverId) {
+              const driver = await this.userModel.findById(order.driverId);
+              if (driver) {
+                const driverEarning = amount * 0.8;
+                driver.walletBalance += driverEarning;
+                await driver.save();
+              }
+            }
+          }
+          return { RspCode: '00', Message: 'Confirm Success' };
+        } else {
+          return { RspCode: '00', Message: 'Confirm Success' }; 
+        }
+      } else {
+        return { RspCode: '97', Message: 'Invalid Checksum' };
+      }
+    } catch (error) {
+      console.error('Lỗi handleVnpayIpn:', error);
+      return { RspCode: '99', Message: 'Unknow Error' };
+    }
+  }
+
+  async validateVnpayResponse(vnp_Params: any): Promise<any> {
+    try {
+      const isDemo = vnp_Params['isDemo'];
+      const secureHash = vnp_Params['vnp_SecureHash'];
+      
+      if (!isDemo) {
+        delete vnp_Params['vnp_SecureHash'];
+        delete vnp_Params['vnp_SecureHashType'];
+        delete vnp_Params['isDemo'];
+
+        const sortedParams = this.sortObject(vnp_Params);
+        const secretKey = process.env.VNP_HASH_SECRET;
+        const signData = queryString.stringify(sortedParams, '&', '=', {
+          encodeURIComponent: (str) => str,
+        });
+        const hmac = crypto.createHmac('sha512', secretKey);
+        const signed = hmac.update(signData).digest('hex');
+
+        if (secureHash !== signed) {
+          return { success: false, message: 'Chữ ký không hợp lệ' };
+        }
+      }
+
       const orderId = vnp_Params['vnp_TxnRef'];
-      const rspCode = vnp_Params['vnp_ResponseCode'];
+      const responseCode = vnp_Params['vnp_ResponseCode'];
 
-      if (rspCode === '00') {
+      if (responseCode === '00') {
         const order = await this.orderModel.findById(orderId);
-        if (order && order.paymentStatus !== 'PAID') {
+        if (order) {
           order.paymentStatus = 'PAID';
           order.paymentMethod = 'VNPAY';
           await order.save();
-
-          // Cập nhật số dư nếu là đơn hàng có liên quan đến ví/tài xế
-          const amount = parseInt(vnp_Params['vnp_Amount']) / 100;
-          if (order.driverId) {
-            const driver = await this.userModel.findById(order.driverId);
-            if (driver) {
-              const driverEarning = amount * 0.8;
-              driver.walletBalance += driverEarning;
-              await driver.save();
-            }
-          }
+          return { success: true, message: 'Thanh toán thành công', orderId };
         }
-        return { RspCode: '00', Message: 'Confirm Success' };
-      } else {
-        return { RspCode: '00', Message: 'Confirm Success' }; 
       }
-    } else {
-      return { RspCode: '97', Message: 'Invalid Checksum' };
+      return { success: false, message: 'Thanh toán thất bại hoặc không tìm thấy đơn hàng' };
+    } catch (error) {
+      console.error('Lỗi validateVnpayResponse:', error);
+      throw error;
     }
   }
 

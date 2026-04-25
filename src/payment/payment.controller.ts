@@ -63,6 +63,22 @@ export class PaymentController {
   @Get('vnpay-ipn')
   @ApiOperation({ summary: 'VNPay IPN Callback' })
   async vnpayIpn(@Req() req: any): Promise<any> {
-    return this.paymentService.handleVnpayIpn(req.query);
+    try {
+      return await this.paymentService.handleVnpayIpn(req.query);
+    } catch (error) {
+      console.error('IPN Error:', error);
+      return { RspCode: '99', Message: 'Unknown Error' };
+    }
+  }
+
+  @Post('vnpay-verify')
+  @ApiOperation({ summary: 'Verify VNPay payment result from App' })
+  async vnpayVerify(@Body() dto: any): Promise<any> {
+    try {
+      return await this.paymentService.validateVnpayResponse(dto);
+    } catch (error) {
+      console.error('Verify Error:', error);
+      throw error;
+    }
   }
 }
