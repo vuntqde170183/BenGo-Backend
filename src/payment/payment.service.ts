@@ -141,28 +141,25 @@ export class PaymentService {
 
     vnp_Params = this.sortObject(vnp_Params);
 
-    const signData = queryString.stringify(vnp_Params, { encode: false });
+    const signData = queryString.stringify(vnp_Params, '&', '=', {
+      encodeURIComponent: (str) => str,
+    });
     const hmac = crypto.createHmac('sha512', secretKey);
-    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+    const signed = hmac.update(signData).digest('hex');
     vnp_Params['vnp_SecureHash'] = signed;
-    vnpUrl += '?' + queryString.stringify(vnp_Params, { encode: false });
+    vnpUrl += '?' + queryString.stringify(vnp_Params, '&', '=', {
+      encodeURIComponent: (str) => str,
+    });
 
     return { paymentUrl: vnpUrl };
   }
 
-  private sortObject(obj) {
+  private sortObject(obj: any) {
     const sorted = {};
-    const str = [];
-    let key;
-    for (key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        str.push(encodeURIComponent(key));
-      }
-    }
-    str.sort();
-    for (key = 0; key < str.length; key++) {
-      sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
-    }
+    const keys = Object.keys(obj).sort();
+    keys.forEach((key) => {
+      sorted[key] = encodeURIComponent(obj[key].toString()).replace(/%20/g, '+');
+    });
     return sorted;
   }
 
