@@ -120,7 +120,7 @@ export class OrdersService {
         totalPrice: dto.totalPrice || estimate.price,
         distanceKm: estimate.distance,
         paymentMethod: dto.paymentMethod || 'CASH',
-        paymentStatus: dto.paymentMethod === 'STRIPE' ? 'PAID' : 'UNPAID',
+        paymentStatus: (dto.paymentMethod === 'STRIPE' || dto.paymentMethod === 'WALLET') ? 'UNPAID' : 'UNPAID', // Luôn khởi tạo là UNPAID, sẽ update sau khi verify
         specialNote: dto.note, // Ánh xạ note từ frontend vào specialNote
       });
 
