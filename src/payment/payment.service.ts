@@ -203,7 +203,7 @@ export class PaymentService {
         return { RspCode: '97', Message: 'Invalid Checksum' };
       }
     } catch (error) {
-      console.error('Lỗi handleVnpayIpn:', error);
+      console.error('❌ [VNPay IPN] Lỗi xử lý:', error);
       return { RspCode: '99', Message: 'Unknow Error' };
     }
   }
@@ -227,20 +227,27 @@ export class PaymentService {
         const signed = hmac.update(signData).digest('hex');
 
         if (secureHash !== signed) {
+          console.error('❌ [VNPay Verify] Chữ ký không hợp lệ!', { secureHash, signed });
           return { success: false, message: 'Chữ ký không hợp lệ' };
         }
       }
 
       const orderId = vnp_Params['vnp_TxnRef'];
       const responseCode = vnp_Params['vnp_ResponseCode'];
+      console.log(`ℹ️ [VNPay Verify] Đang xử lý đơn: ${orderId}, ResponseCode: ${responseCode}, Demo: ${!!isDemo}`);
 
       if (responseCode === '00') {
         const order = await this.orderModel.findById(orderId);
         if (order) {
-          order.paymentStatus = 'PAID';
-          order.paymentMethod = 'VNPAY';
-          await order.save();
+          if (order.paymentStatus !== 'PAID') {
+            order.paymentStatus = 'PAID';
+            order.paymentMethod = 'VNPAY';
+            await order.save();
+            console.log(`✅ [VNPay Verify] Đã cập nhật đơn ${orderId} thành PAID`);
+          }
           return { success: true, message: 'Thanh toán thành công', orderId };
+        } else {
+          console.error(`❌ [VNPay Verify] Không tìm thấy đơn hàng ID: ${orderId}`);
         }
       }
       return { success: false, message: 'Thanh toán thất bại hoặc không tìm thấy đơn hàng' };
