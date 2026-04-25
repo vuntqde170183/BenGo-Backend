@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PaymentService } from './payment.service';
 import {
@@ -58,5 +58,11 @@ export class PaymentController {
     @Body() dto: CreateVnpayUrlDto,
   ): Promise<CreateVnpayUrlResponseDto> {
     return this.paymentService.createVnpayUrl(req, dto);
+  }
+
+  @Get('vnpay-ipn')
+  @ApiOperation({ summary: 'VNPay IPN Callback' })
+  async vnpayIpn(@Req() req: any): Promise<any> {
+    return this.paymentService.handleVnpayIpn(req.query);
   }
 }

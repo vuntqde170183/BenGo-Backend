@@ -128,7 +128,7 @@ export class PaymentService {
     vnp_Params['vnp_TmnCode'] = tmnCode;
     vnp_Params['vnp_Locale'] = locale;
     vnp_Params['vnp_CurrCode'] = currCode;
-    vnp_Params['vnp_TxnRef'] = Date.now().toString();
+    vnp_Params['vnp_TxnRef'] = dto.orderId || Date.now().toString();
     vnp_Params['vnp_OrderInfo'] = dto.orderInfo || 'Thanh toan don hang bengo';
     vnp_Params['vnp_OrderType'] = 'other';
     vnp_Params['vnp_Amount'] = amount * 100;
@@ -152,6 +152,51 @@ export class PaymentService {
     });
 
     return { paymentUrl: vnpUrl };
+  }
+
+  async handleVnpayIpn(vnp_Params: any): Promise<any> {
+    const secretKey = process.env.VNP_HASH_SECRET;
+    const secureHash = vnp_Params['vnp_SecureHash'];
+
+    delete vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHashType'];
+
+    const sortedParams = this.sortObject(vnp_Params);
+    const signData = queryString.stringify(sortedParams, '&', '=', {
+      encodeURIComponent: (str) => str,
+    });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(signData).digest('hex');
+
+    if (secureHash === signed) {
+      const orderId = vnp_Params['vnp_TxnRef'];
+      const rspCode = vnp_Params['vnp_ResponseCode'];
+
+      if (rspCode === '00') {
+        const order = await this.orderModel.findById(orderId);
+        if (order && order.paymentStatus !== 'PAID') {
+          order.paymentStatus = 'PAID';
+          order.paymentMethod = 'VNPAY';
+          await order.save();
+
+          // Cập nhật số dư nếu là đơn hàng có liên quan đến ví/tài xế
+          const amount = parseInt(vnp_Params['vnp_Amount']) / 100;
+          if (order.driverId) {
+            const driver = await this.userModel.findById(order.driverId);
+            if (driver) {
+              const driverEarning = amount * 0.8;
+              driver.walletBalance += driverEarning;
+              await driver.save();
+            }
+          }
+        }
+        return { RspCode: '00', Message: 'Confirm Success' };
+      } else {
+        return { RspCode: '00', Message: 'Confirm Success' }; 
+      }
+    } else {
+      return { RspCode: '97', Message: 'Invalid Checksum' };
+    }
   }
 
   private sortObject(obj: any) {
