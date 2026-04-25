@@ -148,7 +148,9 @@ export class PaymentService {
       const hmac = crypto.createHmac('sha512', secretKey);
       const signed = hmac.update(signData).digest('hex');
       vnp_Params['vnp_SecureHash'] = signed;
-      vnpUrl += '?' + queryString.stringify(vnp_Params);
+      vnpUrl += '?' + queryString.stringify(vnp_Params, '&', '=', {
+        encodeURIComponent: (str) => str,
+      });
 
       return { paymentUrl: vnpUrl };
     } catch (error) {

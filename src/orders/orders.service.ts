@@ -94,57 +94,66 @@ export class OrdersService {
   }
 
   async createOrder(customerId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
-    // Calculate price first
-    const estimate = await this.estimatePrice({
-      origin: dto.origin,
-      destination: dto.destination,
-      vehicleType: dto.vehicleType,
-    });
-
-    const order = new this.orderModel({
-      customerId,
-      pickup: {
-        address: dto.origin.address,
-        lat: dto.origin.lat,
-        lng: dto.origin.lng,
-      },
-      dropoff: {
-        address: dto.destination.address,
-        lat: dto.destination.lat,
-        lng: dto.destination.lng,
-      },
-      vehicleType: dto.vehicleType,
-      goodsImages: dto.goodsImages,
-      status: 'PENDING',
-      totalPrice: dto.totalPrice || estimate.price,
-      distanceKm: estimate.distance,
-      paymentMethod: dto.paymentMethod || 'CASH',
-      paymentStatus: dto.paymentMethod === 'STRIPE' ? 'PAID' : 'UNPAID',
-    });
-
-    await order.save();
-
-    // Notify customer via email
     try {
-      const user = await this.userModel.findById(customerId);
-      if (user && user.email) {
-        this.mailService.sendOrderConfirmation(user.email, user.name, {
-          id: order._id.toString(),
-          pickup: order.pickup.address,
-          dropoff: order.dropoff.address,
-          price: order.totalPrice,
-          vehicleType: order.vehicleType,
-        }).catch(err => console.error('Error sending order confirmation email:', err));
-      }
-    } catch (error) {
-      console.error('Error fetching user for mail notification:', error);
-    }
+      // Calculate price first
+      const estimate = await this.estimatePrice({
+        origin: dto.origin,
+        destination: dto.destination,
+        vehicleType: dto.vehicleType,
+      });
 
-    // TODO: Notify nearby drivers about new order
-    return {
-      id: order._id.toString(),
-      status: order.status,
-    };
+      const order = new this.orderModel({
+        customerId,
+        pickup: {
+          address: dto.origin.address,
+          lat: dto.origin.lat,
+          lng: dto.origin.lng,
+        },
+        dropoff: {
+          address: dto.destination.address,
+          lat: dto.destination.lat,
+          lng: dto.destination.lng,
+        },
+        vehicleType: dto.vehicleType,
+        goodsImages: dto.goodsImages || [],
+        status: 'PENDING',
+        totalPrice: dto.totalPrice || estimate.price,
+        distanceKm: estimate.distance,
+        paymentMethod: dto.paymentMethod || 'CASH',
+        paymentStatus: dto.paymentMethod === 'STRIPE' ? 'PAID' : 'UNPAID',
+        specialNote: dto.note, // Ánh xạ note từ frontend vào specialNote
+      });
+
+      await order.save();
+
+      // Notify customer via email
+      try {
+        const user = await this.userModel.findById(customerId);
+        if (user && user.email) {
+          this.mailService.sendOrderConfirmation(user.email, user.name, {
+            id: order._id.toString(),
+            pickup: order.pickup.address,
+            dropoff: order.dropoff.address,
+            price: order.totalPrice,
+            vehicleType: order.vehicleType,
+          }).catch(err => console.error('❌ Error sending order confirmation email:', err));
+        }
+      } catch (error) {
+        console.error('❌ Error fetching user for mail notification:', error);
+      }
+
+      return {
+        id: order._id.toString(),
+        status: order.status,
+      };
+    } catch (error) {
+      console.error('================ CREATE ORDER ERROR START ================');
+      console.error('Customer ID:', customerId);
+      console.error('DTO:', JSON.stringify(dto, null, 2));
+      console.error('Error Stack:', error.stack || error);
+      console.error('================ CREATE ORDER ERROR END ==================');
+      throw error; // Ném lại lỗi để HttpExceptionFilter bắt và trả về 500
+    }
   }
 
   async getOrder(orderId: string): Promise<OrderResponseDto> {

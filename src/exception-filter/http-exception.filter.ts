@@ -30,6 +30,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     } else {
       message = 'Internal server error';
+      // Log the actual error for debugging
+      console.error('================ EXCEPTION START ================');
+      console.error(exception);
+      console.error('================ EXCEPTION END ==================');
     }
 
     response.status(status).json({
