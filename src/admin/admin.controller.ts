@@ -418,6 +418,76 @@ export class AdminController {
   }
 
   // ============= BÁO CÁO & THỐNG KÊ =============
+  @Get('reports/summary')
+  @ApiOperation({ summary: '[ADMIN] Lấy tổng quan báo cáo (Dashboard Summary)' })
+  async getReportSummary(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<any> {
+    return this.adminService.getReportSummary(startDate, endDate);
+  }
+
+  @Get('reports/charts')
+  @ApiOperation({ summary: '[ADMIN] Lấy dữ liệu biểu đồ (Chart Data)' })
+  async getReportCharts(
+    @Query('type') type: string,
+    @Query('groupBy') groupBy: string = 'DAY',
+  ): Promise<any> {
+    return this.adminService.getReportCharts(type, groupBy);
+  }
+
+  @Get('reports/export/:report_type')
+  @ApiOperation({ summary: '[ADMIN] Danh sách xuất Excel (Table Data & Export)' })
+  async getReportExport(
+    @Param('report_type') reportType: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('status') status?: string,
+    @Query('format') format?: string,
+  ): Promise<any> {
+    return this.adminService.getReportExport(reportType, startDate, endDate, status);
+  }
+
+  @Get('reports/revenue-growth')
+  @ApiOperation({ summary: '[ADMIN] Lấy báo cáo tăng trưởng doanh thu' })
+  async getRevenueGrowth(
+    @Query('period') period: string = 'WEEK',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<any> {
+    return this.adminService.getRevenueGrowth(period, startDate, endDate);
+  }
+
+  @Get('reports/drivers-performance')
+  @ApiOperation({ summary: '[ADMIN] Báo cáo Hiệu suất Tài xế' })
+  async getDriversPerformance(
+    @Query('period') period: string = 'WEEK',
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+  ): Promise<any> {
+    return this.adminService.getDriversPerformance(period, page, limit, search);
+  }
+
+  @Get('reports/orders')
+  @ApiOperation({ summary: '[ADMIN] Lịch sử Đơn hàng (Dành riêng cho báo cáo)' })
+  async getOrdersReport(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('status') status?: string,
+    @Query('vehicleType') vehicleType?: string,
+  ): Promise<any> {
+    return this.adminService.getOrdersReport(startDate, endDate, status, vehicleType);
+  }
+
+  @Get('reports/customers-loyalty')
+  @ApiOperation({ summary: '[ADMIN] Khách hàng thân thiết (Loyalty)' })
+  async getCustomersLoyalty(
+    @Query('limit') limit: number = 10,
+  ): Promise<any> {
+    return this.adminService.getCustomersLoyalty(limit);
+  }
+
   @Get('reports')
   @ApiOperation({
     summary: '[ADMIN] Lấy báo cáo thống kê hệ thống',

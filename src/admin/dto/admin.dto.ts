@@ -163,6 +163,11 @@ export class ReportsResponseDto {
       VAN: number;
       TRUCK: number;
     };
+    byPaymentMethod?: {
+      CASH: number;
+      WALLET: number;
+      QR: number;
+    };
     chartData: {
       date: string;
       value: number;

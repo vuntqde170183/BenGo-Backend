@@ -832,17 +832,290 @@ export class AdminService {
       cancelled: orderStatsRaw.find((item) => item._id === 'CANCELLED')?.count || 0,
     };
 
+    const paymentMethodRevenueRaw = await this.orderModel.aggregate([
+      { $match: revenueMatch },
+      { $group: { _id: '$paymentMethod', total: { $sum: '$totalPrice' } } },
+    ]);
+
+    const byPaymentMethod = { CASH: 0, WALLET: 0, QR: 0 };
+    paymentMethodRevenueRaw.forEach((item) => {
+      if (item._id === 'CASH') byPaymentMethod.CASH += item.total;
+      else if (item._id === 'WALLET') byPaymentMethod.WALLET += item.total;
+      else if (item._id === 'QR') byPaymentMethod.QR += item.total;
+      else if (item._id === 'BANK_TRANSFER') byPaymentMethod.QR += item.total; // Map Bank transfer to QR if needed
+    });
+
     return {
       revenue: {
         daily: dailyRevenueData[0]?.total || 0,
         monthly: monthlyRevenueData[0]?.total || 0,
         total: totalRevenueData[0]?.total || 0,
         byVehicleType,
+        byPaymentMethod,
         chartData,
       },
       topDrivers,
       orderStats,
     };
+  }
+
+  async getReportSummary(startDate?: string, endDate?: string): Promise<any> {
+    const matchQuery: any = {};
+    if (startDate || endDate) {
+      matchQuery.createdAt = {};
+      if (startDate) matchQuery.createdAt.$gte = new Date(startDate);
+      if (endDate) matchQuery.createdAt.$lte = new Date(endDate);
+    }
+
+    const revenueMatch = {
+      ...matchQuery,
+      $or: [{ paymentStatus: 'PAID' }, { status: 'DELIVERED' }],
+    };
+
+    const [
+      revenueStats,
+      orderTotalStats,
+      orderCompletedStats,
+      orderCancelledStats,
+      userNewStats,
+      userActiveStats,
+      driverOnlineStats,
+      driverActiveStats
+    ] = await Promise.all([
+      this.orderModel.aggregate([
+        { $match: revenueMatch },
+        { $group: { _id: null, total: { $sum: '$totalPrice' }, net: { $sum: { $multiply: ['$totalPrice', 0.8] } } } }
+      ]),
+      this.orderModel.countDocuments(matchQuery),
+      this.orderModel.countDocuments({ ...matchQuery, status: 'DELIVERED' }),
+      this.orderModel.countDocuments({ ...matchQuery, status: 'CANCELLED' }),
+      this.userModel.countDocuments({ ...matchQuery, role: 'CUSTOMER' }),
+      this.userModel.countDocuments({ role: 'CUSTOMER' }), 
+      this.driverModel.countDocuments({ isOnline: true }),
+      this.driverModel.countDocuments({ status: 'APPROVED' })
+    ]);
+
+    return {
+      revenue: {
+        total: revenueStats[0]?.total || 0,
+        net: revenueStats[0]?.net || 0,
+        growth: 12.5 
+      },
+      orders: {
+        total: orderTotalStats,
+        completed: orderCompletedStats,
+        cancelled: orderCancelledStats
+      },
+      users: {
+        new: userNewStats,
+        active: userActiveStats
+      },
+      drivers: {
+        online: driverOnlineStats,
+        active: driverActiveStats
+      }
+    };
+  }
+
+  async getReportCharts(type: string, groupBy: string): Promise<any> {
+    const tz = '+07:00';
+    let format = '%Y-%m-%d';
+    if (groupBy === 'HOUR') format = '%Y-%m-%d %H:00';
+    if (groupBy === 'MONTH') format = '%Y-%m';
+
+    const matchQuery: any = {};
+    let grouping: any = { _id: { $dateToString: { format, date: '$createdAt', timezone: tz } } };
+
+    if (type === 'REVENUE') {
+      matchQuery.$or = [{ paymentStatus: 'PAID' }, { status: 'DELIVERED' }];
+      grouping.value = { $sum: '$totalPrice' };
+      grouping.secondaryValue = { $sum: 1 };
+      
+      const dataRaw = await this.orderModel.aggregate([
+        { $match: matchQuery },
+        { $group: grouping },
+        { $sort: { _id: 1 } }
+      ]);
+      return { data: dataRaw.map(d => ({ label: d._id, value: d.value, secondaryValue: d.secondaryValue })) };
+    } else if (type === 'ORDERS') {
+      grouping.value = { $sum: 1 };
+      
+      const dataRaw = await this.orderModel.aggregate([
+        { $match: matchQuery },
+        { $group: grouping },
+        { $sort: { _id: 1 } }
+      ]);
+      return { data: dataRaw.map(d => ({ label: d._id, value: d.value })) };
+    } else if (type === 'USERS') {
+      const dataRaw = await this.userModel.aggregate([
+        { $group: grouping },
+        { $sort: { _id: 1 } }
+      ]);
+      return { data: dataRaw.map(d => ({ label: d._id, value: d.value })) };
+    }
+    
+    return { data: [] };
+  }
+
+  async getReportExport(reportType: string, startDate?: string, endDate?: string, status?: string): Promise<any> {
+    const matchQuery: any = {};
+    if (startDate || endDate) {
+      matchQuery.createdAt = {};
+      if (startDate) matchQuery.createdAt.$gte = new Date(startDate);
+      if (endDate) matchQuery.createdAt.$lte = new Date(endDate);
+    }
+    if (status) matchQuery.status = status;
+
+    if (reportType === 'orders' || reportType === 'transactions') {
+      const data = await this.orderModel.find(matchQuery).populate('customerId', 'name').populate('driverId', 'name').sort({ createdAt: -1 }).lean().exec();
+      return { data };
+    } else if (reportType === 'drivers') {
+      const data = await this.driverModel.find(matchQuery).populate('userId', 'name phone email').sort({ createdAt: -1 }).lean().exec();
+      return { data };
+    }
+    return { data: [] };
+  }
+
+  async getRevenueGrowth(period: string = 'WEEK', startDate?: string, endDate?: string): Promise<any> {
+    const now = new Date();
+    const currentPeriodStart = new Date();
+    currentPeriodStart.setDate(now.getDate() - 7);
+    
+    const previousPeriodStart = new Date();
+    previousPeriodStart.setDate(now.getDate() - 14);
+
+    const revenueMatch = { $or: [{ paymentStatus: 'PAID' }, { status: 'DELIVERED' }] };
+
+    const [currentRevenue, previousRevenue] = await Promise.all([
+      this.orderModel.aggregate([
+        { $match: { ...revenueMatch, createdAt: { $gte: currentPeriodStart } } },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+      ]),
+      this.orderModel.aggregate([
+        { $match: { ...revenueMatch, createdAt: { $gte: previousPeriodStart, $lt: currentPeriodStart } } },
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+      ])
+    ]);
+
+    const curTotal = currentRevenue[0]?.total || 0;
+    const prevTotal = previousRevenue[0]?.total || 0;
+    let growth = 0;
+    if (prevTotal > 0) growth = ((curTotal - prevTotal) / prevTotal) * 100;
+
+    const chartDataRaw = await this.orderModel.aggregate([
+      { $match: { ...revenueMatch, createdAt: { $gte: currentPeriodStart } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+07:00' } }, value: { $sum: '$totalPrice' }, orderCount: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return {
+      summary: {
+        totalRevenue: curTotal + prevTotal,
+        growthPercentage: Number(growth.toFixed(2)),
+        currentPeriodRevenue: curTotal
+      },
+      chartData: chartDataRaw.map(d => ({ date: d._id, value: d.value, orderCount: d.orderCount }))
+    };
+  }
+
+  async getDriversPerformance(period: string = 'WEEK', page: number = 1, limit: number = 10, search?: string): Promise<any> {
+    const skip = (page - 1) * limit;
+    
+    const driverQuery: any = {};
+    if (search) {
+      const users = await this.userModel.find({ $or: [{ name: { $regex: search, $options: 'i' } }, { phone: { $regex: search, $options: 'i' } }] });
+      const userIds = users.map(u => u._id);
+      driverQuery.userId = { $in: userIds };
+    }
+
+    const [drivers, total] = await Promise.all([
+      this.driverModel.find(driverQuery).populate('userId', 'name phone').skip(skip).limit(limit).lean().exec(),
+      this.driverModel.countDocuments(driverQuery)
+    ]);
+
+    const data = await Promise.all(drivers.map(async (driver: any) => {
+      const stats = await this.orderModel.aggregate([
+        { $match: { driverId: driver._id, status: 'DELIVERED' } },
+        { $group: { _id: null, completedOrders: { $sum: 1 }, revenue: { $sum: '$totalPrice' } } }
+      ]);
+      const stat = stats[0] || { completedOrders: 0, revenue: 0 };
+      return {
+        driverId: driver._id,
+        name: driver.userId?.name || 'Unknown',
+        phone: driver.userId?.phone || '',
+        completedOrders: stat.completedOrders,
+        revenue: stat.revenue,
+        rating: driver.rating || 0,
+        status: driver.status,
+        cancellationRate: '0.0%'
+      };
+    }));
+
+    return {
+      data,
+      pagination: { total, page: Number(page), limit: Number(limit) }
+    };
+  }
+
+  async getOrdersReport(startDate?: string, endDate?: string, status?: string, vehicleType?: string): Promise<any> {
+    const matchQuery: any = {};
+    if (startDate || endDate) {
+      matchQuery.createdAt = {};
+      if (startDate) matchQuery.createdAt.$gte = new Date(startDate);
+      if (endDate) matchQuery.createdAt.$lte = new Date(endDate);
+    }
+    if (status) matchQuery.status = status;
+    if (vehicleType) matchQuery.vehicleType = vehicleType;
+
+    const orders = await this.orderModel.find(matchQuery)
+      .populate('customerId', 'name')
+      .populate('driverId', 'name')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+
+    const data = orders.map((o: any) => ({
+      orderId: o._id,
+      customerName: o.customerId?.name || 'Unknown',
+      driverName: o.driverId?.name || 'Unknown',
+      pickupAddress: o.pickupLocation?.address || '',
+      totalPrice: o.totalPrice || 0,
+      platformFee: (o.totalPrice || 0) * 0.2,
+      paymentMethod: o.paymentMethod || 'CASH',
+      status: o.status,
+      createdAt: o.createdAt
+    }));
+
+    return { data };
+  }
+
+  async getCustomersLoyalty(limit: number = 10): Promise<any> {
+    const stats = await this.orderModel.aggregate([
+      { $match: { status: 'DELIVERED', customerId: { $ne: null } } },
+      { $group: { _id: '$customerId', totalOrders: { $sum: 1 }, totalSpending: { $sum: '$totalPrice' }, lastOrder: { $max: '$createdAt' } } },
+      { $sort: { totalSpending: -1 } },
+      { $limit: Number(limit) }
+    ]);
+
+    const data = await Promise.all(stats.map(async (stat: any) => {
+      const user = await this.userModel.findById(stat._id).lean();
+      let rank = 'MEMBER';
+      if (stat.totalSpending > 10000000) rank = 'DIAMOND';
+      else if (stat.totalSpending > 5000000) rank = 'GOLD';
+      else if (stat.totalSpending > 2000000) rank = 'SILVER';
+
+      return {
+        customerId: stat._id,
+        name: user?.name || 'Unknown',
+        phone: user?.phone || '',
+        totalOrders: stat.totalOrders,
+        totalSpending: stat.totalSpending,
+        lastOrder: stat.lastOrder,
+        rank
+      };
+    }));
+
+    return { data };
   }
 
   async getDashboard(): Promise<any> {
