@@ -266,6 +266,19 @@ export class AdminController {
     return createApiResponse(null, 'Cập nhật trạng thái đơn hàng thành công');
   }
 
+  @Delete('orders/:id')
+  @ApiOperation({
+    summary: '[ADMIN] Xóa vĩnh viễn đơn hàng',
+    description: 'API xóa vĩnh viễn một đơn hàng khỏi hệ thống. Thao tác này không thể hoàn tác.'
+  })
+  @ApiResponse({ status: 200, description: 'Xóa đơn hàng thành công' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy đơn hàng' })
+  @ApiResponse({ status: 401, description: 'Chưa đăng nhập hoặc không có quyền admin' })
+  async deleteOrder(@Param('id') id: string): Promise<any> {
+    await this.adminService.deleteOrder(id);
+    return createApiResponse(null, 'Order deleted successfully');
+  }
+
   // ============= CẤU HÌNH GIÁ CƯỚC =============
   @Get('pricing')
   @ApiOperation({
@@ -476,8 +489,10 @@ export class AdminController {
     @Query('endDate') endDate?: string,
     @Query('status') status?: string,
     @Query('vehicleType') vehicleType?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ): Promise<any> {
-    return this.adminService.getOrdersReport(startDate, endDate, status, vehicleType);
+    return this.adminService.getOrdersReport(startDate, endDate, status, vehicleType, page, limit);
   }
 
   @Get('reports/customers-loyalty')

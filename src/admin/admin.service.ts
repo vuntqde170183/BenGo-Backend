@@ -432,6 +432,14 @@ export class AdminService {
     await order.save();
   }
 
+  async deleteOrder(id: string): Promise<void> {
+    const order = await this.orderModel.findById(id);
+    if (!order) {
+      throw new NotFoundException('Không tìm thấy đơn hàng');
+    }
+    await this.orderModel.findByIdAndDelete(id);
+  }
+
   async getSpecialOrders(page: number = 1, limit: number = 20): Promise<any> {
     const query = { priority: { $in: ['VIP', 'URGENT', 'FRAGILE'] } };
     const skip = (page - 1) * limit;
@@ -1057,7 +1065,14 @@ export class AdminService {
     };
   }
 
-  async getOrdersReport(startDate?: string, endDate?: string, status?: string, vehicleType?: string): Promise<any> {
+  async getOrdersReport(
+    startDate?: string,
+    endDate?: string,
+    status?: string,
+    vehicleType?: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<any> {
     const matchQuery: any = {};
     if (startDate || endDate) {
       matchQuery.createdAt = {};
@@ -1067,18 +1082,25 @@ export class AdminService {
     if (status) matchQuery.status = status;
     if (vehicleType) matchQuery.vehicleType = vehicleType;
 
-    const orders = await this.orderModel.find(matchQuery)
-      .populate('customerId', 'name')
-      .populate('driverId', 'name')
-      .sort({ createdAt: -1 })
-      .lean()
-      .exec();
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      this.orderModel.find(matchQuery)
+        .populate('customerId', 'name')
+        .populate('driverId', 'name')
+        .sort({ createdAt: -1 })
+        .skip(Number(skip))
+        .limit(Number(limit))
+        .lean()
+        .exec(),
+      this.orderModel.countDocuments(matchQuery)
+    ]);
 
     const data = orders.map((o: any) => ({
       orderId: o._id,
       customerName: o.customerId?.name || 'Unknown',
-      driverName: o.driverId?.name || 'Unknown',
-      pickupAddress: o.pickupLocation?.address || '',
+      driverName: o.driverId?.name || '---',
+      pickupAddress: o.pickup?.address || '',
       totalPrice: o.totalPrice || 0,
       platformFee: (o.totalPrice || 0) * 0.2,
       paymentMethod: o.paymentMethod || 'CASH',
@@ -1086,7 +1108,16 @@ export class AdminService {
       createdAt: o.createdAt
     }));
 
-    return { data };
+    return {
+      data,
+      pagination: {
+        total,
+        count: data.length,
+        per_page: Number(limit),
+        current_page: Number(page),
+        total_pages: Math.ceil(total / limit)
+      }
+    };
   }
 
   async getCustomersLoyalty(limit: number = 10): Promise<any> {
