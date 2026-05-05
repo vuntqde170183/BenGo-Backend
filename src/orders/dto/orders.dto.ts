@@ -162,6 +162,24 @@ export class OrderResponseDto {
   @ApiPropertyOptional({ example: '2024-03-20T10:00:00.000Z' })
   createdAt?: string;
 
+  @ApiPropertyOptional({ example: '2024-03-20T10:05:00.000Z' })
+  updatedAt?: string;
+
+  @ApiPropertyOptional({ example: 'NORMAL' })
+  priority?: string;
+
+  @ApiPropertyOptional({ example: 'Handle with care' })
+  specialNote?: string;
+
+  @ApiPropertyOptional({ example: 'https://res.cloudinary.com/...' })
+  deliveryProofImage?: string;
+
+  @ApiPropertyOptional({ example: 'Delivered to recipient' })
+  deliveryNotes?: string;
+
+  @ApiPropertyOptional({ example: ['fragile', 'urgent'] })
+  tags?: string[];
+
   @ApiPropertyOptional()
   driver?: {
     id: string;
