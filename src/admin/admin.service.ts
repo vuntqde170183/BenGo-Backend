@@ -66,12 +66,10 @@ export class AdminService {
 
     const userObj: any = user.toObject();
 
-    // Nếu là DRIVER, lấy thêm thông tin từ bảng Driver
-    if (user.role === 'DRIVER') {
-      const driver = await this.driverModel.findOne({ userId: id });
-      if (driver) {
-        userObj.driverProfile = driver.toObject();
-      }
+    // Lấy thêm thông tin hồ sơ tài xế nếu có (dành cho cả trường hợp đang chờ duyệt)
+    const driver = await this.driverModel.findOne({ userId: id });
+    if (driver) {
+      userObj.driverProfile = driver.toObject();
     }
 
     return createApiResponse(userObj, 'User retrieved successfully');
@@ -898,7 +896,7 @@ export class AdminService {
       this.orderModel.countDocuments({ ...matchQuery, status: 'DELIVERED' }),
       this.orderModel.countDocuments({ ...matchQuery, status: 'CANCELLED' }),
       this.userModel.countDocuments({ ...matchQuery, role: 'CUSTOMER' }),
-      this.userModel.countDocuments({ role: 'CUSTOMER' }), 
+      this.userModel.countDocuments({ role: 'CUSTOMER' }),
       this.driverModel.countDocuments({ isOnline: true }),
       this.driverModel.countDocuments({ status: 'APPROVED' })
     ]);
@@ -907,7 +905,7 @@ export class AdminService {
       revenue: {
         total: revenueStats[0]?.total || 0,
         net: revenueStats[0]?.net || 0,
-        growth: 12.5 
+        growth: 12.5
       },
       orders: {
         total: orderTotalStats,
@@ -938,7 +936,7 @@ export class AdminService {
       matchQuery.$or = [{ paymentStatus: 'PAID' }, { status: 'DELIVERED' }];
       grouping.value = { $sum: '$totalPrice' };
       grouping.secondaryValue = { $sum: 1 };
-      
+
       const dataRaw = await this.orderModel.aggregate([
         { $match: matchQuery },
         { $group: grouping },
@@ -947,7 +945,7 @@ export class AdminService {
       return { data: dataRaw.map(d => ({ label: d._id, value: d.value, secondaryValue: d.secondaryValue })) };
     } else if (type === 'ORDERS') {
       grouping.value = { $sum: 1 };
-      
+
       const dataRaw = await this.orderModel.aggregate([
         { $match: matchQuery },
         { $group: grouping },
@@ -961,7 +959,7 @@ export class AdminService {
       ]);
       return { data: dataRaw.map(d => ({ label: d._id, value: d.value })) };
     }
-    
+
     return { data: [] };
   }
 
@@ -988,7 +986,7 @@ export class AdminService {
     const now = new Date();
     const currentPeriodStart = new Date();
     currentPeriodStart.setDate(now.getDate() - 7);
-    
+
     const previousPeriodStart = new Date();
     previousPeriodStart.setDate(now.getDate() - 14);
 
@@ -1028,7 +1026,7 @@ export class AdminService {
 
   async getDriversPerformance(period: string = 'WEEK', page: number = 1, limit: number = 10, search?: string): Promise<any> {
     const skip = (page - 1) * limit;
-    
+
     const driverQuery: any = {};
     if (search) {
       const users = await this.userModel.find({ $or: [{ name: { $regex: search, $options: 'i' } }, { phone: { $regex: search, $options: 'i' } }] });
