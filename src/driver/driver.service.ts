@@ -10,6 +10,7 @@ import {
   UpdateTripStatusDto,
   UploadDocumentDto,
   DriverDocumentsResponseDto,
+  SubmitVerificationDto,
 } from './dto/driver.dto';
 import { Driver } from './driver.schema';
 import { Order } from '../orders/orders.schema';
@@ -390,6 +391,56 @@ export class DriverService {
         current_page: page,
         total_pages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async submitVerification(userId: string, dto: SubmitVerificationDto): Promise<any> {
+    let driver = await this.driverModel.findOne({ userId });
+
+    if (!driver) {
+      driver = new this.driverModel({
+        userId,
+      });
+    }
+
+    // Map all fields from DTO to driver model
+    driver.identityNumber = dto.identityNumber;
+    if (dto.identityFrontImage) driver.identityFrontImage = dto.identityFrontImage;
+    if (dto.identityBackImage) driver.identityBackImage = dto.identityBackImage;
+    if (dto.licenseImage) driver.licenseImage = dto.licenseImage;
+    driver.drivingLicenseNumber = dto.drivingLicenseNumber;
+    driver.plateNumber = dto.plateNumber;
+    driver.vehicleType = dto.vehicleType;
+    if (dto.vehicleRegistrationImage) driver.vehicleRegistrationImage = dto.vehicleRegistrationImage;
+    if (dto.bankInfo) driver.bankInfo = dto.bankInfo;
+
+    // Reset status to PENDING for re-verification if it was rejected
+    driver.status = 'PENDING';
+    driver.rejectionReason = null;
+
+    await driver.save();
+
+    return {
+      success: true,
+      message: 'Hồ sơ đã được gửi để xác thực',
+      status: driver.status,
+    };
+  }
+
+  async getVerificationStatus(userId: string): Promise<any> {
+    const driver = await this.driverModel.findOne({ userId });
+
+    if (!driver) {
+      return {
+        status: 'NONE', // Never submitted
+        message: 'Chưa có thông tin hồ sơ tài xế',
+      };
+    }
+
+    return {
+      status: driver.status,
+      rejectionReason: driver.rejectionReason,
+      updatedAt: (driver as any).updatedAt,
     };
   }
 }

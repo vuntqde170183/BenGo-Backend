@@ -26,6 +26,7 @@ import {
   UpdateTripStatusDto,
   UploadDocumentDto,
   DriverDocumentsResponseDto,
+  SubmitVerificationDto,
 } from './dto/driver.dto';
 import { JwtGuard } from '../auth/jwt-auth.guard';
 import { createApiResponse } from '../utils/response.util';
@@ -166,5 +167,23 @@ export class DriverController {
       search,
       time,
     );
+  }
+
+  @Post('verify')
+  @ApiOperation({ summary: 'Gửi yêu cầu xác thực tài xế' })
+  @ApiResponse({ status: 201, description: 'Hồ sơ đã được gửi' })
+  async submitVerification(
+    @Req() req: any,
+    @Body() dto: SubmitVerificationDto,
+  ): Promise<any> {
+    return this.driverService.submitVerification(req.user.id, dto);
+  }
+
+  @Get('verify/status')
+  @ApiOperation({ summary: 'Kiểm tra trạng thái xác thực tài xế' })
+  @ApiResponse({ status: 200, description: 'Trạng thái hiện tại' })
+  async getVerificationStatus(@Req() req: any): Promise<any> {
+    const data = await this.driverService.getVerificationStatus(req.user.id);
+    return createApiResponse(data, 'Lấy trạng thái xác thực thành công');
   }
 }

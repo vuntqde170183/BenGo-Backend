@@ -207,3 +207,47 @@ export class DriverDocumentsResponseDto {
   @ApiPropertyOptional({ type: BankInfoDto })
   bankInfo?: BankInfoDto;
 }
+
+export class SubmitVerificationDto {
+  @ApiProperty({ example: '0123456789' })
+  @IsString()
+  identityNumber: string;
+
+  @ApiPropertyOptional({ example: 'http://front.jpg' })
+  @IsString()
+  @IsOptional()
+  identityFrontImage?: string;
+
+  @ApiPropertyOptional({ example: 'http://back.jpg' })
+  @IsString()
+  @IsOptional()
+  identityBackImage?: string;
+
+  @ApiPropertyOptional({ example: 'http://license.jpg' })
+  @IsString()
+  @IsOptional()
+  licenseImage?: string;
+
+  @ApiProperty({ example: 'B1-123456' })
+  @IsString()
+  drivingLicenseNumber: string;
+
+  @ApiProperty({ example: '29-A 12345' })
+  @IsString()
+  plateNumber: string;
+
+  @ApiProperty({ example: 'VAN' })
+  @IsString()
+  vehicleType: string;
+
+  @ApiPropertyOptional({ example: 'http://reg.jpg' })
+  @IsString()
+  @IsOptional()
+  vehicleRegistrationImage?: string;
+
+  @ApiPropertyOptional({ type: BankInfoDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BankInfoDto)
+  bankInfo?: BankInfoDto;
+}
