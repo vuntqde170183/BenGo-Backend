@@ -164,12 +164,18 @@ export class DriverDocumentStatusDto {
 
 export class BankInfoDto {
   @ApiProperty({ example: 'MBBank' })
+  @IsString()
+  @IsOptional()
   bankName: string;
 
   @ApiProperty({ example: '0123456789' })
+  @IsString()
+  @IsOptional()
   accountNumber: string;
 
   @ApiProperty({ example: 'NGUYEN VAN A' })
+  @IsString()
+  @IsOptional()
   accountHolder: string;
 }
 
